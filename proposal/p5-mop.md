@@ -63,7 +63,9 @@ a more general class-metadata capturing mechanism which itself can be
 used to implement inheritance (or roles, etc). The syntax would look
 like this:
 
+```
   class <NAME> ( <class-metadata> ) { ... }
+```
 
 With the parentheses capturing the results of whatever perl expression
 is found within it, and storing it in the class meta-object.
@@ -77,7 +79,9 @@ method metadata as well. This is not parameter parsing, but instead
 is a means by which parameter parsing might be accomplished. The syntax
 would look like this:
 
+```
   method <NAME> ( <method-metadata> ) {}
+```
 
 Again, as with the `class` keyword, the parentheses capturing the results
 of whatever perl expression is found within it, and storing it in the
@@ -102,16 +106,22 @@ proposals:
 
 - new ^ sigil
 
+```
   ^Foo->get_all_methods
   ^{"Foo"}->get_all_methods
+```
 
 - new 'mop($)' built-in function
 
+```
   mop("Foo")->get_all_methods
+```
 
 - new core "mop" pragma (similar to strict, etc)
 
+```
   mop::get_metaclass("Foo")->get_all_methods
+```
 
 Whichever method is chosen it should simply return the class
 meta-object corresponding to the class name that is passed as
@@ -123,8 +133,10 @@ In addition to accessing the meta-objects in the MOP, there is
 also a need to bind to certain MOP events, specifically the
 end of the compile-time and the end of the runtime-time.
 
+```
   mop::bind_to_end_of_compile_event( sub { ... } );
   mop::bind_to_end_of_runtime_event( sub { ... } );
+```
 
 The end of the compile-time event would fire once the compiler
 had finished parsing all the syntax elements and creating the
@@ -196,6 +208,7 @@ should be fairly easy to build an instance of a class using the MOP.
 
 Here is a simple example of a MOP powered constructor:
 
+```
   class Point {
       has x;
       has y;
@@ -209,12 +222,14 @@ Here is a simple example of a MOP powered constructor:
           }, $class);
       }
   }
+```
 
 ### Building Moose on top of the MOP
 
 Okay, just to prove a point, here is a quick example of how we might be
 able to implement a Moose-like system taking advantage of the new syntax.
 
+```
   class Point {
       use Moose 3.0;
 
@@ -238,6 +253,7 @@ able to implement a Moose-like system taking advantage of the new syntax.
           $self->z(0);
       };
   }
+```
 
 ## The End
 
