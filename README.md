@@ -1,5 +1,7 @@
 # A MOP for Perl 5
 
+**NOTE: This is still _VERY_ much a work in progress**
+
 This repository contains an ever evolving proposal for a
 Meta Object Protocol, or MOP, to be perhaps included in a
 future version of Perl 5.
