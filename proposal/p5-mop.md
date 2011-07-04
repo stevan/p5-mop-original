@@ -214,7 +214,7 @@ should be fairly easy to build an instance of a class using the MOP.
 Here is a simple example of a MOP powered constructor:
 
 ```
-  class Point {
+  class Point 0.01 {
       has x;
       has y;
 
@@ -226,6 +226,10 @@ Here is a simple example of a MOP powered constructor:
               } __MOP__->get_all_attributes,
           }, $class);
       }
+  }
+
+  class Point::3D 0.01 ( isa => 'Point' ) {
+      has z;
   }
 ```
 
