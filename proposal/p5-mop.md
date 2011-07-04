@@ -131,6 +131,8 @@ the argument.
 
 ## Event Binding
 
+**NOTE: This is very likely to change**
+
 In addition to accessing the meta-objects in the MOP, there is
 also a need to bind to certain MOP events, specifically the
 end of the compile-time and the end of the runtime-time.
@@ -143,8 +145,9 @@ end of the compile-time and the end of the runtime-time.
 The end of the compile-time event would fire once the compiler
 had finished parsing all the syntax elements and creating the
 MOP meta-objects. This would be the time when you might inject
-some code into a CV to implement method parsing, or generate
-some accessors based on information in the attribute meta-object.
+some code into a CV to implement method parameter parsing, or
+generate some accessors based on information in the attribute
+meta-object.
 
 The end of the runtime event would fire once the body of the
 class was finished executing, essentially an end of scope hook
@@ -220,7 +223,7 @@ Here is a simple example of a MOP powered constructor:
           bless({
               map {
                 $_->name => ($args{ $_->name } || undef)
-              } __MOP__->get_all_attributes),
+              } __MOP__->get_all_attributes,
           }, $class);
       }
   }
