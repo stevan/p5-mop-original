@@ -1,5 +1,7 @@
 # A prototype of the MOP for Perl 5
 
+**NOTE: This is still _VERY_ much a work in progress**
+
 This is a _very rough_ prototype of the proposed MOP
 for Perl 5. The main purpose of this prototype is
 to work out the MOP API as well as some key functionality.

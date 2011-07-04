@@ -1,6 +1,8 @@
 
 # Perl 5 MOP
 
+**NOTE: This is still _VERY_ much a work in progress**
+
 This is proposal for a Meta Object Protocol (MOP) for Perl 5.
 The main goal of this MOP is to provide a consistent way to
 capture and query class metadata. In the spirit of TIMTOWTDI,
