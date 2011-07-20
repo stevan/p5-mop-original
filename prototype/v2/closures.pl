@@ -23,7 +23,6 @@ following:
 Some of the things that annoy me:
 
 * No easy way to make inheritance work
-* methods are duplicated for each instance
 * there is no concrete instance, only a lexical pad
 
 =cut
@@ -53,8 +52,12 @@ sub method {
 sub class (&) {
     my $body = shift;
 
-    # get ready to capture
-    # the methods
+    # capture the attributes
+    # defined in the class
+    my $attrs = peek_sub( $body );
+
+    # capture the methods
+    # defined in the class
     my $vtable = {};
     $body->();
 
@@ -62,7 +65,9 @@ sub class (&) {
         my %args = @_;
 
         # build the instance environment
-        my $instance = {};
+        # by using the original class
+        # environment as a starting point
+        my $instance = { %{$attrs} };
         foreach my $arg ( keys %args ) {
             my $value = $args{ $arg };
             $instance->{ '$' . $arg } = \$value;
@@ -82,7 +87,7 @@ sub class (&) {
 ## ------------------------------------------------------------------
 
 my $Point = class {
-    my $x;
+    my $x = 100;
     my $y;
 
     method 'x' => sub { $x };
@@ -98,7 +103,7 @@ my $Point = class {
     };
 };
 
-my $p = $Point->( x => 100, y => 320 );
+my $p = $Point->( y => 320 );
 
 is $p->x, 100;
 is $p->y, 320;
