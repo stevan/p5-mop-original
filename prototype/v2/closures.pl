@@ -51,6 +51,10 @@ sub method {
 sub class (&) {
     my $body = shift;
 
+    # to hold the metaclass
+    # if we decide to make it
+    my $meta;
+
     # capture the attributes
     # defined in the class
     my $attrs = peek_sub( $body );
@@ -60,25 +64,48 @@ sub class (&) {
     my $vtable = {};
     $body->();
 
-    sub {
-        my %args = @_;
+    bless sub {
+        my $method_name = shift;
 
-        # build the instance environment
-        # by using the original class
-        # environment as a starting point
-        my $instance = { %{$attrs} };
-        foreach my $arg ( keys %args ) {
-            my $value = $args{ $arg };
-            $instance->{ '$' . $arg } = \$value;
+        if ( $method_name eq 'new' ) {
+            my %args = @_;
+            # build the instance environment
+            # by using the original class
+            # environment as a starting point
+            my $instance = { %{$attrs} };
+            foreach my $arg ( keys %args ) {
+                my $value = $args{ $arg };
+                $instance->{ '$' . $arg } = \$value;
+            }
+
+            return bless sub {
+                my ($method_name, @args) = @_;
+                my $method = $vtable->{ $method_name };
+                die "Cannot find method '$method_name'\n"
+                    unless defined $method;
+                set_closed_over( $method, $instance );
+                $method->( @args );
+            } => 'Dispatchable';
         }
+        elsif ( $method_name eq 'meta' ) {
 
-        bless sub {
-            my ($method_name, @args) = @_;
-            my $method = $vtable->{ $method_name };
-            set_closed_over( $method, $instance );
-            $method->( @args );
-        } => 'Dispatchable';
-    }
+            unless ( $meta ) {
+                $meta = class(sub {
+                    method 'get_attributes' => sub { $attrs  };
+                    method 'get_methods'    => sub { $vtable };
+                    method 'add_method'     => sub {
+                        my ($name, $method) = @_;
+                        $vtable->{ $name } = $method;
+                    };
+                })->new;
+            }
+
+            return $meta;
+        }
+        else {
+            die "Cannot find class method '$method_name'\n";
+        }
+    } => 'Dispatchable';
 }
 
 ## ------------------------------------------------------------------
@@ -102,30 +129,46 @@ my $Point = class {
     };
 };
 
-my $p = $Point->( y => 320 );
+my $meta = $Point->meta;
 
-is $p->x, 100;
-is $p->y, 320;
-is_deeply $p->dump, { x => 100, y => 320 };
+is_deeply [ sort keys %{$meta->get_methods} ], [qw[ dump set_x x y ]], '... got the method list we expected';
+is_deeply $meta->get_attributes, { '$x' => \100, '$y' => \undef }, '... got the attribute list we expected';
+
+my $p = $Point->new( y => 320 );
+
+is $p->x, 100, '... got the right value for x';
+is $p->y, 320, '... got the right value for y';
+is_deeply $p->dump, { x => 100, y => 320 }, '... got the right value from dump';
 
 $p->set_x(10);
-is $p->x, 10;
+is $p->x, 10, '... got the right value for x';
 
-is_deeply $p->dump, { x => 10, y => 320 };
+is_deeply $p->dump, { x => 10, y => 320 }, '... got the right value from dump';
 
-my $p2 = $Point->( x => 1, y => 30 );
+# get all meta on this ...
+$meta->add_method(
+    'as_string' => sub {
+        $::self->x . ' x ' . $::self->y
+    }
+);
 
-is $p2->x, 1;
-is $p2->y, 30;
-is_deeply $p2->dump, { x => 1, y => 30 };
+is $p->as_string, '10 x 320', '... got the expected value from the new method';
+
+my $p2 = $Point->new( x => 1, y => 30 );
+
+is $p2->as_string, '1 x 30', '... got the expected value from the new method (again)';
+
+is $p2->x, 1, '... got the right value for x';
+is $p2->y, 30, '... got the right value for y';
+is_deeply $p2->dump, { x => 1, y => 30 }, '... got the right value from dump';
 
 $p2->set_x(500);
-is $p2->x, 500;
-is_deeply $p2->dump, { x => 500, y => 30 };
+is $p2->x, 500, '... got the right value for x';
+is_deeply $p2->dump, { x => 500, y => 30 }, '... got the right value from dump';
 
-is $p->x, 10;
-is $p->y, 320;
-is_deeply $p->dump, { x => 10, y => 320 };
+is $p->x, 10, '... got the right value for x';
+is $p->y, 320, '... got the right value for y';
+is_deeply $p->dump, { x => 10, y => 320 }, '... got the right value from dump';
 
 
 done_testing;
