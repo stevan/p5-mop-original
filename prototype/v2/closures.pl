@@ -47,11 +47,17 @@ my $self;
 sub method {
     my ($name, $body) = @_;
     my $pad = peek_my(2);
-    ${$pad->{'$methods'}}->{ $name } = $body;
+    ${$pad->{'$vtable'}}->{ $name } = $body;
 }
 
 sub class (&) {
     my $body = shift;
+
+    # get ready to capture
+    # the methods
+    my $vtable = {};
+    $body->();
+
     sub {
         my %args = @_;
 
@@ -62,20 +68,11 @@ sub class (&) {
             $instance->{ '$' . $arg } = \$value;
         }
 
-        # get ready to capture
-        # the methods
-        my $methods = {};
-        $body->();
-
-        # define the environment these
-        # methods will be executed in
-        foreach my $method ( values %$methods ) {
-            set_closed_over( $method, $instance );
-        }
-
         bless sub {
-            my ($method, @args) = @_;
-            $methods->{ $method }->( @args );
+            my ($method_name, @args) = @_;
+            my $method = $vtable->{ $method_name };
+            set_closed_over( $method, $instance );
+            $method->( @args );
         } => 'Dispatchable';
     }
 }
