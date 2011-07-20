@@ -23,7 +23,6 @@ following:
 Some of the things that annoy me:
 
 * No easy way to make inheritance work
-* there is no concrete instance, only a lexical pad
 
 =cut
 
