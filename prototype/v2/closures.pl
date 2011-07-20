@@ -4,25 +4,26 @@ use strict;
 use warnings;
 
 use Test::More;
+use Clone ();
 use PadWalker qw[ set_closed_over closed_over peek_sub peek_my ];
 
 =pod
 
-So this is an exploration of a more minimalist
-and prototype style OO system (except without
-the prototypes).
+So this is an exploration of a more
+minimalist OO system.
 
 Some of the things that appeal to me are the
 following:
 
 * the class is a really just a factory for instances
-* an instance is defined as the lexical environment
+* an instance is defined by the lexical environment
   of its methods
 * private instance slots (mostly)
+* on demand metaclasses
 
-Some of the things that annoy me:
+Some of the things that annoy me right now:
 
-* No easy way to make inheritance work
+* No easy way to make inheritance work (yet)
 
 =cut
 
@@ -72,12 +73,45 @@ sub class (&) {
             # build the instance environment
             # by using the original class
             # environment as a starting point
-            my $instance = { %{$attrs} };
+            my $instance = {};
+
+            # first we need to clone the
+            # attributes into our instance
+            foreach my $attr ( keys %$attrs ) {
+                my $value = ${ $attrs->{ $attr } };
+                # FIXME:
+                # this doesn't work, because when
+                # the metaclass is created it will
+                # copy the $attrs and $vtable and
+                # therefore make things like add_method
+                # stop working. So we need some way
+                # to indicate that these values
+                # should not be cloned.
+                #
+                # To be honest, didn't realize this
+                # would happen because I thought
+                # that peek_sub( $body ) would only
+                # care about stuff defined inside
+                # it and not just what it closes
+                # over.
+                #
+                # So basically we need to examine
+                # the process here and figure out
+                # a better way to approach this.
+                # - SL
+                # if ( ref $value eq 'ARRAY' || ref $value eq 'HASH' ) {
+                #     $value = Clone::clone( $value );
+                # }
+                $instance->{ $attr } = \$value;
+            }
+
+            # then we overwrite any args
             foreach my $arg ( keys %args ) {
                 my $value = $args{ $arg };
                 $instance->{ '$' . $arg } = \$value;
             }
 
+            # now create our instance ...
             return bless sub {
                 my ($method_name, @args) = @_;
                 my $method = $vtable->{ $method_name };
@@ -88,10 +122,10 @@ sub class (&) {
             } => 'Dispatchable';
         }
         elsif ( $method_name eq 'meta' ) {
-
+            # on demand metaclass
             unless ( $meta ) {
                 $meta = class(sub {
-                    method 'get_attributes' => sub { $attrs  };
+                    method 'get_attributes' => sub { $attrs };
                     method 'get_methods'    => sub { $vtable };
                     method 'add_method'     => sub {
                         my ($name, $method) = @_;
@@ -99,7 +133,6 @@ sub class (&) {
                     };
                 })->new;
             }
-
             return $meta;
         }
         else {
@@ -109,7 +142,7 @@ sub class (&) {
 }
 
 ## ------------------------------------------------------------------
-## Prototypin!
+## Create a class
 ## ------------------------------------------------------------------
 
 my $Point = class {
@@ -129,10 +162,7 @@ my $Point = class {
     };
 };
 
-my $meta = $Point->meta;
-
-is_deeply [ sort keys %{$meta->get_methods} ], [qw[ dump set_x x y ]], '... got the method list we expected';
-is_deeply $meta->get_attributes, { '$x' => \100, '$y' => \undef }, '... got the attribute list we expected';
+## Test the class
 
 my $p = $Point->new( y => 320 );
 
@@ -145,12 +175,21 @@ is $p->x, 10, '... got the right value for x';
 
 is_deeply $p->dump, { x => 10, y => 320 }, '... got the right value from dump';
 
-# get all meta on this ...
+## get all meta on this ...
+
+my $meta = $Point->meta;
+
+is_deeply [ sort keys %{$meta->get_methods} ], [qw[ dump set_x x y ]], '... got the method list we expected';
+is_deeply $meta->get_attributes, { '$x' => \100, '$y' => \undef }, '... got the attribute list we expected';
+
+# add a method ...
 $meta->add_method(
     'as_string' => sub {
         $::self->x . ' x ' . $::self->y
     }
 );
+
+## back to normal testing ...
 
 is $p->as_string, '10 x 320', '... got the expected value from the new method';
 
@@ -170,6 +209,12 @@ is $p->x, 10, '... got the right value for x';
 is $p->y, 320, '... got the right value for y';
 is_deeply $p->dump, { x => 10, y => 320 }, '... got the right value from dump';
 
+## do some deeper meta-fiddling again
+
+${$meta->get_attributes->{'$x'}}++;
+
+my $p3 = $Point->new;
+is $p3->x, 101, '... got the right value for x';
 
 done_testing;
 
