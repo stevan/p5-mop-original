@@ -15,18 +15,14 @@ class 'Point' => sub {
     has 'x';
     has 'y';
 
-    # YUK!
-    my $MOP = __MOP__;
-
     method 'new' => sub {
         my ($class, %args) = @_;
         bless {
             map {
               $_->name => ($args{ $_->name } || undef)
-            } @{ $MOP->attributes }
+            } @{ mop::get_metaclass( $class )->attributes }
         } => $class;
     }
-
 };
 
 my $meta = mop::get_metaclass('Point');
