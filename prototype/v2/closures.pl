@@ -49,6 +49,11 @@ sub method {
     ${$pad->{'$vtable'}}->{ $name } = $body;
 }
 
+# have to declare this here
+# since &class is going to
+# use it.
+my $Class;
+
 sub class (&) {
     my $body = shift;
 
@@ -103,34 +108,32 @@ sub class (&) {
         }
         elsif ( $method_name eq 'meta' ) {
             # on demand metaclass
-            unless ( $meta ) {
-                # we need to initialize this
-                # late otherwise we get deep
-                # recursion, so we do it here
-                $meta = class(sub {
-                    method 'get_attributes' => sub { $attrs };
-                    method 'get_methods'    => sub { $vtable };
-                    method 'add_method'     => sub {
-                        my ($name, $method) = @_;
-                        $vtable->{ $name } = $method;
-                    };
-                });
-            }
-            # but we need to be sure
-            # to pass in the $attrs
-            # and $vtable here so that
-            # we can be assured of the
-            # right copy of them
-            return $meta->new(
-                attrs  => $attrs,
-                vtable => $vtable
-            );
+            $meta = $Class->new(
+                attributes => $attrs,
+                methods    => $vtable
+            ) unless $meta;
+            return $meta;
         }
         else {
             die "Cannot find class method '$method_name'\n";
         }
     } => 'Dispatchable';
 }
+
+# now we can create the
+# $Class here and it
+# should all just work
+$Class = class sub {
+    my $attributes;
+    my $methods;
+
+    method 'get_attributes' => sub { $attributes };
+    method 'get_methods'    => sub { $methods };
+    method 'add_method'     => sub {
+        my ($name, $method) = @_;
+        $methods->{ $name } = $method;
+    };
+};
 
 ## ------------------------------------------------------------------
 ## Create a class
