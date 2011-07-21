@@ -79,29 +79,9 @@ sub class (&) {
             # attributes into our instance
             foreach my $attr ( keys %$attrs ) {
                 my $value = ${ $attrs->{ $attr } };
-                # FIXME:
-                # this doesn't work, because when
-                # the metaclass is created it will
-                # copy the $attrs and $vtable and
-                # therefore make things like add_method
-                # stop working. So we need some way
-                # to indicate that these values
-                # should not be cloned.
-                #
-                # To be honest, didn't realize this
-                # would happen because I thought
-                # that peek_sub( $body ) would only
-                # care about stuff defined inside
-                # it and not just what it closes
-                # over.
-                #
-                # So basically we need to examine
-                # the process here and figure out
-                # a better way to approach this.
-                # - SL
-                # if ( ref $value eq 'ARRAY' || ref $value eq 'HASH' ) {
-                #     $value = Clone::clone( $value );
-                # }
+                if ( ref $value ) {
+                    $value = Clone::clone( $value );
+                }
                 $instance->{ $attr } = \$value;
             }
 
@@ -124,6 +104,9 @@ sub class (&) {
         elsif ( $method_name eq 'meta' ) {
             # on demand metaclass
             unless ( $meta ) {
+                # we need to initialize this
+                # late otherwise we get deep
+                # recursion, so we do it here
                 $meta = class(sub {
                     method 'get_attributes' => sub { $attrs };
                     method 'get_methods'    => sub { $vtable };
@@ -131,9 +114,17 @@ sub class (&) {
                         my ($name, $method) = @_;
                         $vtable->{ $name } = $method;
                     };
-                })->new;
+                });
             }
-            return $meta;
+            # but we need to be sure
+            # to pass in the $attrs
+            # and $vtable here so that
+            # we can be assured of the
+            # right copy of them
+            return $meta->new(
+                attrs  => $attrs,
+                vtable => $vtable
+            );
         }
         else {
             die "Cannot find class method '$method_name'\n";
@@ -215,6 +206,7 @@ ${$meta->get_attributes->{'$x'}}++;
 
 my $p3 = $Point->new;
 is $p3->x, 101, '... got the right value for x';
+
 
 done_testing;
 
