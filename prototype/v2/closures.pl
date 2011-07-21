@@ -47,6 +47,10 @@ my $Meta;             # the base metaclass class
     }
 }
 
+## ------------------------------------------------------------------
+## Internal mechanisms
+## ------------------------------------------------------------------
+
 sub FIND_METHOD {
     my ($method_name, $methods, $superclasses) = @_;
 
@@ -64,6 +68,31 @@ sub FIND_METHOD {
     }
 
     return;
+}
+
+my ($SELF, $CLASS, $INSTANCE);
+
+sub CALL_METHOD {
+    my ($method, $invocant, $class_invocant, $instance, @args) = @_;
+
+    set_closed_over( $method, {
+        %$instance,
+        '$self'  => \$invocant,
+        '$class' => \$class_invocant,
+    });
+
+    local $::SELF     = $invocant;
+    local $::CLASS    = $class_invocant;
+    local $::INSTANCE = $instance;
+
+    $method->( @args );
+}
+
+sub SUPER {
+    my ($method_name, @args) = @_;
+    my $method = FIND_METHOD( $method_name, {}, $::CLASS->meta->get_superclasses );
+    die "No SUPER method '$method_name' found" unless defined $method;
+    CALL_METHOD( $method, $::SELF, $::CLASS, $::INSTANCE, @args );
 }
 
 ## ------------------------------------------------------------------
@@ -149,21 +178,9 @@ sub class (&) {
             # now create our instance ...
             return bless sub {
                 my ($method_name, $invocant, @args) = @_;
-
                 my $method = FIND_METHOD( $method_name, $vtable, $supers );
-                die "No method '$method_name' found"
-                    unless defined $method;
-
-                set_closed_over(
-                    $method,
-                    {
-                        %$instance,
-                        '$self'  => \$invocant,
-                        '$class' => \$class_invocant
-                    }
-                );
-
-                $method->( @args );
+                die "No method '$method_name' found" unless defined $method;
+                CALL_METHOD( $method, $invocant, $class_invocant, $instance, @args );
             } => 'Dispatchable';
         }
         elsif ( $method_name eq 'meta' ) {
@@ -280,7 +297,10 @@ my $Point3D = class {
 
     my $z;
 
-    method 'z' => sub { $z };
+    method 'z'         => sub { $z };
+    method 'as_string' => sub {
+        return SUPER('as_string') . ' x ' . $self->z;
+    };
 };
 
 my $p3d = $Point3D->new( x => 1, y => 2, z => 3 );
@@ -288,6 +308,8 @@ my $p3d = $Point3D->new( x => 1, y => 2, z => 3 );
 is $p3d->x, 1, '... got the right value for x';
 is $p3d->y, 2, '... got the right value for y';
 is $p3d->z, 3, '... got the right value for z';
+
+is $p3d->as_string, '1 x 2 x 3', '... got the right value (with SUPER method)';
 
 {
     # just checkin ...
