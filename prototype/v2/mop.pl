@@ -3,9 +3,11 @@
 use strict;
 use warnings;
 
+use PadWalker ();
+
 use Test::More;
 
-use PadWalker;
+our ($SELF, $CLASS);
 
 my ($self, $class);
 
@@ -25,41 +27,83 @@ my ($self, $class);
             data  => $data
         } => 'mop::dispatchable';
     }
+
+    sub get_uuid  { (shift)->{'uuid'}     }
+    sub get_class { ${(shift)->{'class'}} }
+    sub get_data  { (shift)->{'data'}     }
+    sub get_data_at {
+        my ($instance, $name) = @_;
+        ${ $instance->{'data'}->{ $name } }
+    }
 }
 
 {
     package mop::dispatchable;
     use strict;
     use warnings;
+    use PadWalker ();
+
     sub AUTOLOAD {
         my @autoload    = (split '::', our $AUTOLOAD);
         my $method_name = $autoload[-1];
         return if $method_name eq 'DESTROY';
 
         my $invocant = shift;
-        my $class    = $invocant->{'class'};
-        my $method   = $class->{'%methods'}->{ $method_name };
-        my $instance = $invocant->{'data'};
+        my $class    = mop::instance::get_class( $invocant );
+        my $method   = mop::instance::get_data_at( $class, '$methods' )->{ $method_name };
+        my $instance = mop::instance::get_data( $invocant );
 
         PadWalker::set_closed_over( $method, {
             %$instance,
             '$self'  => \$invocant,
+            '$class' => \$class
         });
+
+        local $::SELF  = $invocant;
+        local $::CLASS = $class;
 
         $method->( @_ );
     }
 }
 
+## ------------------------------------------------------------------
+
+my $Class;
+
+$Class = mop::instance::create(
+    \$Class,
+    {
+        '$methods' => \{
+            'new' => sub {
+                my %args  = @_;
+
+                my $instance = {};
+                foreach my $arg ( keys %args ) {
+                    my $value = $args{ $arg };
+                    $instance->{ '$' . $arg } = \$value;
+                }
+
+                return mop::instance::create(
+                    \$::SELF,
+                    $instance
+                );
+            }
+        }
+    }
+);
+
+## ------------------------------------------------------------------
+
 sub method {
     my ($name, $body) = @_;
     my $pad = PadWalker::peek_my(2);
-    ${$pad->{'$meta'}}->{'%methods'}->{ $name } = $body;
+    ${$pad->{'$meta'}}->{'methods'}->{ $name } = $body;
 }
 
 sub extends {
     my ($superclass) = @_;
     my $pad = PadWalker::peek_my(2);
-    push @{ ${$pad->{'$meta'}}->{'@superclasses'} } => $superclass;
+    push @{ ${$pad->{'$meta'}}->{'superclasses'} } => $superclass;
 }
 
 ## This is where most of the work is done
@@ -72,31 +116,11 @@ sub class (&) {
     delete $attrs->{'$self'};
     delete $attrs->{'$class'};
 
-    $meta->{'%attributes'} = $attrs;
+    $meta->{'attributes'} = $attrs;
 
     $body->();
 
-    mop::instance::create(
-        {
-            '%methods' => {
-                'new' => sub {
-                    my %args = @_;
-
-                    my $instance = {};
-                    foreach my $arg ( keys %args ) {
-                        my $value = $args{ $arg };
-                        $instance->{ '$' . $arg } = \$value;
-                    }
-
-                    return mop::instance::create(
-                        $meta,
-                        $instance
-                    );
-                }
-            }
-        },
-        $meta
-    );
+    $Class->new( %$meta );
 }
 
 # -------------------------------------------------------------------
