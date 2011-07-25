@@ -3,7 +3,9 @@
 use strict;
 use warnings;
 
-use PadWalker ();
+use PadWalker    ();
+use Clone        ();
+use Scalar::Util ();
 
 use Test::More;
 
@@ -101,6 +103,12 @@ $Class = mop::instance::create(
             'get_superclasses' => sub { mop::instance::get_data_at( $::SELF, '$superclasses' ) },
             'get_methods'      => sub { mop::instance::get_data_at( $::SELF, '$methods' )      },
             'get_attributes'   => sub { mop::instance::get_data_at( $::SELF, '$attributes' )   },
+            'get_mro'          => sub {
+                return [
+                    $::SELF,
+                    map { @{ $_->get_mro } } @{ $::SELF->get_superclasses }
+                ]
+            }
         }
     }
 );
@@ -115,6 +123,18 @@ my $Object = mop::instance::create(
                 my %args  = @_;
 
                 my $instance = {};
+
+                foreach my $class ( @{ $::SELF->get_mro } ) {
+                    my $attrs = $class->get_attributes;
+                    foreach my $attr_name ( keys %$attrs ) {
+                        unless ( exists $instance->{ $attr_name } ) {
+                            my $value = ${ $attrs->{ $attr_name } };
+                            $value = Clone::clone( $value ) if ref $value;
+                            $instance->{ $attr_name } = \$value;
+                        }
+                    }
+                }
+
                 foreach my $arg ( keys %args ) {
                     my $value = $args{ $arg };
                     $instance->{ '$' . $arg } = \$value;
@@ -147,7 +167,6 @@ sub extends {
     push @{ ${$pad->{'$meta'}}->{'superclasses'} } => $superclass;
 }
 
-## This is where most of the work is done
 sub class (&) {
     my $body = shift;
 
@@ -159,6 +178,11 @@ sub class (&) {
     my $attrs = PadWalker::peek_sub( $body );
     delete $attrs->{'$self'};
     delete $attrs->{'$class'};
+
+    foreach my $attr ( keys %$attrs ) {
+        delete $attrs->{ $attr }
+            if Scalar::Util::blessed ${ $attrs->{ $attr } };
+    }
 
     $meta->{'attributes'} = $attrs;
 
@@ -226,6 +250,22 @@ is_deeply $p2->dump, { x => 500, y => 30 }, '... got the right value from dump';
 is $p->x, 10, '... got the right value for x';
 is $p->y, 320, '... got the right value for y';
 is_deeply $p->dump, { x => 10, y => 320 }, '... got the right value from dump';
+
+## Test a subclass
+
+my $Point3D = class {
+    extends $Point;
+
+    my $z;
+
+    method 'z' => sub { $z };
+};
+
+my $p3d = $Point3D->new( x => 1, y => 2, z => 3 );
+
+is $p3d->x, 1, '... got the right value for x';
+is $p3d->y, 2, '... got the right value for y';
+is $p3d->z, 3, '... got the right value for z';
 
 done_testing;
 
