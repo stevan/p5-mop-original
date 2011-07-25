@@ -365,6 +365,26 @@ sub class (&) {
 ## Testing the whole thing ...
 ## -------------------------------------------------------------------
 
+# So the class created below is still kind of rough, obviously
+# the syntax needs more work. Some key things that I do like are:
+#
+# - access to instance data is done via lexically accessible values
+# - $self and $class are valid within methods
+# - the invocant is no longer in the @_
+# - the class ($Point) is a concrete thing, not just a string
+#
+# Some of the things I would like to fix are:
+#
+# - using 'my' for attributes is bad, that should be 'has'
+#   instead to better differentiate between attributes and
+#   simple lexical variables
+# - there is no good way to do class methods (yet)
+# - we need to support the 'class Point { ... }' syntax
+# - we do not yet have a means of capturing metadata for
+#   classes, attributes and methods
+#
+# Otherwise, I think this is progressing along.
+
 my $Point = class {
     my $x;
     my $y;
