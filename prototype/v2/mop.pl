@@ -119,9 +119,15 @@ my ($self, $class);
 # then executing the method.
 
 # DISPATCH is concerned with finding the method, after which it
-# will call CALLMETHOD to execute it. There is also a special case
-# for the the method name 'NEXTMETHOD', which accepts the name
-# of a superclass method to dispatch to, and does so accordingly.
+# will call CALLMETHOD to execute it.
+
+# NEXTMETHOD is actually kind of in between DISPATCH and
+# the AUTOLOAD handler. It is actually treated as a method
+# by the instances, and given a method name it will call the
+# superclass method (if there is one) for that method. It
+# should be noted that this is not a recommendation for how
+# to implement such a feature, it is simply here to show behavior
+# and nothing more.
 
 # Finally, we are using AUTOLOAD here as a general purpose
 # dispatching mechanism. This is simply a means of making the
@@ -175,14 +181,15 @@ my ($self, $class);
     sub DISPATCH {
         my $method_name = shift;
         my $invocant    = shift;
+        my $method = WALKMETH( mop::instance::get_class( $invocant ), $method_name )
+            || die "Could not find method '$method_name'";
+        CALLMETHOD( $method, $invocant, @_ );
+    }
 
-        my %opts;
-        if ( $method_name eq 'NEXTMETHOD' ) {
-            $method_name = shift;
-            $opts{'super'} = 1;
-        }
-
-        my $method = WALKMETH( mop::instance::get_class( $invocant ), $method_name, %opts )
+    sub NEXTMETHOD {
+        my $invocant    = shift;
+        my $method_name = shift;
+        my $method      = WALKMETH( mop::instance::get_class( $invocant ), $method_name, (super => 1) )
             || die "Could not find method '$method_name'";
         CALLMETHOD( $method, $invocant, @_ );
     }
