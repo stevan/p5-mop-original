@@ -153,9 +153,16 @@ my ($self, $class);
     sub DISPATCH {
         my $method_name = shift;
         my $invocant    = shift;
-        my $class       = mop::instance::get_class( $invocant );
-        my $method      = WALKMETH( $class, $method_name ) || die "Could not find method '$method_name'";
-        my $instance    = mop::instance::get_data( $invocant );
+        my $method      = WALKMETH( mop::instance::get_class( $invocant ), $method_name )
+            || die "Could not find method '$method_name'";
+        CALLMETHOD( $method, $invocant, @_ );
+    }
+
+    sub CALLMETHOD {
+        my $method   = shift;
+        my $invocant = shift;
+        my $class    = mop::instance::get_class( $invocant );
+        my $instance = mop::instance::get_data( $invocant );
 
         PadWalker::set_closed_over( $method, {
             %$instance,
@@ -448,6 +455,12 @@ my $Point3D = class {
     my $z;
 
     method 'z' => sub { $z };
+
+    #method 'dump' => sub {
+    #    my $orig = $self->nextmethod('dump');
+    #
+    #
+    #};
 };
 
 my $p3d = $Point3D->new( x => 1, y => 2, z => 3 );
