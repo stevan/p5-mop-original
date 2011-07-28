@@ -114,18 +114,20 @@ my ($self, $class);
 # a Class object and applying a $solver callback to each class
 # until the callback returns something.
 
-# DISPATCH is concerned with setting up a method to be executed.
-# This means finding the method, setting up the lexical environment
-# for the method and finally executing the method.
+# CALLMETHOD is concerned with setting up a method to be executed.
+# This means setting up the lexical environment for the method and
+# then executing the method.
+
+# DISPATCH is concerned with finding the method, after which it
+# will call CALLMETHOD to execute it. There is also a special case
+# for the the method name 'NEXTMETHOD', which accepts the name
+# of a superclass method to dispatch to, and does so accordingly.
 
 # Finally, we are using AUTOLOAD here as a general purpose
 # dispatching mechanism. This is simply a means of making the
 # prototype work, it should not be seen as a recommendation for
 # the actual implementation.
 
-# TODO:
-# We should add some kind of NEXT::METHOD implementation here
-# as well that can handle proper SUPER style dispatching.
 
 {
     package mop::dispatchable;
@@ -134,28 +136,22 @@ my ($self, $class);
     use PadWalker ();
 
     sub WALKMETH {
-        my ($class, $method_name) = @_;
-        WALKCLASS( $class, sub { mop::instance::get_data_at( $_[0], '$methods' )->{ $method_name } } );
+        my ($class, $method_name, %opts) = @_;
+        WALKCLASS( $class, sub { mop::instance::get_data_at( $_[0], '$methods' )->{ $method_name } }, %opts );
     }
 
     sub WALKCLASS {
-        my ($class, $solver) = @_;
-        if ( my $result = $solver->( $class ) ) {
-            return $result;
-        }
-        foreach my $super ( @{ mop::instance::get_data_at( $class, '$superclasses' ) } ) {
-            if ( my $result = WALKCLASS( $super, $solver ) ) {
+        my ($class, $solver, %opts) = @_;
+        unless ( delete $opts{'super'} ) {
+            if ( my $result = $solver->( $class ) ) {
                 return $result;
             }
         }
-    }
-
-    sub DISPATCH {
-        my $method_name = shift;
-        my $invocant    = shift;
-        my $method      = WALKMETH( mop::instance::get_class( $invocant ), $method_name )
-            || die "Could not find method '$method_name'";
-        CALLMETHOD( $method, $invocant, @_ );
+        foreach my $super ( @{ mop::instance::get_data_at( $class, '$superclasses' ) } ) {
+            if ( my $result = WALKCLASS( $super, $solver, %opts ) ) {
+                return $result;
+            }
+        }
     }
 
     sub CALLMETHOD {
@@ -174,6 +170,21 @@ my ($self, $class);
         local $::CLASS = $class;
 
         $method->( @_ );
+    }
+
+    sub DISPATCH {
+        my $method_name = shift;
+        my $invocant    = shift;
+
+        my %opts;
+        if ( $method_name eq 'NEXTMETHOD' ) {
+            $method_name = shift;
+            $opts{'super'} = 1;
+        }
+
+        my $method = WALKMETH( mop::instance::get_class( $invocant ), $method_name, %opts )
+            || die "Could not find method '$method_name'";
+        CALLMETHOD( $method, $invocant, @_ );
     }
 
     sub AUTOLOAD {
@@ -456,11 +467,11 @@ my $Point3D = class {
 
     method 'z' => sub { $z };
 
-    #method 'dump' => sub {
-    #    my $orig = $self->nextmethod('dump');
-    #
-    #
-    #};
+    method 'dump' => sub {
+        my $orig = $self->NEXTMETHOD('dump');
+        $orig->{'z'} = $z;
+        $orig;
+    };
 };
 
 my $p3d = $Point3D->new( x => 1, y => 2, z => 3 );
@@ -468,6 +479,8 @@ my $p3d = $Point3D->new( x => 1, y => 2, z => 3 );
 is $p3d->x, 1, '... got the right value for x';
 is $p3d->y, 2, '... got the right value for y';
 is $p3d->z, 3, '... got the right value for z';
+
+is_deeply $p3d->dump, { x => 1, y => 2, z => 3 }, '... go the right value from dump';
 
 done_testing;
 
