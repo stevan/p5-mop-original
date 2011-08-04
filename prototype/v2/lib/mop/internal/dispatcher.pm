@@ -11,6 +11,13 @@ sub WALKMETH {
     my ($class, $method_name, %opts) = @_;
     WALKCLASS(
         $class,
+        # FIXME:
+        # We really should have a internal::class
+        # module which handles finding a method
+        # by name. This actually only needs to be
+        # so low leve for $Class, the other class
+        # objects can call methods.
+        # - SL
         sub { mop::internal::instance::get_data_at( $_[0], '$methods' )->{ $method_name } },
         %opts
     );
@@ -23,6 +30,13 @@ sub WALKCLASS {
             return $result;
         }
     }
+    # FIXME:
+    # this actually should be checking the
+    # MRO and not the superclass list. But
+    # as stated above, this is only really
+    # needed for $Class, the other classes
+    # can actually call methods.
+    # - SL
     foreach my $super ( @{ mop::internal::instance::get_data_at( $class, '$superclasses' ) } ) {
         if ( my $result = WALKCLASS( $super, $solver, %opts ) ) {
             return $result;
@@ -42,6 +56,14 @@ sub CALLMETHOD {
         '$class' => \$class
     });
 
+    # FIXME:
+    # these are just aliasing
+    # globals, and we need a
+    # better way to handle this
+    # perhaps mop.pm should
+    # take care of this kind
+    # of stuff.
+    # - SL
     local $::SELF  = $invocant;
     local $::CLASS = $class;
 
