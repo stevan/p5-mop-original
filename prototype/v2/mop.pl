@@ -3,11 +3,11 @@
 use strict;
 use warnings;
 
-use PadWalker    ();
 use Clone        ();
 use Scalar::Util ();
-
 use Test::More;
+
+use mop;
 
 ## ------------------------------------------------------------------
 ## Global Variable setup
@@ -34,176 +34,6 @@ our ($SELF, $CLASS);
 my ($self, $class);
 
 ## ------------------------------------------------------------------
-## Low-Level Instance Structure
-## ------------------------------------------------------------------
-
-# This is the low-level instance data structure, it should not be
-# confused with the Instance Meta Protocol, which will be defined
-# later on.
-
-# There are basically three fields in an instance structure.
-
-# The first is a unique identifier. I am using Data::UUID here so that
-# we can be sure the value will be unique accross processes, threads
-# and machines. I think this is important for any modern object system
-# that is to be built within a networked world.
-
-# The second is a reference to the Class object that this instance
-# is connected too.
-
-# The third is the structure to hold the actual instance data itself.
-# This is a HASH ref in which all the keys are references as well. This
-# data structure is compatible with what PadWalker::set_closed_over
-# expects for arguments. The reason being that in every method call
-# we use this data structure as the lexical pad for that method. This
-# will be explained more further down.
-
-# It should also be noted that we bless our instances into the
-# 'mop::dispatchable' package, which is done mostly to make the
-# prototype function correctly, although the 'mop::dispatchable'
-# does have use beyond just the prototype (see below).
-
-# TODO:
-# I think that get_data_at needs some re-thinking to improve how
-# we handle missing data, perhaps an exception.
-
-{
-    package mop::instance;
-    use strict;
-    use warnings;
-    use Data::UUID;
-
-    my $UUID = Data::UUID->new;
-
-    sub create {
-        my ($class, $data) = @_;
-        bless {
-            uuid  => $UUID->create_str,
-            class => $class,
-            data  => $data
-        } => 'mop::dispatchable';
-    }
-
-    sub get_uuid  { (shift)->{'uuid'}     }
-    sub get_class { ${(shift)->{'class'}} }
-    sub get_data  { (shift)->{'data'}     }
-    sub get_data_at {
-        my ($instance, $name) = @_;
-        ${ $instance->{'data'}->{ $name } || \undef }
-    }
-}
-
-## ------------------------------------------------------------------
-## Low-Level Dispatcher
-## ------------------------------------------------------------------
-
-# The exact implementation of this is heavily tied to the prototype
-# and making the prototype behave as expected on the user language
-# level. However, that is not all that it does.
-
-# The real useful parts of the dispatcher are the three methods;
-# WALKMETH, WALKCLASS and DISPATCH. These were somewhat borrowed
-# from Perl 6, but with some modifications. Each one has a specific
-# set of responsibilities.
-
-# WALKMETH is primarliy responsible for finding a method within a
-# given class. This means that it must know enough about a Class
-# object to be able to find a method within it.
-
-# WALKCLASS is primarily responsible for traversing the MRO of
-# a Class object and applying a $solver callback to each class
-# until the callback returns something.
-
-# CALLMETHOD is concerned with setting up a method to be executed.
-# This means setting up the lexical environment for the method and
-# then executing the method.
-
-# DISPATCH is concerned with finding the method, after which it
-# will call CALLMETHOD to execute it.
-
-# NEXTMETHOD is actually kind of in between DISPATCH and
-# the AUTOLOAD handler. It is actually treated as a method
-# by the instances, and given a method name it will call the
-# superclass method (if there is one) for that method. It
-# should be noted that this is not a recommendation for how
-# to implement such a feature, it is simply here to show behavior
-# and nothing more.
-
-# Finally, we are using AUTOLOAD here as a general purpose
-# dispatching mechanism. This is simply a means of making the
-# prototype work, it should not be seen as a recommendation for
-# the actual implementation.
-
-
-{
-    package mop::dispatchable;
-    use strict;
-    use warnings;
-    use PadWalker ();
-
-    sub WALKMETH {
-        my ($class, $method_name, %opts) = @_;
-        WALKCLASS( $class, sub { mop::instance::get_data_at( $_[0], '$methods' )->{ $method_name } }, %opts );
-    }
-
-    sub WALKCLASS {
-        my ($class, $solver, %opts) = @_;
-        unless ( delete $opts{'super'} ) {
-            if ( my $result = $solver->( $class ) ) {
-                return $result;
-            }
-        }
-        foreach my $super ( @{ mop::instance::get_data_at( $class, '$superclasses' ) } ) {
-            if ( my $result = WALKCLASS( $super, $solver, %opts ) ) {
-                return $result;
-            }
-        }
-    }
-
-    sub CALLMETHOD {
-        my $method   = shift;
-        my $invocant = shift;
-        my $class    = mop::instance::get_class( $invocant );
-        my $instance = mop::instance::get_data( $invocant );
-
-        PadWalker::set_closed_over( $method, {
-            %$instance,
-            '$self'  => \$invocant,
-            '$class' => \$class
-        });
-
-        local $::SELF  = $invocant;
-        local $::CLASS = $class;
-
-        $method->( @_ );
-    }
-
-    sub DISPATCH {
-        my $method_name = shift;
-        my $invocant    = shift;
-        my $method = WALKMETH( mop::instance::get_class( $invocant ), $method_name )
-            || die "Could not find method '$method_name'";
-        CALLMETHOD( $method, $invocant, @_ );
-    }
-
-    sub NEXTMETHOD {
-        my $invocant    = shift;
-        my $method_name = shift;
-        my $method      = WALKMETH( mop::instance::get_class( $invocant ), $method_name, (super => 1) )
-            || die "Could not find method '$method_name'";
-        CALLMETHOD( $method, $invocant, @_ );
-    }
-
-    sub AUTOLOAD {
-        my @autoload    = (split '::', our $AUTOLOAD);
-        my $method_name = $autoload[-1];
-        return if $method_name eq 'DESTROY';
-
-        DISPATCH( $method_name, @_ );
-    }
-}
-
-## ------------------------------------------------------------------
 ## Boostrapping
 ## ------------------------------------------------------------------
 
@@ -226,15 +56,15 @@ my ($self, $class);
 
 my $Class;
 
-$Class = mop::instance::create(
+$Class = mop::internal::instance::create(
     \$Class,
     {
         '$superclasses' => \[],
         '$attributes'   => \{},
         '$methods'      => \{
-            'get_superclasses' => sub { mop::instance::get_data_at( $::SELF, '$superclasses' ) },
-            'get_methods'      => sub { mop::instance::get_data_at( $::SELF, '$methods' )      },
-            'get_attributes'   => sub { mop::instance::get_data_at( $::SELF, '$attributes' )   },
+            'get_superclasses' => sub { mop::internal::instance::get_data_at( $::SELF, '$superclasses' ) },
+            'get_methods'      => sub { mop::internal::instance::get_data_at( $::SELF, '$methods' )      },
+            'get_attributes'   => sub { mop::internal::instance::get_data_at( $::SELF, '$attributes' )   },
             'get_mro'          => sub {
                 return [
                     $::SELF,
@@ -245,7 +75,7 @@ $Class = mop::instance::create(
     }
 );
 
-my $Object = mop::instance::create(
+my $Object = mop::internal::instance::create(
     \$Class,
     {
         '$superclasses' => \[],
@@ -272,18 +102,18 @@ my $Object = mop::instance::create(
                     $instance->{ '$' . $arg } = \$value;
                 }
 
-                return mop::instance::create(
+                return mop::internal::instance::create(
                     \$::SELF,
                     $instance
                 );
             },
-            'id'    => sub { mop::instance::get_uuid( $::SELF ) },
-            'class' => sub { mop::instance::get_class( $::SELF ) },
+            'id'    => sub { mop::internal::instance::get_uuid( $::SELF ) },
+            'class' => sub { mop::internal::instance::get_class( $::SELF ) },
         }
     }
 );
 
-mop::instance::get_data_at( $Class, '$superclasses' )->[0] = $Object;
+mop::internal::instance::get_data_at( $Class, '$superclasses' )->[0] = $Object;
 
 ## ------------------------------------------------------------------
 ## Sugar Layer
