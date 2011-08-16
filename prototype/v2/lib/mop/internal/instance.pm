@@ -9,18 +9,11 @@ my $UUID = Data::UUID->new;
 
 sub create {
     my ($class, $data) = @_;
-    bless {
+    return +{
         uuid  => $UUID->create_str,
         class => $class,
         data  => $data
-        # FIXME:
-        # what we bless the instance into
-        # is irrelevant, this is just something
-        # to make the prototype work, so should
-        # be mostly ignored. The important part
-        # is the structure of the instance itself
-        # - SL
-    } => 'mop::dispatchable';
+    }
 }
 
 sub get_uuid  { (shift)->{'uuid'}     }
