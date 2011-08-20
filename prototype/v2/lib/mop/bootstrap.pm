@@ -16,6 +16,11 @@ sub init {
             'get_methods'      => sub { mop::internal::class::get_methods( $::SELF )      },
             'get_attributes'   => sub { mop::internal::class::get_attributes( $::SELF )   },
             'get_mro'          => sub { mop::internal::class::get_mro( $::SELF )          },
+            # TODO:
+            # Need to think about adding the following methods:
+            # - equivalent of linearized_isa (MRO with dups removed)
+            # - get_all_{method,attributes} returns correct list using MRO
+            # - find_{method,attribute}
         }
     );
 
