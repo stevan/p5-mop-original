@@ -5,8 +5,18 @@ use warnings;
 
 use mop::syntax::dispatchable;
 
-use PadWalker    ();
-use Scalar::Util ();
+use PadWalker     ();
+use Devel::Caller ();
+
+sub has (\$) {
+    my $var = shift;
+
+	my %names = reverse %{ PadWalker::peek_sub( Devel::Caller::caller_cv( 1 ) ) };
+	my $name = $names{ $var };
+
+    my $pad = PadWalker::peek_my(2);
+    ${ $pad->{'$meta'} }->{'attributes'}->{ $name } = $var;
+}
 
 sub method {
     my ($name, $body) = @_;
@@ -24,40 +34,10 @@ sub class (&) {
     my $body = shift;
 
     my $meta = {
+        'attributes'   => {},
         'methods'      => {},
         'superclasses' => [],
     };
-
-    my $attrs = PadWalker::peek_sub( $body );
-
-    # NOTE:
-    # we need to use some guessing here to
-    # make sure we are only capturing the
-    # variable actually intended as attributes
-    # and not other lexicals PadWalker might
-    # see. So the first thing we do is get
-    # rid of $self and $class, which we know
-    # are not acceptable.
-
-    delete $attrs->{'$self'};
-    delete $attrs->{'$class'};
-
-    # The next thing we do is to remove any
-    # closed over classes, such as would occur
-    # with the 'extends' statement.
-
-    foreach my $attr ( keys %$attrs ) {
-        delete $attrs->{ $attr }
-            if Scalar::Util::blessed ${ $attrs->{ $attr } };
-    }
-
-    # none of the above technique for
-    # cleaning the attrs HASH are ideal
-    # but this is just a hacked up sugar
-    # layer, so we live with it for the
-    # protototype.
-
-    $meta->{'attributes'} = $attrs;
 
     $body->();
 
@@ -83,11 +63,6 @@ The primary responsibility of these 3 functions is to provide a
 sugar layer for the creation of classes. Exactly how this would
 work in a real implementation is unknown, but this does the job
 (in a kind of scary PadWalker-ish way) for now.
-
-==head1 TODO
-
-improve the handling and detection of attributes, right now it
-is too much guessing.
 
 =head1 AUTHOR
 

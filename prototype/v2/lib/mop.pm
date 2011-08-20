@@ -32,6 +32,7 @@ sub import {
     {
          no strict 'refs';
          *{"${to}::class"}   = \&mop::syntax::class;
+         *{"${to}::has"}     = \&mop::syntax::has;
          *{"${to}::method"}  = \&mop::syntax::method;
          *{"${to}::extends"} = \&mop::syntax::extends;
     }

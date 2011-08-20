@@ -28,9 +28,6 @@ my ($self, $class);
 #
 # Some of the things I would like to fix are:
 #
-# - using 'my' for attributes is bad, that should be 'has'
-#   instead to better differentiate between attributes and
-#   simple lexical variables
 # - there is no good way to do class methods (yet)
 # - we need to support the 'class Point { ... }' syntax
 # - we do not yet have a means of capturing metadata for
@@ -39,8 +36,8 @@ my ($self, $class);
 # Otherwise, I think this is progressing along.
 
 my $Point = class {
-    my $x;
-    my $y;
+    has my $x;
+    has my $y;
 
     method 'x' => sub { $x };
     method 'y' => sub { $y };
@@ -98,7 +95,7 @@ is_deeply $p->dump, { x => 10, y => 320 }, '... got the right value from dump';
 my $Point3D = class {
     extends $Point;
 
-    my $z;
+    has my $z;
 
     method 'z' => sub { $z };
 
