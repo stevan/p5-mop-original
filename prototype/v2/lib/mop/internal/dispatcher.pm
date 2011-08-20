@@ -3,71 +3,29 @@ package mop::internal::dispatcher;
 use strict;
 use warnings;
 
+use mop::internal::class;
 use mop::internal::instance;
-
-use PadWalker ();
+use mop::internal::method;
 
 sub WALKMETH {
     my ($class, $method_name, %opts) = @_;
     WALKCLASS(
         $class,
-        # FIXME:
-        # We really should have a internal::class
-        # module which handles finding a method
-        # by name. This actually only needs to be
-        # so low leve for $Class, the other class
-        # objects can call methods.
-        # - SL
-        sub { mop::internal::instance::get_data_at( $_[0], '$methods' )->{ $method_name } },
+        sub { mop::internal::class::find_method( $_[0], $method_name ) },
         %opts
     );
 }
 
 sub WALKCLASS {
     my ($class, $solver, %opts) = @_;
-    unless ( delete $opts{'super'} ) {
-        if ( my $result = $solver->( $class ) ) {
+    my @mro = @{ mop::internal::class::get_mro( $class ) };
+    shift @mro if exists $opts{'super'};
+    foreach my $_class ( @mro ) {
+        if ( my $result = $solver->( $_class ) ) {
             return $result;
         }
     }
-    # FIXME:
-    # this actually should be checking the
-    # MRO and not the superclass list. But
-    # as stated above, this is only really
-    # needed for $Class, the other classes
-    # can actually call methods.
-    # - SL
-    foreach my $super ( @{ mop::internal::instance::get_data_at( $class, '$superclasses' ) } ) {
-        if ( my $result = WALKCLASS( $super, $solver, %opts ) ) {
-            return $result;
-        }
-    }
-}
-
-sub CALLMETHOD {
-    my $method   = shift;
-    my $invocant = shift;
-    my $class    = mop::internal::instance::get_class( $invocant );
-    my $instance = mop::internal::instance::get_data( $invocant );
-
-    PadWalker::set_closed_over( $method, {
-        %$instance,
-        '$self'  => \$invocant,
-        '$class' => \$class
-    });
-
-    # FIXME:
-    # these are just aliasing
-    # globals, and we need a
-    # better way to handle this
-    # perhaps mop.pm should
-    # take care of this kind
-    # of stuff.
-    # - SL
-    local $::SELF  = $invocant;
-    local $::CLASS = $class;
-
-    $method->( @_ );
+    return;
 }
 
 sub DISPATCH {
@@ -89,6 +47,12 @@ sub NEXTMETHOD {
         (super => 1)
     ) || die "Could not find method '$method_name'";
     CALLMETHOD( $method, $invocant, @_ );
+}
+
+sub CALLMETHOD {
+    my $method   = shift;
+    my $invocant = shift;
+    mop::internal::method::execute( $method, $invocant, @_ );
 }
 
 1;
