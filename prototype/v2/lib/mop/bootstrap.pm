@@ -5,8 +5,7 @@ use warnings;
 
 use mop::internal::class;
 use mop::internal::instance;
-
-use Clone ();
+use mop::internal::attribute;
 
 sub init {
 
@@ -31,28 +30,28 @@ sub init {
             'new'   => sub {
                 my %args  = @_;
 
-                my $instance = {};
+                my $data = {};
 
                 foreach my $class ( @{ $::SELF->get_mro } ) {
                     my $attrs = $class->get_attributes;
                     foreach my $attr_name ( keys %$attrs ) {
-                        unless ( exists $instance->{ $attr_name } ) {
-                            my $value = ${ $attrs->{ $attr_name } };
-                            $value = Clone::clone( $value ) if ref $value;
-                            $instance->{ $attr_name } = \$value;
+                        unless ( exists $data->{ $attr_name } ) {
+                            $data->{ $attr_name } = mop::internal::attribute::get_initial_value(
+                                $attrs->{ $attr_name }
+                            );
                         }
                     }
                 }
 
                 foreach my $arg ( keys %args ) {
                     my $value = $args{ $arg };
-                    $instance->{ '$' . $arg } = \$value;
+                    $data->{ '$' . $arg } = \$value;
                 }
 
                 bless(
                     mop::internal::instance::create(
                         \$::SELF,
-                        $instance
+                        $data
                     ),
                     'mop::syntax::dispatchable'
                 );
