@@ -7,6 +7,7 @@ use mop::syntax::dispatchable;
 
 use PadWalker     ();
 use Devel::Caller ();
+use Sub::Name     ();
 
 sub has (\$) {
     my $var = shift;
@@ -21,7 +22,7 @@ sub has (\$) {
 sub method {
     my ($name, $body) = @_;
     my $pad = PadWalker::peek_my(2);
-    ${ $pad->{'$meta'} }->{'methods'}->{ $name } = $body;
+    ${ $pad->{'$meta'} }->{'methods'}->{ $name } =  Sub::Name::subname( $name, $body );
 }
 
 sub extends {
