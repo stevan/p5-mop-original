@@ -91,8 +91,14 @@ my $CheckingAccount = class {
     };
 };
 
+ok $BankAccount->is_subclass_of( $::Object ), '... BankAccount is a subclass of Object';
+
+ok $CheckingAccount->is_subclass_of( $BankAccount ), '... CheckingAccount is a subclass of BankAccount';
+ok $CheckingAccount->is_subclass_of( $::Object ), '... CheckingAccount is a subclass of Object';
+
 my $savings = $BankAccount->new( balance => 250 );
 is $savings->class, $BankAccount, '... got the class we expected';
+ok $savings->is_a( $BankAccount ), '... savings is an instance of BankAccount';
 
 is $savings->balance, 250, '... got the savings balance we expected';
 
@@ -107,6 +113,8 @@ my $checking = $CheckingAccount->new(
     overdraft_account => $savings,
 );
 is $checking->class, $CheckingAccount, '... got the class we expected';
+ok $checking->is_a( $CheckingAccount ), '... checking is an instance of BankAccount';
+ok $checking->is_a( $BankAccount ), '... checking is an instance of BankAccount';
 
 is $checking->balance, 100, '... got the checking balance we expected';
 is $checking->overdraft_account, $savings, '... got the right overdraft account';

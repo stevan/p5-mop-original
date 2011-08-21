@@ -56,11 +56,14 @@ my $Point = class {
 
 like $Point->id, qr/[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}/, '... got the expected uuid format';
 is $Point->class, $::Class, '... got the class we expected';
+ok $Point->is_a( $::Object ), '... class Point is a Object';
+ok $Point->is_subclass_of( $::Object ), '... class Point is a subclass of Object';
 is_deeply $Point->get_superclasses, [ $::Object ], '... got the superclasses we expected';
 
 ## Test an instance
 
 my $p = $Point->new( x => 100, y => 320 );
+ok $p->is_a( $Point ), '... p is a Point';
 
 like $p->id, qr/[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}/, '... got the expected uuid format';
 is $p->class, $Point, '... got the class we expected';
@@ -90,7 +93,7 @@ is $p->x, 10, '... got the right value for x';
 is $p->y, 320, '... got the right value for y';
 is_deeply $p->dump, { x => 10, y => 320 }, '... got the right value from dump';
 
-## Test a subclass
+# ... subclass it ...
 
 my $Point3D = class {
     extends $Point;
@@ -106,7 +109,19 @@ my $Point3D = class {
     };
 };
 
+## Test the subclass
+
+is $Point3D->class, $::Class, '... got the class we expected';
+ok $Point3D->is_a( $::Object ), '... class Point3D is a Object';
+ok $Point3D->is_subclass_of( $Point ), '... class Point3D is a subclass of Point';
+ok $Point3D->is_subclass_of( $::Object ), '... class Point3D is a subclass of Object';
+is_deeply $Point3D->get_superclasses, [ $Point ], '... got the superclasses we expected';
+
+## Test the instance
+
 my $p3d = $Point3D->new( x => 1, y => 2, z => 3 );
+ok $p3d->is_a( $Point3D ), '... p3d is a Point3D';
+ok $p3d->is_a( $Point ), '... p3d is a Point';
 
 is $p3d->x, 1, '... got the right value for x';
 is $p3d->y, 2, '... got the right value for y';
