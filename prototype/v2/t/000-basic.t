@@ -16,7 +16,13 @@ is $::Class->class, $::Class, '... the class of Class is Class';
 ok $::Class->is_subclass_of( $::Object ), '... class Class is a subclass of Object';
 ok !$::Class->is_subclass_of( $::Class ), '... class Class is not a subclass of Class';
 
-ok $::Class->is_a( $::Object ), '... class Class is a Object';
-ok $::Class->is_a( $::Class ), '... class Class is a Class';
+ok $::Class->is_a( $::Object ), '... class Class is-a Object';
+ok $::Class->is_a( $::Class ), '... class Class is-a Class';
+
+ok !$::Object->is_subclass_of( $::Object ), '... class Object is not a subclass of Object';
+ok !$::Object->is_subclass_of( $::Class ), '... class Object is not a subclass of Class';
+
+ok $::Object->is_a( $::Object ), '... class Object is-a Object';
+ok $::Object->is_a( $::Class ), '... class Object is-a Class';
 
 done_testing;
