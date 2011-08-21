@@ -46,6 +46,7 @@ is $Foo->static_method, 'STATIC', '... called the static method on Foo';
 
 my $foo = $Foo->new;
 
+is $foo->class, $Foo, '... got the class we expected';
 ok $foo->is_a( $Foo ), '... foo is a Foo';
 ok $foo->is_a( $::Object ), '... foo is an Object';
 ok !$foo->is_a( $::Class ), '... foo is not a Class';
