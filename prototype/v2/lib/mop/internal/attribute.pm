@@ -5,9 +5,24 @@ use warnings;
 
 use Clone ();
 
+sub create {
+    my %params = @_;
+
+    return +{
+        name             => $params{'name'},
+        initial_value    => $params{'initial_value'},
+        associated_class => $params{'associated_class'}
+    }
+}
+
+sub associate_class {
+    my ($attr, $class) = @_;
+    $attr->{'associated_class'} = $class;
+}
+
 sub get_initial_value {
     my $attr = shift;
-    my $value = ${ $attr };
+    my $value = ${ $attr->{'initial_value'} };
     $value = Clone::clone( $value ) if ref $value;
     return \$value;
 }

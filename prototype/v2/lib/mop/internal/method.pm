@@ -7,13 +7,28 @@ use mop::internal::instance;
 
 use PadWalker ();
 
+sub create {
+    my %params = @_;
+
+    return +{
+        name             => $params{'name'},
+        body             => $params{'body'},
+        associated_class => $params{'associated_class'}
+    }
+}
+
+sub associate_class {
+    my ($method, $class) = @_;
+    $method->{'associated_class'} = $class;
+}
+
 sub execute {
     my $method   = shift;
     my $invocant = shift;
     my $class    = mop::internal::instance::get_class( $invocant );
     my $instance = mop::internal::instance::get_data( $invocant );
 
-    PadWalker::set_closed_over( $method, {
+    PadWalker::set_closed_over( $method->{'body'}, {
         %$instance,
         '$self'  => \$invocant,
         '$class' => \$class
@@ -24,7 +39,7 @@ sub execute {
     local $::SELF  = $invocant;
     local $::CLASS = $class;
 
-    $method->( @_ );
+    $method->{'body'}->( @_ );
 }
 
 1;

@@ -19,7 +19,7 @@ methods.
 my $FooMeta = $::Class->new(
     superclasses => [ $::Class ],
     methods      => {
-        static_method => sub { 'STATIC' }
+        static_method => mop::internal::method::create( name => 'static_method', body => sub { 'STATIC' } )
     }
 );
 
@@ -32,7 +32,7 @@ ok $FooMeta->is_subclass_of( $::Class ), '... FooMeta is a subclass of Class';
 my $Foo = $FooMeta->new(
     superclasses => [ $::Object ],
     methods      => {
-        hello => sub { 'FOO' }
+        hello => mop::internal::method::create( name => 'hello', body => sub { 'FOO' } )
     }
 );
 

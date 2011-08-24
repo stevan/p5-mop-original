@@ -12,7 +12,7 @@ sub create {
     my $attributes   = $params{'attributes'}   || {};
     my $methods      = $params{'methods'}      || {};
 
-    mop::internal::instance::create(
+    my $class = mop::internal::instance::create(
         \$::Class,
         {
             '$superclasses' => \$superclasses,
@@ -20,6 +20,16 @@ sub create {
             '$methods'      => \$methods
         }
     );
+
+    foreach my $method ( values %$methods ) {
+        mop::internal::method::associate_class( $method, $class );
+    }
+
+    foreach my $attr ( values %$attributes ) {
+        mop::internal::attribute::associate_class( $attr, $class );
+    }
+
+    $class;
 }
 
 sub get_superclasses { mop::internal::instance::get_data_at( $_[0], '$superclasses' ) }

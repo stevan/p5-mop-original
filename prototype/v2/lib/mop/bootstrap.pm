@@ -11,16 +11,16 @@ sub init {
 
     $::Class = mop::internal::class::create(
         methods => {
-            'get_superclasses' => sub { mop::internal::class::get_superclasses( $::SELF ) },
-            'get_methods'      => sub { mop::internal::class::get_methods( $::SELF )      },
-            'get_attributes'   => sub { mop::internal::class::get_attributes( $::SELF )   },
-            'get_mro'          => sub { mop::internal::class::get_mro( $::SELF )          },
-            'is_subclass_of'   => sub {
+            'get_superclasses' => mop::internal::method::create( name => 'get_superclasses', body => sub { mop::internal::class::get_superclasses( $::SELF ) } ),
+            'get_methods'      => mop::internal::method::create( name => 'get_methods',      body => sub { mop::internal::class::get_methods( $::SELF )      } ),
+            'get_attributes'   => mop::internal::method::create( name => 'get_attributes',   body => sub { mop::internal::class::get_attributes( $::SELF )   } ),
+            'get_mro'          => mop::internal::method::create( name => 'get_mro',          body => sub { mop::internal::class::get_mro( $::SELF )          } ),
+            'is_subclass_of'   => mop::internal::method::create( name => 'is_subclass_of',   body => sub {
                 my $super = shift;
                 my @mro   = @{ $::SELF->get_mro };
                 shift @mro;
                 scalar grep { $super->id eq $_->id } @mro;
-            },
+            } ),
             # TODO:
             # Need to think about adding the following methods:
             # - equivalent of linearized_isa (MRO with dups removed)
@@ -31,10 +31,10 @@ sub init {
 
     $::Object = mop::internal::class::create(
         methods => {
-            'id'    => sub { mop::internal::instance::get_uuid( $::SELF )  },
-            'class' => sub { mop::internal::instance::get_class( $::SELF ) },
-            'is_a'  => sub { $::CLASS->id eq $_[0]->id || $::CLASS->is_subclass_of( $_[0] ) },
-            'new'   => sub {
+            'id'    => mop::internal::method::create( name => 'id',    body => sub { mop::internal::instance::get_uuid( $::SELF )  } ),
+            'class' => mop::internal::method::create( name => 'class', body => sub { mop::internal::instance::get_class( $::SELF ) } ),
+            'is_a'  => mop::internal::method::create( name => 'is_a',  body => sub { $::CLASS->id eq $_[0]->id || $::CLASS->is_subclass_of( $_[0] ) } ),
+            'new'   => mop::internal::method::create( name => 'new',   body => sub {
                 my %args  = @_;
 
                 my $data = {};
@@ -62,7 +62,7 @@ sub init {
                     ),
                     'mop::syntax::dispatchable'
                 );
-            }
+            } )
         }
     );
 

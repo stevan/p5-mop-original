@@ -16,13 +16,19 @@ sub has (\$) {
 	my $name = $names{ $var };
 
     my $pad = PadWalker::peek_my(2);
-    ${ $pad->{'$meta'} }->{'attributes'}->{ $name } = $var;
+    ${ $pad->{'$meta'} }->{'attributes'}->{ $name } = mop::internal::attribute::create(
+        name          => $name,
+        initial_value => $var
+    );
 }
 
 sub method {
     my ($name, $body) = @_;
     my $pad = PadWalker::peek_my(2);
-    ${ $pad->{'$meta'} }->{'methods'}->{ $name } =  Sub::Name::subname( $name, $body );
+    ${ $pad->{'$meta'} }->{'methods'}->{ $name } = mop::internal::method::create(
+        name => $name,
+        body => Sub::Name::subname( $name, $body )
+    );
 }
 
 sub extends {
