@@ -10,12 +10,12 @@ use mop::internal::attribute;
 sub init {
 
     $::Class = mop::internal::class::create(
-        methods => {
-            'get_superclasses' => mop::internal::method::create( name => 'get_superclasses', body => sub { mop::internal::class::get_superclasses( $::SELF ) } ),
-            'get_methods'      => mop::internal::method::create( name => 'get_methods',      body => sub { mop::internal::class::get_methods( $::SELF )      } ),
-            'get_attributes'   => mop::internal::method::create( name => 'get_attributes',   body => sub { mop::internal::class::get_attributes( $::SELF )   } ),
-            'get_mro'          => mop::internal::method::create( name => 'get_mro',          body => sub { mop::internal::class::get_mro( $::SELF )          } ),
-            'is_subclass_of'   => mop::internal::method::create( name => 'is_subclass_of',   body => sub {
+        methods => [
+            mop::internal::method::create( name => 'get_superclasses', body => sub { mop::internal::class::get_superclasses( $::SELF ) } ),
+            mop::internal::method::create( name => 'get_methods',      body => sub { mop::internal::class::get_methods( $::SELF )      } ),
+            mop::internal::method::create( name => 'get_attributes',   body => sub { mop::internal::class::get_attributes( $::SELF )   } ),
+            mop::internal::method::create( name => 'get_mro',          body => sub { mop::internal::class::get_mro( $::SELF )          } ),
+            mop::internal::method::create( name => 'is_subclass_of',   body => sub {
                 my $super = shift;
                 my @mro   = @{ $::SELF->get_mro };
                 shift @mro;
@@ -26,25 +26,26 @@ sub init {
             # - equivalent of linearized_isa (MRO with dups removed)
             # - get_all_{method,attributes} returns correct list using MRO
             # - find_{method,attribute}
-        }
+        ]
     );
 
     $::Object = mop::internal::class::create(
-        methods => {
-            'id'    => mop::internal::method::create( name => 'id',    body => sub { mop::internal::instance::get_uuid( $::SELF )  } ),
-            'class' => mop::internal::method::create( name => 'class', body => sub { mop::internal::instance::get_class( $::SELF ) } ),
-            'is_a'  => mop::internal::method::create( name => 'is_a',  body => sub { $::CLASS->id eq $_[0]->id || $::CLASS->is_subclass_of( $_[0] ) } ),
-            'new'   => mop::internal::method::create( name => 'new',   body => sub {
+        methods => [
+            mop::internal::method::create( name => 'id',    body => sub { mop::internal::instance::get_uuid( $::SELF )  } ),
+            mop::internal::method::create( name => 'class', body => sub { mop::internal::instance::get_class( $::SELF ) } ),
+            mop::internal::method::create( name => 'is_a',  body => sub { $::CLASS->id eq $_[0]->id || $::CLASS->is_subclass_of( $_[0] ) } ),
+            mop::internal::method::create( name => 'new',   body => sub {
                 my %args  = @_;
 
                 my $data = {};
 
                 foreach my $class ( @{ $::SELF->get_mro } ) {
                     my $attrs = $class->get_attributes;
-                    foreach my $attr_name ( keys %$attrs ) {
+                    foreach my $attr ( @$attrs ) {
+                        my $attr_name = mop::internal::attribute::get_name( $attr );
                         unless ( exists $data->{ $attr_name } ) {
-                            $data->{ $attr_name } = mop::internal::attribute::get_initial_value(
-                                $attrs->{ $attr_name }
+                            $data->{ $attr_name } = mop::internal::attribute::get_initial_value_for_instance(
+                                $attr
                             );
                         }
                     }
@@ -63,7 +64,7 @@ sub init {
                     'mop::syntax::dispatchable'
                 );
             } )
-        }
+        ]
     );
 
     mop::internal::class::get_superclasses( $::Class )->[0] = $::Object;

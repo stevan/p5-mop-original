@@ -18,9 +18,9 @@ methods.
 
 my $FooMeta = $::Class->new(
     superclasses => [ $::Class ],
-    methods      => {
-        static_method => mop::internal::method::create( name => 'static_method', body => sub { 'STATIC' } )
-    }
+    methods      => [
+        mop::internal::method::create( name => 'static_method', body => sub { 'STATIC' } )
+    ]
 );
 
 is $FooMeta->class, $::Class, '... got the class we expected';
@@ -31,9 +31,9 @@ ok $FooMeta->is_subclass_of( $::Class ), '... FooMeta is a subclass of Class';
 
 my $Foo = $FooMeta->new(
     superclasses => [ $::Object ],
-    methods      => {
-        hello => mop::internal::method::create( name => 'hello', body => sub { 'FOO' } )
-    }
+    methods      => [
+        mop::internal::method::create( name => 'hello', body => sub { 'FOO' } )
+    ]
 );
 
 is $Foo->class, $FooMeta, '... got the class we expected';

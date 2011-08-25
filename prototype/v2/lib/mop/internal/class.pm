@@ -9,8 +9,8 @@ sub create {
     my %params = @_;
 
     my $superclasses = $params{'superclasses'} || [];
-    my $attributes   = $params{'attributes'}   || {};
-    my $methods      = $params{'methods'}      || {};
+    my $attributes   = $params{'attributes'}   || [];
+    my $methods      = $params{'methods'}      || [];
 
     my $class = mop::internal::instance::create(
         \$::Class,
@@ -21,12 +21,12 @@ sub create {
         }
     );
 
-    foreach my $method ( values %$methods ) {
-        mop::internal::method::associate_class( $method, $class );
+    foreach my $method ( @$methods ) {
+        mop::internal::method::associate_with_class( $method, $class );
     }
 
-    foreach my $attr ( values %$attributes ) {
-        mop::internal::attribute::associate_class( $attr, $class );
+    foreach my $attr ( @$attributes ) {
+        mop::internal::attribute::associate_with_class( $attr, $class );
     }
 
     $class;
@@ -46,7 +46,10 @@ sub get_mro {
 
 sub find_method {
     my ($class, $method_name) = @_;
-    get_methods( $class )->{ $method_name }
+    foreach my $method ( @{ get_methods( $class ) } ) {
+        return $method
+            if mop::internal::method::get_name( $method ) eq $method_name;
+    }
 }
 
 1;
