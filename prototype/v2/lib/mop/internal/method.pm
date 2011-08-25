@@ -17,7 +17,11 @@ sub create {
     }
 }
 
-sub associate_class {
+sub get_name             { $_[0]->{'name'} }
+sub get_body             { $_[0]->{'body'} }
+sub get_associated_class { $_[0]->{'associated_class'} }
+
+sub associate_with_class {
     my ($method, $class) = @_;
     $method->{'associated_class'} = $class;
 }
@@ -27,8 +31,9 @@ sub execute {
     my $invocant = shift;
     my $class    = mop::internal::instance::get_class( $invocant );
     my $instance = mop::internal::instance::get_data( $invocant );
+    my $body     = get_body( $method );
 
-    PadWalker::set_closed_over( $method->{'body'}, {
+    PadWalker::set_closed_over( $body, {
         %$instance,
         '$self'  => \$invocant,
         '$class' => \$class
@@ -39,7 +44,7 @@ sub execute {
     local $::SELF  = $invocant;
     local $::CLASS = $class;
 
-    $method->{'body'}->( @_ );
+    $body->( @_ );
 }
 
 1;
