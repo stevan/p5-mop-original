@@ -6,11 +6,12 @@ use warnings;
 use mop::internal::class;
 use mop::internal::instance;
 use mop::internal::attribute;
+use mop::internal::util::set;
 
 sub init {
 
     $::Class = mop::internal::class::create(
-        methods => [
+        methods => mop::internal::util::set::create(
             mop::internal::method::create( name => 'get_superclasses', body => sub { mop::internal::class::get_superclasses( $::SELF ) } ),
             mop::internal::method::create( name => 'get_methods',      body => sub { mop::internal::class::get_methods( $::SELF )      } ),
             mop::internal::method::create( name => 'get_attributes',   body => sub { mop::internal::class::get_attributes( $::SELF )   } ),
@@ -26,11 +27,11 @@ sub init {
             # - equivalent of linearized_isa (MRO with dups removed)
             # - get_all_{method,attributes} returns correct list using MRO
             # - find_{method,attribute}
-        ]
+        )
     );
 
     $::Object = mop::internal::class::create(
-        methods => [
+        methods => mop::internal::util::set::create(
             mop::internal::method::create( name => 'id',    body => sub { mop::internal::instance::get_uuid( $::SELF )  } ),
             mop::internal::method::create( name => 'class', body => sub { mop::internal::instance::get_class( $::SELF ) } ),
             mop::internal::method::create( name => 'is_a',  body => sub { $::CLASS->id eq $_[0]->id || $::CLASS->is_subclass_of( $_[0] ) } ),
@@ -64,10 +65,10 @@ sub init {
                     'mop::syntax::dispatchable'
                 );
             } )
-        ]
+        )
     );
 
-    mop::internal::class::get_superclasses( $::Class )->[0] = $::Object;
+    mop::internal::class::get_superclasses( $::Class )->insert( $::Object );
 
     bless( $::Class, 'mop::syntax::dispatchable' );
     bless( $::Object, 'mop::syntax::dispatchable' );

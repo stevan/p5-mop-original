@@ -58,7 +58,7 @@ like $Point->id, qr/[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}
 is $Point->class, $::Class, '... got the class we expected';
 ok $Point->is_a( $::Object ), '... class Point is a Object';
 ok $Point->is_subclass_of( $::Object ), '... class Point is a subclass of Object';
-is_deeply $Point->get_superclasses, [ $::Object ], '... got the superclasses we expected';
+is_deeply [ $Point->get_superclasses->members ], [ $::Object ], '... got the superclasses we expected';
 
 ## Test an instance
 
@@ -115,7 +115,7 @@ is $Point3D->class, $::Class, '... got the class we expected';
 ok $Point3D->is_a( $::Object ), '... class Point3D is a Object';
 ok $Point3D->is_subclass_of( $Point ), '... class Point3D is a subclass of Point';
 ok $Point3D->is_subclass_of( $::Object ), '... class Point3D is a subclass of Object';
-is_deeply $Point3D->get_superclasses, [ $Point ], '... got the superclasses we expected';
+is_deeply [ $Point3D->get_superclasses->members ], [ $Point ], '... got the superclasses we expected';
 
 ## Test the instance
 

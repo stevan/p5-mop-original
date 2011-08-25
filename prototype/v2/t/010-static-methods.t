@@ -7,6 +7,7 @@ use Test::More;
 use Test::Fatal;
 
 use mop;
+use mop::internal::util::set;
 
 =pod
 
@@ -17,10 +18,10 @@ methods.
 =cut
 
 my $FooMeta = $::Class->new(
-    superclasses => [ $::Class ],
-    methods      => [
+    superclasses => mop::internal::util::set::create( $::Class ),
+    methods      => mop::internal::util::set::create(
         mop::internal::method::create( name => 'static_method', body => sub { 'STATIC' } )
-    ]
+    )
 );
 
 is $FooMeta->class, $::Class, '... got the class we expected';
@@ -30,10 +31,10 @@ ok $FooMeta->is_subclass_of( $::Object ), '... FooMeta is a subclass of Object';
 ok $FooMeta->is_subclass_of( $::Class ), '... FooMeta is a subclass of Class';
 
 my $Foo = $FooMeta->new(
-    superclasses => [ $::Object ],
-    methods      => [
+    superclasses => mop::internal::util::set::create( $::Object ),
+    methods      => mop::internal::util::set::create(
         mop::internal::method::create( name => 'hello', body => sub { 'FOO' } )
-    ]
+    )
 );
 
 is $Foo->class, $FooMeta, '... got the class we expected';

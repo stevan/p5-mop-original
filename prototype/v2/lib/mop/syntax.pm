@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use mop::syntax::dispatchable;
+use mop::internal::util::set;
 
 use PadWalker     ();
 use Devel::Caller ();
@@ -16,40 +17,44 @@ sub has (\$) {
 	my $name = $names{ $var };
 
     my $pad = PadWalker::peek_my(2);
-    push @{ ${ $pad->{'$meta'} }->{'attributes'} } => mop::internal::attribute::create(
-        name          => $name,
-        initial_value => $var
+    ${ $pad->{'$meta'} }->{'attributes'}->insert(
+        mop::internal::attribute::create(
+            name          => $name,
+            initial_value => $var
+        )
     );
 }
 
 sub method {
     my ($name, $body) = @_;
     my $pad = PadWalker::peek_my(2);
-    push @{ ${ $pad->{'$meta'} }->{'methods'} } => mop::internal::method::create(
-        name => $name,
-        body => Sub::Name::subname( $name, $body )
+    ${ $pad->{'$meta'} }->{'methods'}->insert(
+        mop::internal::method::create(
+            name => $name,
+            body => Sub::Name::subname( $name, $body )
+        )
     );
 }
 
 sub extends {
     my ($superclass) = @_;
     my $pad = PadWalker::peek_my(2);
-    push @{ ${ $pad->{'$meta'} }->{'superclasses'} } => $superclass;
+    ${ $pad->{'$meta'} }->{'superclasses'}->insert( $superclass );
 }
 
 sub class (&) {
     my $body = shift;
 
     my $meta = {
-        'attributes'   => [],
-        'methods'      => [],
-        'superclasses' => [],
+        'attributes'   => mop::internal::util::set::create(),
+        'methods'      => mop::internal::util::set::create(),
+        'superclasses' => mop::internal::util::set::create(),
     };
 
     $body->();
 
-    push @{ $meta->{'superclasses'} } => $::Object
-        unless scalar @{ $meta->{'superclasses'} };
+    $meta->{'superclasses'}->insert( $::Object )
+        unless $meta->{'superclasses'}->size;
 
     $::Class->new( %$meta );
 }

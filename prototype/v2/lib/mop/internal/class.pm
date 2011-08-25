@@ -4,13 +4,16 @@ use strict;
 use warnings;
 
 use mop::internal::instance;
+use mop::internal::method;
+use mop::internal::attribute;
+use mop::internal::util::set;
 
 sub create {
     my %params = @_;
 
-    my $superclasses = $params{'superclasses'} || [];
-    my $attributes   = $params{'attributes'}   || [];
-    my $methods      = $params{'methods'}      || [];
+    my $superclasses = $params{'superclasses'} || mop::internal::util::set::create();
+    my $attributes   = $params{'attributes'}   || mop::internal::util::set::create();
+    my $methods      = $params{'methods'}      || mop::internal::util::set::create();
 
     my $class = mop::internal::instance::create(
         \$::Class,
@@ -21,11 +24,11 @@ sub create {
         }
     );
 
-    foreach my $method ( @$methods ) {
+    foreach my $method ( $methods->elements ) {
         mop::internal::method::associate_with_class( $method, $class );
     }
 
-    foreach my $attr ( @$attributes ) {
+    foreach my $attr ( $attributes->elements ) {
         mop::internal::attribute::associate_with_class( $attr, $class );
     }
 
@@ -40,13 +43,13 @@ sub get_mro {
     my $class = shift;
     return [
         $class,
-        map { @{ get_mro( $_ ) } } @{ get_superclasses( $class ) }
+        map { @{ get_mro( $_ ) } } get_superclasses( $class )->members
     ]
 }
 
 sub find_method {
     my ($class, $method_name) = @_;
-    foreach my $method ( @{ get_methods( $class ) } ) {
+    foreach my $method ( get_methods( $class )->members ) {
         return $method
             if mop::internal::method::get_name( $method ) eq $method_name;
     }
