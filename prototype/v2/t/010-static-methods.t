@@ -18,7 +18,7 @@ methods.
 =cut
 
 my $FooMeta = $::Class->new(
-    superclasses => mop::internal::util::set::create( $::Class ),
+    superclasses => [ $::Class ],
     methods      => mop::internal::util::set::create(
         mop::internal::method::create( name => 'static_method', body => sub { 'STATIC' } )
     )
@@ -31,7 +31,7 @@ ok $FooMeta->is_subclass_of( $::Object ), '... FooMeta is a subclass of Object';
 ok $FooMeta->is_subclass_of( $::Class ), '... FooMeta is a subclass of Class';
 
 my $Foo = $FooMeta->new(
-    superclasses => mop::internal::util::set::create( $::Object ),
+    superclasses => [ $::Object ],
     methods      => mop::internal::util::set::create(
         mop::internal::method::create( name => 'hello', body => sub { 'FOO' } )
     )

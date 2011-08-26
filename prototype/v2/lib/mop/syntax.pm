@@ -39,7 +39,7 @@ sub method {
 sub extends {
     my ($superclass) = @_;
     my $pad = PadWalker::peek_my(2);
-    ${ $pad->{'$meta'} }->{'superclasses'}->insert( $superclass );
+    push @{ ${ $pad->{'$meta'} }->{'superclasses'} } => $superclass;
 }
 
 sub class (&) {
@@ -48,13 +48,13 @@ sub class (&) {
     my $meta = {
         'attributes'   => mop::internal::util::set::create(),
         'methods'      => mop::internal::util::set::create(),
-        'superclasses' => mop::internal::util::set::create(),
+        'superclasses' => [],
     };
 
     $body->();
 
-    $meta->{'superclasses'}->insert( $::Object )
-        unless $meta->{'superclasses'}->size;
+    push @{ $meta->{'superclasses'} } => $::Object
+        unless scalar @{ $meta->{'superclasses'} };
 
     $::Class->new( %$meta );
 }

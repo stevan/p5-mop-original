@@ -11,7 +11,7 @@ use mop::internal::util::set;
 sub create {
     my %params = @_;
 
-    my $superclasses = $params{'superclasses'} || mop::internal::util::set::create();
+    my $superclasses = $params{'superclasses'} || [];
     my $attributes   = $params{'attributes'}   || mop::internal::util::set::create();
     my $methods      = $params{'methods'}      || mop::internal::util::set::create();
 
@@ -43,7 +43,7 @@ sub get_mro {
     my $class = shift;
     return [
         $class,
-        map { @{ get_mro( $_ ) } } get_superclasses( $class )->members
+        map { @{ get_mro( $_ ) } } @{ get_superclasses( $class ) }
     ]
 }
 

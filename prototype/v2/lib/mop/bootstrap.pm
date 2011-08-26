@@ -68,7 +68,7 @@ sub init {
         )
     );
 
-    mop::internal::class::get_superclasses( $::Class )->insert( $::Object );
+    mop::internal::class::get_superclasses( $::Class )->[0] = $::Object;
 
     bless( $::Class, 'mop::syntax::dispatchable' );
     bless( $::Object, 'mop::syntax::dispatchable' );
