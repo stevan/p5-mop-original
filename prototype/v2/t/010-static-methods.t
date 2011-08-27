@@ -17,6 +17,7 @@ methods.
 
 =cut
 
+# create a meta-class (class to create classes with)
 my $FooMeta = $::Class->new(
     superclasses => [ $::Class ],
     methods      => mop::internal::util::set::create(
@@ -30,6 +31,7 @@ ok $FooMeta->is_a( $::Class ), '... FooMeta is a Class';
 ok $FooMeta->is_subclass_of( $::Object ), '... FooMeta is a subclass of Object';
 ok $FooMeta->is_subclass_of( $::Class ), '... FooMeta is a subclass of Class';
 
+# create a class (using our meta-class)
 my $Foo = $FooMeta->new(
     superclasses => [ $::Object ],
     methods      => mop::internal::util::set::create(
@@ -45,6 +47,7 @@ ok $Foo->is_subclass_of( $::Object ), '... Foo is a subclass of Object';
 
 is $Foo->static_method, 'STATIC', '... called the static method on Foo';
 
+# create an instance ...
 my $foo = $Foo->new;
 
 is $foo->class, $Foo, '... got the class we expected';
