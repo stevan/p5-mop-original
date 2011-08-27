@@ -11,7 +11,11 @@ use mop::internal::util::set;
 sub init {
 
     $::Class = mop::internal::class::create(
-        methods => mop::internal::util::set::create(
+        attributes => mop::internal::util::set::create(
+            mop::internal::attribute::create( name => '$superclasses', initial_value => \([]) ),
+            mop::internal::attribute::create( name => '$attributes',   initial_value => \(mop::internal::util::set::create()) ),
+            mop::internal::attribute::create( name => '$methods',      initial_value => \(mop::internal::util::set::create()) ),
+        ),
         methods    => mop::internal::util::set::create(
             # class creation needs ...
             mop::internal::method::create( name => 'BUILD', body => sub {
