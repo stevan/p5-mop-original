@@ -7,6 +7,8 @@ use Set::Object ();
 
 sub create { Set::Object->new( @_ ) }
 
+sub clone { create( $_[0]->members ) }
+
 1;
 
 __END__
