@@ -80,7 +80,7 @@ sub init {
                     'mop::syntax::dispatchable'
                 );
 
-                foreach my $class ( @{ $::SELF->get_mro } ) {
+                foreach my $class ( reverse @{ $::SELF->get_mro } ) {
                     if ( my $BUILD = mop::internal::class::find_method( $class, 'BUILD' ) ) {
                         mop::internal::method::execute( $BUILD, $self );
                     }
