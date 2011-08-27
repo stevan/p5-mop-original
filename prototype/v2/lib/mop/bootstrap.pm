@@ -12,6 +12,17 @@ sub init {
 
     $::Class = mop::internal::class::create(
         methods => mop::internal::util::set::create(
+        methods    => mop::internal::util::set::create(
+            # class creation needs ...
+            mop::internal::method::create( name => 'BUILD', body => sub {
+                foreach my $method ( $::SELF->get_methods->elements ) {
+                    mop::internal::method::associate_with_class( $method, $::SELF );
+                }
+                foreach my $attr ( $::SELF->get_attributes->elements ) {
+                    mop::internal::attribute::associate_with_class( $attr, $::SELF );
+                }
+            }),
+            # class API ...
             mop::internal::method::create( name => 'get_superclasses', body => sub { mop::internal::class::get_superclasses( $::SELF ) } ),
             mop::internal::method::create( name => 'get_methods',      body => sub { mop::internal::class::get_methods( $::SELF )      } ),
             mop::internal::method::create( name => 'get_attributes',   body => sub { mop::internal::class::get_attributes( $::SELF )   } ),
@@ -57,13 +68,21 @@ sub init {
                     $data->{ '$' . $arg } = \$value;
                 }
 
-                bless(
+                my $self = bless(
                     mop::internal::instance::create(
                         \$::SELF,
                         $data
                     ),
                     'mop::syntax::dispatchable'
                 );
+
+                foreach my $class ( @{ $::SELF->get_mro } ) {
+                    if ( my $BUILD = mop::internal::class::find_method( $class, 'BUILD' ) ) {
+                        mop::internal::method::execute( $BUILD, $self );
+                    }
+                }
+
+                return $self;
             } )
         )
     );

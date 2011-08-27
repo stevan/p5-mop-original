@@ -59,6 +59,13 @@ is $Point->class, $::Class, '... got the class we expected';
 ok $Point->is_a( $::Object ), '... class Point is a Object';
 ok $Point->is_subclass_of( $::Object ), '... class Point is a subclass of Object';
 is_deeply $Point->get_superclasses, [ $::Object ], '... got the superclasses we expected';
+is_deeply
+    [ sort { $a->{'name'} cmp $b->{'name'} } $Point->get_attributes->members ],
+    [
+        { name => '$x', initial_value => \undef, associated_class => $Point },
+        { name => '$y', initial_value => \undef, associated_class => $Point },
+    ],
+    '... got the superclasses we expected';
 
 ## Test an instance
 
@@ -116,6 +123,13 @@ ok $Point3D->is_a( $::Object ), '... class Point3D is a Object';
 ok $Point3D->is_subclass_of( $Point ), '... class Point3D is a subclass of Point';
 ok $Point3D->is_subclass_of( $::Object ), '... class Point3D is a subclass of Object';
 is_deeply $Point3D->get_superclasses, [ $Point ], '... got the superclasses we expected';
+is_deeply
+    [ $Point3D->get_attributes->members ],
+    [
+        { name => '$z', initial_value => \undef, associated_class => $Point3D },
+    ],
+    '... got the superclasses we expected';
+
 
 ## Test the instance
 
