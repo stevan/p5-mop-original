@@ -4,7 +4,8 @@ use strict;
 use warnings;
 
 use mop::syntax::dispatchable;
-use mop::internal::util::set;
+use mop::internal::attribute::set;
+use mop::internal::method::set;
 
 use PadWalker     ();
 use Devel::Caller ();
@@ -17,7 +18,7 @@ sub has (\$) {
 	my $name = $names{ $var };
 
     my $pad = PadWalker::peek_my(2);
-    mop::internal::util::set::insert(
+    mop::internal::attribute::set::insert(
         ${ $pad->{'$meta'} }->{'attributes'},
         mop::internal::attribute::create(
             name          => $name,
@@ -29,7 +30,7 @@ sub has (\$) {
 sub method {
     my ($name, $body) = @_;
     my $pad = PadWalker::peek_my(2);
-    mop::internal::util::set::insert(
+    mop::internal::method::set::insert(
         ${ $pad->{'$meta'} }->{'methods'},
         mop::internal::method::create(
             name => $name,
@@ -48,8 +49,8 @@ sub class (&) {
     my $body = shift;
 
     my $meta = {
-        'attributes'   => mop::internal::util::set::create(),
-        'methods'      => mop::internal::util::set::create(),
+        'attributes'   => mop::internal::attribute::set::create(),
+        'methods'      => mop::internal::method::set::create(),
         'superclasses' => [],
     };
 

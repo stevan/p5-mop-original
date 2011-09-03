@@ -5,15 +5,16 @@ use warnings;
 
 use mop::internal::instance;
 use mop::internal::method;
+use mop::internal::method::set;
 use mop::internal::attribute;
-use mop::internal::util::set;
+use mop::internal::attribute::set;
 
 sub create {
     my %params = @_;
 
     my $superclasses = $params{'superclasses'} || [];
-    my $attributes   = $params{'attributes'}   || mop::internal::util::set::create();
-    my $methods      = $params{'methods'}      || mop::internal::util::set::create();
+    my $attributes   = $params{'attributes'}   || mop::internal::attribute::set::create();
+    my $methods      = $params{'methods'}      || mop::internal::method::set::create();
 
     my $class = mop::internal::instance::create(
         \$::Class,
@@ -24,11 +25,11 @@ sub create {
         }
     );
 
-    foreach my $method ( mop::internal::util::set::members( $methods ) ) {
+    foreach my $method ( mop::internal::method::set::members( $methods ) ) {
         mop::internal::method::associate_with_class( $method, $class );
     }
 
-    foreach my $attr ( mop::internal::util::set::members( $attributes ) ) {
+    foreach my $attr ( mop::internal::attribute::set::members( $attributes ) ) {
         mop::internal::attribute::associate_with_class( $attr, $class );
     }
 
@@ -49,7 +50,7 @@ sub get_mro {
 
 sub find_method {
     my ($class, $method_name) = @_;
-    foreach my $method ( mop::internal::util::set::members( get_methods( $class ) ) ) {
+    foreach my $method ( mop::internal::method::set::members( get_methods( $class ) ) ) {
         return $method
             if mop::internal::method::get_name( $method ) eq $method_name;
     }

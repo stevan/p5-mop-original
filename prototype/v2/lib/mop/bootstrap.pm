@@ -6,23 +6,25 @@ use warnings;
 use mop::internal::class;
 use mop::internal::instance;
 use mop::internal::attribute;
-use mop::internal::util::set;
+use mop::internal::attribute::set;
+use mop::internal::method;
+use mop::internal::method::set;
 
 sub init {
 
     $::Class = mop::internal::class::create(
-        attributes => mop::internal::util::set::create(
+        attributes => mop::internal::method::set::create(
             mop::internal::attribute::create( name => '$superclasses', initial_value => \([]) ),
-            mop::internal::attribute::create( name => '$attributes',   initial_value => \(mop::internal::util::set::create()) ),
-            mop::internal::attribute::create( name => '$methods',      initial_value => \(mop::internal::util::set::create()) ),
+            mop::internal::attribute::create( name => '$attributes',   initial_value => \(mop::internal::attribute::set::create()) ),
+            mop::internal::attribute::create( name => '$methods',      initial_value => \(mop::internal::method::set::create()) ),
         ),
-        methods    => mop::internal::util::set::create(
+        methods    => mop::internal::method::set::create(
             # class creation needs ...
             mop::internal::method::create( name => 'BUILD', body => sub {
-                foreach my $method ( mop::internal::util::set::members( $::SELF->get_methods ) ) {
+                foreach my $method ( mop::internal::method::set::members( $::SELF->get_methods ) ) {
                     mop::internal::method::associate_with_class( $method, $::SELF );
                 }
-                foreach my $attr ( mop::internal::util::set::members( $::SELF->get_attributes ) ) {
+                foreach my $attr ( mop::internal::attribute::set::members( $::SELF->get_attributes ) ) {
                     mop::internal::attribute::associate_with_class( $attr, $::SELF );
                 }
             }),
@@ -46,7 +48,7 @@ sub init {
     );
 
     $::Object = mop::internal::class::create(
-        methods => mop::internal::util::set::create(
+        methods => mop::internal::method::set::create(
             mop::internal::method::create( name => 'id',    body => sub { mop::internal::instance::get_uuid( $::SELF )  } ),
             mop::internal::method::create( name => 'class', body => sub { mop::internal::instance::get_class( $::SELF ) } ),
             mop::internal::method::create( name => 'is_a',  body => sub { $::CLASS->id eq $_[0]->id || $::CLASS->is_subclass_of( $_[0] ) } ),
@@ -57,7 +59,7 @@ sub init {
 
                 foreach my $class ( @{ $::SELF->get_mro } ) {
                     my $attrs = $class->get_attributes;
-                    foreach my $attr ( mop::internal::util::set::members( $attrs ) ) {
+                    foreach my $attr ( mop::internal::attribute::set::members( $attrs ) ) {
                         my $attr_name = mop::internal::attribute::get_name( $attr );
                         unless ( exists $data->{ $attr_name } ) {
                             $data->{ $attr_name } = mop::internal::attribute::get_initial_value_for_instance(

@@ -1,11 +1,17 @@
-package mop::internal::util::set;
+package mop::internal::method::set;
 
 use strict;
 use warnings;
 
+use mop::internal::method;
+
 sub create {
-    my @members = @_;
-    return +{ map { ("$_" => $_) } @members };
+    my @methods = @_;
+    return +{
+        map {
+            (mop::internal::method::get_name( $_ ) => $_)
+        } @methods
+    };
 }
 
 sub members {
@@ -14,8 +20,8 @@ sub members {
 }
 
 sub insert {
-    my ($set, $item) = @_;
-    $set->{ "$item" } = $item;
+    my ($set, $method) = @_;
+    $set->{ mop::internal::method::get_name( $method ) } = $method;
 }
 
 sub clone { create( members( @_ ) ) }
@@ -28,7 +34,7 @@ __END__
 
 =head1 NAME
 
-mop::internal::util::set
+mop::internal::attribute::set
 
 =head1 DESCRIPTION
 
