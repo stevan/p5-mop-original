@@ -18,8 +18,7 @@ sub has (\$) {
 	my $name = $names{ $var };
 
     my $pad = PadWalker::peek_my(2);
-    mop::internal::attribute::set::insert(
-        ${ $pad->{'$meta'} }->{'attributes'},
+    ${ $pad->{'$class'} }->add_attribute(
         mop::internal::attribute::create(
             name          => $name,
             initial_value => $var
@@ -30,8 +29,7 @@ sub has (\$) {
 sub method {
     my ($name, $body) = @_;
     my $pad = PadWalker::peek_my(2);
-    mop::internal::method::set::insert(
-        ${ $pad->{'$meta'} }->{'methods'},
+    ${ $pad->{'$class'} }->add_method(
         mop::internal::method::create(
             name => $name,
             body => Sub::Name::subname( $name, $body )
@@ -42,24 +40,18 @@ sub method {
 sub extends {
     my ($superclass) = @_;
     my $pad = PadWalker::peek_my(2);
-    push @{ ${ $pad->{'$meta'} }->{'superclasses'} } => $superclass;
+    ${ $pad->{'$class'} }->add_superclass( $superclass );
 }
 
 sub class (&) {
     my $body = shift;
-
-    my $meta = {
-        'attributes'   => mop::internal::attribute::set::create(),
-        'methods'      => mop::internal::method::set::create(),
-        'superclasses' => [],
-    };
-
-    $body->();
-
-    push @{ $meta->{'superclasses'} } => $::Object
-        unless scalar @{ $meta->{'superclasses'} };
-
-    $::Class->new( %$meta );
+    my $class = $::Class->new;
+    {
+        local $::CLASS = $class;
+        $body->();
+    }
+    $class->FINALIZE;
+    $class;
 }
 
 1;

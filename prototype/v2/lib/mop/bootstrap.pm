@@ -39,17 +39,39 @@ sub init {
             mop::internal::method::create( name => 'get_methods',      body => sub { mop::internal::class::get_methods( $::SELF )      } ),
             mop::internal::method::create( name => 'get_attributes',   body => sub { mop::internal::class::get_attributes( $::SELF )   } ),
             mop::internal::method::create( name => 'get_mro',          body => sub { mop::internal::class::get_mro( $::SELF )          } ),
-            mop::internal::method::create( name => 'is_subclass_of',   body => sub {
+            # ... methods to build the class
+            mop::internal::method::create( name => 'add_superclass', body => sub {
+                my $superclass = shift;
+                push @{ $::SELF->get_superclasses } => $superclass;
+            }),
+            mop::internal::method::create( name => 'add_method', body => sub {
+                my $method = shift;
+                mop::internal::method::associate_with_class( $method, $::SELF );
+                mop::internal::method::set::insert(
+                    $::SELF->get_methods,
+                    $method
+                );
+            }),
+            mop::internal::method::create( name => 'add_attribute', body => sub {
+                my $attr = shift;
+                mop::internal::attribute::associate_with_class( $attr, $::SELF );
+                mop::internal::attribute::set::insert(
+                    $::SELF->get_attributes,
+                    $attr
+                );
+            }),
+            # ... predicate methods
+            mop::internal::method::create( name => 'is_subclass_of', body => sub {
                 my $super = shift;
                 my @mro   = @{ $::SELF->get_mro };
                 shift @mro;
                 scalar grep { $super->id eq $_->id } @mro;
-            } ),
-            # TODO:
-            # Need to think about adding the following methods:
-            # - equivalent of linearized_isa (MRO with dups removed)
-            # - get_all_{method,attributes} returns correct list using MRO
-            # - find_{method,attribute}
+            }),
+            # ... class API
+            mop::internal::method::create( name => 'FINALIZE', body => sub {
+                $::SELF->add_superclass( $::Object )
+                    unless scalar @{ $::SELF->get_superclasses };
+            })
         )
     );
 
