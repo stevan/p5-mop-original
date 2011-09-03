@@ -3,8 +3,7 @@ package mop::internal::attribute;
 use strict;
 use warnings;
 
-use Scalar::Util ();
-use Clone        ();
+use Clone ();
 
 sub create {
     my %params = @_;
@@ -28,17 +27,7 @@ sub associate_with_class {
 sub get_initial_value_for_instance {
     my $attr = shift;
     my $value = ${ $attr->{'initial_value'} };
-    if ( Scalar::Util::blessed( $value ) ) {
-        if ( $value->can('clone') ) {
-            $value = $value->clone;
-        }
-        else {
-            die "Cannot clone $value";
-        }
-    }
-    else {
-        $value = Clone::clone( $value ) if ref $value;
-    }
+    $value = Clone::clone( $value ) if ref $value;
     return \$value;
 }
 
