@@ -14,6 +14,9 @@ sub init {
 
     $::Class = mop::internal::class::create(
         attributes => mop::internal::method::set::create(
+            mop::internal::attribute::create( name => '$name',         initial_value => \(my $name) ),
+            mop::internal::attribute::create( name => '$version',      initial_value => \(my $version) ),
+            mop::internal::attribute::create( name => '$authority',    initial_value => \(my $authority) ),
             mop::internal::attribute::create( name => '$superclasses', initial_value => \([]) ),
             mop::internal::attribute::create( name => '$attributes',   initial_value => \(mop::internal::attribute::set::create()) ),
             mop::internal::attribute::create( name => '$methods',      initial_value => \(mop::internal::method::set::create()) ),
@@ -28,7 +31,10 @@ sub init {
                     mop::internal::attribute::associate_with_class( $attr, $::SELF );
                 }
             }),
-            # class API ...
+            # ... accessor methods to primatives
+            mop::internal::method::create( name => 'get_name',         body => sub { mop::internal::instance::get_data_at( $::SELF, '$name' ) } ),
+            mop::internal::method::create( name => 'get_version',      body => sub { mop::internal::instance::get_data_at( $::SELF, '$version' ) } ),
+            mop::internal::method::create( name => 'get_authority',    body => sub { mop::internal::instance::get_data_at( $::SELF, '$authority' ) } ),
             mop::internal::method::create( name => 'get_superclasses', body => sub { mop::internal::class::get_superclasses( $::SELF ) } ),
             mop::internal::method::create( name => 'get_methods',      body => sub { mop::internal::class::get_methods( $::SELF )      } ),
             mop::internal::method::create( name => 'get_attributes',   body => sub { mop::internal::class::get_attributes( $::SELF )   } ),
