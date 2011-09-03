@@ -24,11 +24,11 @@ sub create {
         }
     );
 
-    foreach my $method ( $methods->elements ) {
+    foreach my $method ( mop::internal::util::set::members( $methods ) ) {
         mop::internal::method::associate_with_class( $method, $class );
     }
 
-    foreach my $attr ( $attributes->elements ) {
+    foreach my $attr ( mop::internal::util::set::members( $attributes ) ) {
         mop::internal::attribute::associate_with_class( $attr, $class );
     }
 
@@ -49,7 +49,7 @@ sub get_mro {
 
 sub find_method {
     my ($class, $method_name) = @_;
-    foreach my $method ( get_methods( $class )->members ) {
+    foreach my $method ( mop::internal::util::set::members( get_methods( $class ) ) ) {
         return $method
             if mop::internal::method::get_name( $method ) eq $method_name;
     }

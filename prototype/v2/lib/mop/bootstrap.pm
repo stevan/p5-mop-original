@@ -19,10 +19,10 @@ sub init {
         methods    => mop::internal::util::set::create(
             # class creation needs ...
             mop::internal::method::create( name => 'BUILD', body => sub {
-                foreach my $method ( $::SELF->get_methods->elements ) {
+                foreach my $method ( mop::internal::util::set::members( $::SELF->get_methods ) ) {
                     mop::internal::method::associate_with_class( $method, $::SELF );
                 }
-                foreach my $attr ( $::SELF->get_attributes->elements ) {
+                foreach my $attr ( mop::internal::util::set::members( $::SELF->get_attributes ) ) {
                     mop::internal::attribute::associate_with_class( $attr, $::SELF );
                 }
             }),
@@ -57,7 +57,7 @@ sub init {
 
                 foreach my $class ( @{ $::SELF->get_mro } ) {
                     my $attrs = $class->get_attributes;
-                    foreach my $attr ( @$attrs ) {
+                    foreach my $attr ( mop::internal::util::set::members( $attrs ) ) {
                         my $attr_name = mop::internal::attribute::get_name( $attr );
                         unless ( exists $data->{ $attr_name } ) {
                             $data->{ $attr_name } = mop::internal::attribute::get_initial_value_for_instance(

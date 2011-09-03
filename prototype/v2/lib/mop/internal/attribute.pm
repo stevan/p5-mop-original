@@ -32,10 +32,6 @@ sub get_initial_value_for_instance {
         if ( $value->can('clone') ) {
             $value = $value->clone;
         }
-        # UGH, this is a hack ...
-        elsif ( $value->isa('Set::Object') ) {
-            $value = mop::internal::util::set::clone( $value );
-        }
         else {
             die "Cannot clone $value";
         }

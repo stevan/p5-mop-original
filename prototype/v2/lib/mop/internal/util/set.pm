@@ -3,11 +3,22 @@ package mop::internal::util::set;
 use strict;
 use warnings;
 
-use Set::Object ();
+sub create {
+    my @members = @_;
+    return +{ map { ("$_" => $_) } @members };
+}
 
-sub create { Set::Object->new( @_ ) }
+sub members {
+    my $set = shift;
+    values %$set;
+}
 
-sub clone { create( $_[0]->members ) }
+sub insert {
+    my ($set, $item) = @_;
+    $set->{ "$item" } = $item;
+}
+
+sub clone { create( members( @_ ) ) }
 
 1;
 
