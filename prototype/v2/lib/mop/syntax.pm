@@ -4,8 +4,6 @@ use strict;
 use warnings;
 
 use mop::syntax::dispatchable;
-use mop::internal::attribute::set;
-use mop::internal::method::set;
 
 use PadWalker     ();
 use Devel::Caller ();
