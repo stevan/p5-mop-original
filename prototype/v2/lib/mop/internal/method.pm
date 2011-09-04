@@ -11,20 +11,13 @@ sub create {
     my %params = @_;
 
     return +{
-        name             => $params{'name'},
-        body             => $params{'body'},
-        associated_class => $params{'associated_class'}
+        name => $params{'name'},
+        body => $params{'body'},
     }
 }
 
-sub get_name             { $_[0]->{'name'} }
-sub get_body             { $_[0]->{'body'} }
-sub get_associated_class { $_[0]->{'associated_class'} }
-
-sub associate_with_class {
-    my ($method, $class) = @_;
-    $method->{'associated_class'} = $class;
-}
+sub get_name { $_[0]->{'name'} }
+sub get_body { $_[0]->{'body'} }
 
 sub execute {
     my $method   = shift;

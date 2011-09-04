@@ -9,20 +9,13 @@ sub create {
     my %params = @_;
 
     return +{
-        name             => $params{'name'},
-        initial_value    => $params{'initial_value'},
-        associated_class => $params{'associated_class'}
+        name          => $params{'name'},
+        initial_value => $params{'initial_value'},
     }
 }
 
-sub get_name             { $_[0]->{'name'} }
-sub get_initial_value    { $_[0]->{'initial_value'} }
-sub get_associated_class { $_[0]->{'associated_class'} }
-
-sub associate_with_class {
-    my ($attr, $class) = @_;
-    $attr->{'associated_class'} = $class;
-}
+sub get_name          { $_[0]->{'name'} }
+sub get_initial_value { $_[0]->{'initial_value'} }
 
 sub get_initial_value_for_instance {
     my $attr = shift;

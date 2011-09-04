@@ -19,7 +19,7 @@ sub create {
     my $attributes   = $params{'attributes'}   || mop::internal::attribute::set::create();
     my $methods      = $params{'methods'}      || mop::internal::method::set::create();
 
-    my $class = mop::internal::instance::create(
+    mop::internal::instance::create(
         \$::Class,
         {
             '$name'         => \$name,
@@ -30,16 +30,6 @@ sub create {
             '$methods'      => \$methods
         }
     );
-
-    foreach my $method ( mop::internal::method::set::members( $methods ) ) {
-        mop::internal::method::associate_with_class( $method, $class );
-    }
-
-    foreach my $attr ( mop::internal::attribute::set::members( $attributes ) ) {
-        mop::internal::attribute::associate_with_class( $attr, $class );
-    }
-
-    $class;
 }
 
 sub get_superclasses { mop::internal::instance::get_data_at( $_[0], '$superclasses' ) }
