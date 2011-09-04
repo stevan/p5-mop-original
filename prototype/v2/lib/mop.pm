@@ -19,6 +19,11 @@ BEGIN {
     # referenced in the syntax modules.
     $::Class  = undef;
     $::Object = undef;
+
+    # these are some of the classes that are also created
+    # in the bootstrap and are part of the MOP
+    $::Method    = undef;
+    $::Attribute = undef;
 }
 
 use mop::bootstrap;
