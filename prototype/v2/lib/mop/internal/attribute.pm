@@ -3,25 +3,19 @@ package mop::internal::attribute;
 use strict;
 use warnings;
 
-use Clone ();
-
 sub create {
     my %params = @_;
 
-    return +{
-        name          => $params{'name'},
-        initial_value => $params{'initial_value'},
-    }
-}
+    my $name          = $params{'name'}          || die "An attribute must have a name";
+    my $initial_value = $params{'initial_value'} || undef;
 
-sub get_name          { $_[0]->{'name'} }
-sub get_initial_value { $_[0]->{'initial_value'} }
-
-sub get_initial_value_for_instance {
-    my $attr = shift;
-    my $value = ${ $attr->{'initial_value'} };
-    $value = Clone::clone( $value ) if ref $value;
-    return \$value;
+    mop::internal::instance::create(
+        \$::Attribute,
+        {
+            '$name'          => \$name,
+            '$initial_value' => \$initial_value,
+        }
+    );
 }
 
 1;
