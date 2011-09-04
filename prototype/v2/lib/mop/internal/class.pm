@@ -12,6 +12,9 @@ use mop::internal::attribute::set;
 sub create {
     my %params = @_;
 
+    my $name         = $params{'name'}         || die "A class must have a name";
+    my $version      = $params{'version'}      || '0.01';
+    my $authority    = $params{'authority'}    || '';
     my $superclasses = $params{'superclasses'} || [];
     my $attributes   = $params{'attributes'}   || mop::internal::attribute::set::create();
     my $methods      = $params{'methods'}      || mop::internal::method::set::create();
@@ -19,6 +22,9 @@ sub create {
     my $class = mop::internal::instance::create(
         \$::Class,
         {
+            '$name'         => \$name,
+            '$version'      => \$version,
+            '$authority'    => \$authority,
             '$superclasses' => \$superclasses,
             '$attributes'   => \$attributes,
             '$methods'      => \$methods
