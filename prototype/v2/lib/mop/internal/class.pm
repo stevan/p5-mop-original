@@ -32,21 +32,19 @@ sub create {
     );
 }
 
-sub get_superclasses { mop::internal::instance::get_data_at( $_[0], '$superclasses' ) }
-sub get_methods      { mop::internal::instance::get_data_at( $_[0], '$methods' )      }
-sub get_attributes   { mop::internal::instance::get_data_at( $_[0], '$attributes' )   }
+# These two functions are needed by the internal::dispatchers
 
 sub get_mro {
     my $class = shift;
     return [
         $class,
-        map { @{ get_mro( $_ ) } } @{ get_superclasses( $class ) }
+        map { @{ get_mro( $_ ) } } @{ mop::internal::instance::get_data_at( $class, '$superclasses' ) }
     ]
 }
 
 sub find_method {
     my ($class, $method_name) = @_;
-    foreach my $method ( mop::internal::method::set::members( get_methods( $class ) ) ) {
+    foreach my $method ( mop::internal::method::set::members( mop::internal::instance::get_data_at( $class, '$methods' ) ) ) {
         return $method
             if mop::internal::method::get_name( $method ) eq $method_name;
     }
