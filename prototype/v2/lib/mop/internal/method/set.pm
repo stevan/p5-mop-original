@@ -8,20 +8,22 @@ use mop::internal::method;
 sub create {
     my @methods = @_;
     return +{
-        map {
-            (mop::internal::method::get_name( $_ ) => $_)
-        } @methods
+        methods => {
+            map {
+                (mop::internal::method::get_name( $_ ) => $_)
+            } @methods
+        }
     };
 }
 
 sub members {
     my $set = shift;
-    values %$set;
+    values %{ $set->{'methods'} };
 }
 
 sub insert {
     my ($set, $method) = @_;
-    $set->{ mop::internal::method::get_name( $method ) } = $method;
+    $set->{'methods'}->{ mop::internal::method::get_name( $method ) } = $method;
 }
 
 sub clone { create( members( @_ ) ) }

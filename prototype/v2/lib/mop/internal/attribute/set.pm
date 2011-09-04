@@ -8,20 +8,22 @@ use mop::internal::attribute;
 sub create {
     my @attributes = @_;
     return +{
-        map {
-            (mop::internal::attribute::get_name( $_ ) => $_)
-        } @attributes
+        attributes => {
+            map {
+                (mop::internal::attribute::get_name( $_ ) => $_)
+            } @attributes
+        }
     };
 }
 
 sub members {
     my $set = shift;
-    values %$set;
+    values %{ $set->{'attributes'} };
 }
 
 sub insert {
     my ($set, $attribute) = @_;
-    $set->{ mop::internal::attribute::get_name( $attribute ) } = $attribute;
+    $set->{'attributes'}->{ mop::internal::attribute::get_name( $attribute ) } = $attribute;
 }
 
 sub clone { create( members( @_ ) ) }
