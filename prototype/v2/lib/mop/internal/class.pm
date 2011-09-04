@@ -4,10 +4,6 @@ use strict;
 use warnings;
 
 use mop::internal::instance;
-use mop::internal::method;
-use mop::internal::method::set;
-use mop::internal::attribute;
-use mop::internal::attribute::set;
 
 sub create {
     my %params = @_;
@@ -16,8 +12,8 @@ sub create {
     my $version      = $params{'version'}      || '0.01';
     my $authority    = $params{'authority'}    || '';
     my $superclasses = $params{'superclasses'} || [];
-    my $attributes   = $params{'attributes'}   || mop::internal::attribute::set::create();
-    my $methods      = $params{'methods'}      || mop::internal::method::set::create();
+    my $attributes   = $params{'attributes'}   || {};
+    my $methods      = $params{'methods'}      || {};
 
     mop::internal::instance::create(
         \$::Class,
@@ -44,10 +40,7 @@ sub get_mro {
 
 sub find_method {
     my ($class, $method_name) = @_;
-    foreach my $method ( mop::internal::method::set::members( mop::internal::instance::get_data_at( $class, '$methods' ) ) ) {
-        return $method
-            if mop::internal::method::get_name( $method ) eq $method_name;
-    }
+    mop::internal::instance::get_data_at( $class, '$methods' )->{ $method_name };
 }
 
 1;
