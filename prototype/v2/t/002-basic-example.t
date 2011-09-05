@@ -7,44 +7,6 @@ use Test::More;
 
 use mop;
 
-=pod
-
-Here is how this example might look with the real syntax:
-
-  class BankAccount {
-      has $balance;
-
-      method balance { $balance }
-
-      method deposit ($amount) { $balance += $amount }
-
-      method withdraw ($amount) {
-          ($balance >= $amount)
-              || die "Account overdrawn";
-          $balance -= $amount;
-      }
-  }
-
-  class CheckingAccount extends BankAccount {
-      has $overdraft_account;
-
-      method overdraft_account { $overdraft_account }
-
-      method withdraw ($amount) {
-
-          my $overdraft_amount = $amount - $self->balance;
-
-          if ( $overdraft_account && $overdraft_amount > 0 ) {
-              $overdraft_account->withdraw( $overdraft_amount );
-              $self->deposit( $overdraft_amount );
-          }
-
-          $self->next::method( $amount );
-      }
-  }
-
-=cut
-
 BEGIN {
 
     # FIXME:
@@ -55,7 +17,7 @@ BEGIN {
     my ($self, $class);
 
     class 'BankAccount' => sub {
-        has my $balance;
+        has my $balance, ( initial_value => \0 );
 
         method 'balance' => sub { $balance };
 
@@ -92,8 +54,45 @@ BEGIN {
             $self->NEXTMETHOD( 'withdraw', $amount );
         };
     };
-
 }
+
+=pod
+
+Here is how this example might look with the real syntax:
+
+  class BankAccount {
+      has $balance = 0;
+
+      method balance { $balance }
+
+      method deposit ($amount) { $balance += $amount }
+
+      method withdraw ($amount) {
+          ($balance >= $amount)
+              || die "Account overdrawn";
+          $balance -= $amount;
+      }
+  }
+
+  class CheckingAccount extends BankAccount {
+      has $overdraft_account;
+
+      method overdraft_account { $overdraft_account }
+
+      method withdraw ($amount) {
+
+          my $overdraft_amount = $amount - $self->balance;
+
+          if ( $overdraft_account && $overdraft_amount > 0 ) {
+              $overdraft_account->withdraw( $overdraft_amount );
+              $self->deposit( $overdraft_amount );
+          }
+
+          $self->next::method( $amount );
+      }
+  }
+
+=cut
 
 ok BankAccount->is_subclass_of( $::Object ), '... BankAccount is a subclass of Object';
 
@@ -113,13 +112,15 @@ $savings->deposit( 150 );
 is $savings->balance, 350, '... got the savings balance we expected';
 
 my $checking = CheckingAccount->new(
-    balance           => 100,
     overdraft_account => $savings,
 );
 is $checking->class, CheckingAccount, '... got the class we expected';
 ok $checking->is_a( CheckingAccount ), '... checking is an instance of BankAccount';
 ok $checking->is_a( BankAccount ), '... checking is an instance of BankAccount';
 
+is $checking->balance, 0, '... got the checking balance we expected';
+
+$checking->deposit( 100 );
 is $checking->balance, 100, '... got the checking balance we expected';
 is $checking->overdraft_account, $savings, '... got the right overdraft account';
 
