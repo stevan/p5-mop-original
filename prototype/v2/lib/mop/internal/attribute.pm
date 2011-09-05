@@ -3,6 +3,8 @@ package mop::internal::attribute;
 use strict;
 use warnings;
 
+use Clone ();
+
 sub create {
     my %params = @_;
 
@@ -17,6 +19,14 @@ sub create {
         }
     );
 }
+
+sub get_initial_value_for_instance {
+    my $attr = shift;
+    my $value = ${ $attr->{'initial_value'} };
+    $value = Clone::clone( $value ) if ref $value;
+    return \$value;
+}
+
 
 1;
 
