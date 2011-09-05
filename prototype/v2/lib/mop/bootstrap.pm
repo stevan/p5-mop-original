@@ -37,16 +37,21 @@ sub init {
                         my $attrs = mop::internal::instance::get_data_at( $class, '$attributes' );
                         foreach my $attr_name ( keys %$attrs ) {
                             unless ( exists $data->{ $attr_name } ) {
-                                $data->{ $attr_name } = mop::internal::attribute::get_initial_value_for_instance(
-                                    $attrs->{ $attr_name }
-                                );
+                                my $param_name = $attr_name;
+                                $param_name =~ s/^\$//;
+
+                                if ( exists $args->{ $param_name } ) {
+                                    my $value = $args->{ $param_name };
+                                    $data->{ $attr_name } = \$value;
+                                }
+                                else {
+                                    $data->{ $attr_name } = mop::internal::attribute::get_initial_value_for_instance(
+                                        $attrs->{ $attr_name }
+                                    );
+                                }
+
                             }
                         }
-                    }
-
-                    foreach my $arg ( keys %$args ) {
-                        my $value = $args->{ $arg };
-                        $data->{ '$' . $arg } = \$value;
                     }
 
                     return $data;
@@ -68,7 +73,7 @@ sub init {
                 body => sub {
                     my %args = @_;
 
-                    my $data = $::CLASS->CREATE( \%args );
+                    my $data = $::SELF->CREATE( \%args );
 
                     my $self = bless(
                         mop::internal::instance::create( \$::SELF, $data ),
@@ -91,15 +96,22 @@ sub init {
                     }
                 }
             ),
+            'BUILD' => mop::internal::method::create(
+                name => 'BUILD',
+                body => sub {
+                    my $args = shift;
+                    my $data = mop::internal::instance::get_data( $::SELF );
+                    foreach my $arg ( keys %$args ) {
+                        my $value = $args->{ $arg };
+                        $data->{ '$' . $arg } = \$value;
+                    }
+                }
+            ),
         },
     );
 
-    mop::internal::instance::get_data_at( $::Class, '$superclasses' )->[0] = $::Object;
-
-    bless( $::Object, 'mop::syntax::dispatchable' );
-    bless( $::Class,  'mop::syntax::dispatchable' );
-
-    $::Method = $::Class->new(
+    $::Method = mop::internal::class::create(
+        class        => \$::Class,
         name         => 'Method',
         version      => '0.01',
         authority    => 'cpan:STEVAN',
@@ -108,14 +120,22 @@ sub init {
         methods      => {},
     );
 
-    $::Attribute = $::Class->new(
-        name         => 'Class',
+    $::Attribute = mop::internal::class::create(
+        class        => \$::Class,
+        name         => 'Attribute',
         version      => '0.01',
         authority    => 'cpan:STEVAN',
         superclasses => [ $::Object ],
         attributes   => {},
         methods      => {},
     );
+
+    mop::internal::instance::get_data_at( $::Class, '$superclasses' )->[0] = $::Object;
+
+    bless( $::Object,    'mop::syntax::dispatchable' );
+    bless( $::Class,     'mop::syntax::dispatchable' );
+    bless( $::Method,    'mop::syntax::dispatchable' );
+    bless( $::Attribute, 'mop::syntax::dispatchable' );
 
     bless( mop::internal::instance::get_data_at( $::Class, '$methods' )->{'add_method'}, 'mop::syntax::dispatchable' );
     bless( mop::internal::instance::get_data_at( $::Class, '$methods' )->{'CREATE'},     'mop::syntax::dispatchable' );
@@ -207,6 +227,15 @@ sub init {
         mop::internal::attribute::get_initial_value_for_instance( $::SELF )
     }));
 
+    ## --------------------------------
+    ## Cleanup
+    ## --------------------------------
+
+    delete mop::internal::instance::get_data_at( $::Object, '$methods' )->{'BUILD'};
+
+    ## --------------------------------
+    ## END BOOTSTRAP
+    ## --------------------------------
 
     return;
 }
