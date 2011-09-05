@@ -10,6 +10,10 @@ use mop::internal::method;
 
 sub init {
 
+    ## --------------------------------
+    ## Create our classes
+    ## --------------------------------
+
     $::Class = mop::internal::class::create(
         class        => \$::Class,
         name         => 'Class',
@@ -96,17 +100,6 @@ sub init {
                     }
                 }
             ),
-            'BUILD' => mop::internal::method::create(
-                name => 'BUILD',
-                body => sub {
-                    my $args = shift;
-                    my $data = mop::internal::instance::get_data( $::SELF );
-                    foreach my $arg ( keys %$args ) {
-                        my $value = $args->{ $arg };
-                        $data->{ '$' . $arg } = \$value;
-                    }
-                }
-            ),
         },
     );
 
@@ -116,8 +109,11 @@ sub init {
         version      => '0.01',
         authority    => 'cpan:STEVAN',
         superclasses => [ $::Object ],
-        attributes   => {},
         methods      => {},
+        attributes   => {
+            '$name' => mop::internal::attribute::create( name => '$name', initial_value => \(my $method_name) ),
+            '$body' => mop::internal::attribute::create( name => '$body', initial_value => \(my $method_body) ),
+        },
     );
 
     $::Attribute = mop::internal::class::create(
@@ -126,9 +122,16 @@ sub init {
         version      => '0.01',
         authority    => 'cpan:STEVAN',
         superclasses => [ $::Object ],
-        attributes   => {},
         methods      => {},
+        attributes   => {
+            '$name'          => mop::internal::attribute::create( name => '$name',          initial_value => \(my $attribute_name) ),
+            '$initial_value' => mop::internal::attribute::create( name => '$initial_value', initial_value => \(my $initial_value)  ),
+        },
     );
+
+    ## --------------------------------
+    ## START BOOTSTRAP
+    ## --------------------------------
 
     mop::internal::instance::get_data_at( $::Class, '$superclasses' )->[0] = $::Object;
 
@@ -139,8 +142,15 @@ sub init {
 
     bless( mop::internal::instance::get_data_at( $::Class, '$methods' )->{'add_method'}, 'mop::syntax::dispatchable' );
     bless( mop::internal::instance::get_data_at( $::Class, '$methods' )->{'CREATE'},     'mop::syntax::dispatchable' );
-    bless( mop::internal::instance::get_data_at( $::Object, '$methods' )->{'new'},       'mop::syntax::dispatchable' );
-    bless( mop::internal::instance::get_data_at( $::Object, '$methods' )->{'BUILDALL'},  'mop::syntax::dispatchable' );
+
+    bless( mop::internal::instance::get_data_at( $::Object, '$methods' )->{'new'},      'mop::syntax::dispatchable' );
+    bless( mop::internal::instance::get_data_at( $::Object, '$methods' )->{'BUILDALL'}, 'mop::syntax::dispatchable' );
+
+    bless( mop::internal::instance::get_data_at( $::Method, '$attributes' )->{'$name'}, 'mop::syntax::dispatchable' );
+    bless( mop::internal::instance::get_data_at( $::Method, '$attributes' )->{'$body'}, 'mop::syntax::dispatchable' );
+
+    bless( mop::internal::instance::get_data_at( $::Attribute, '$attributes' )->{'$name'},          'mop::syntax::dispatchable' );
+    bless( mop::internal::instance::get_data_at( $::Attribute, '$attributes' )->{'$initial_value'}, 'mop::syntax::dispatchable' );
 
     ## --------------------------------
     ## $::Class
@@ -208,9 +218,6 @@ sub init {
     ## $::Method
     ## --------------------------------
 
-    $::Method->add_attribute( $::Attribute->new( name => '$name', initial_value => \(my $method_name) ) );
-    $::Method->add_attribute( $::Attribute->new( name => '$body', initial_value => \(my $method_body) ) );
-
     $::Method->add_method( $::Method->new( name => 'get_name', body => sub { mop::internal::instance::get_data_at( $::SELF, '$name' ) } ) );
     $::Method->add_method( $::Method->new( name => 'get_body', body => sub { mop::internal::instance::get_data_at( $::SELF, '$body' ) } ) );
 
@@ -218,20 +225,11 @@ sub init {
     ## $::Attribute
     ## --------------------------------
 
-    $::Attribute->add_attribute( $::Attribute->new( name => '$name',          initial_value => \(my $attribute_name) ) );
-    $::Attribute->add_attribute( $::Attribute->new( name => '$initial_value', initial_value => \(my $initial_value) ) );
-
     $::Attribute->add_method( $::Method->new( name => 'get_name',          body => sub { mop::internal::instance::get_data_at( $::SELF, '$name' ) } ) );
     $::Attribute->add_method( $::Method->new( name => 'get_initial_value', body => sub { mop::internal::instance::get_data_at( $::SELF, '$initial_value' ) } ) );
     $::Attribute->add_method( $::Method->new( name => 'get_initial_value_for_instance', body => sub {
         mop::internal::attribute::get_initial_value_for_instance( $::SELF )
     }));
-
-    ## --------------------------------
-    ## Cleanup
-    ## --------------------------------
-
-    delete mop::internal::instance::get_data_at( $::Object, '$methods' )->{'BUILD'};
 
     ## --------------------------------
     ## END BOOTSTRAP
