@@ -17,7 +17,7 @@ sub has (\$) {
 
     my $pad = PadWalker::peek_my(2);
     ${ $pad->{'$class'} }->add_attribute(
-        mop::internal::attribute::create(
+        $::Attribute->new(
             name          => $name,
             initial_value => $var
         )
@@ -28,7 +28,7 @@ sub method {
     my ($name, $body) = @_;
     my $pad = PadWalker::peek_my(2);
     ${ $pad->{'$class'} }->add_method(
-        mop::internal::method::create(
+        $::Method->new(
             name => $name,
             body => Sub::Name::subname( $name, $body )
         )
