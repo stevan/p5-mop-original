@@ -8,6 +8,7 @@ use mop::internal::instance;
 sub create {
     my %params = @_;
 
+    my $class        = $params{'class'}        || die "A class must have a (meta) class";
     my $name         = $params{'name'}         || die "A class must have a name";
     my $version      = $params{'version'}      || '0.01';
     my $authority    = $params{'authority'}    || '';
@@ -16,7 +17,7 @@ sub create {
     my $methods      = $params{'methods'}      || {};
 
     mop::internal::instance::create(
-        \$::Class,
+        $class,
         {
             '$name'         => \$name,
             '$version'      => \$version,
