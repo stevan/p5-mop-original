@@ -46,11 +46,11 @@ sub init {
             }),
             'add_method' => mop::internal::method::create( name => 'add_method', body => sub {
                 my $method = shift;
-                $::SELF->get_methods->{ $method->get_name } = $method;
+                $::SELF->get_methods->{ mop::internal::instance::get_data_at( $method, '$name' ) } = $method;
             }),
             'add_attribute' => mop::internal::method::create( name => 'add_attribute', body => sub {
                 my $attr = shift;
-                $::SELF->get_attributes->{ $attr->get_name } = $attr;
+                $::SELF->get_attributes->{ mop::internal::instance::get_data_at( $attr, '$name' ) } = $attr;
             }),
             # ... predicate methods
             'is_subclass_of' => mop::internal::method::create( name => 'is_subclass_of', body => sub {
