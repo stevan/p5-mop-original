@@ -17,8 +17,8 @@ BEGIN {
     my ($self, $class);
 
     class 'Point' => sub {
-        has my $x;
-        has my $y;
+        has( my $x ) = 0;
+        has( my $y ) = 0;
 
         method 'x' => sub { $x };
         method 'y' => sub { $y };
@@ -38,7 +38,7 @@ BEGIN {
     class 'Point3D' => sub {
         extends Point();
 
-        has my $z;
+        has( my $z ) = 0;
 
         method 'z' => sub { $z };
 
@@ -120,6 +120,16 @@ is $p3d->y, 2, '... got the right value for y';
 is $p3d->z, 3, '... got the right value for z';
 
 is_deeply $p3d->dump, { x => 1, y => 2, z => 3 }, '... go the right value from dump';
+
+## test the default values
+
+{
+    my $p = Point->new;
+    is_deeply $p->dump, { x => 0, y => 0 }, '... go the right value from dump';
+
+    my $p3d = Point3D->new;
+    is_deeply $p3d->dump, { x => 0, y => 0, z => 0 }, '... go the right value from dump';
+}
 
 done_testing;
 

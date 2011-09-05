@@ -9,7 +9,7 @@ use PadWalker     ();
 use Devel::Caller ();
 use Sub::Name     ();
 
-sub has (\$@) {
+sub has (\$@) : lvalue {
     my $var      = shift;
     my %metadata = @_;
 
@@ -24,6 +24,8 @@ sub has (\$@) {
             %metadata
         )
     );
+
+    $$var;
 }
 
 sub method {

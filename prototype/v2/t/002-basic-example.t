@@ -17,7 +17,7 @@ BEGIN {
     my ($self, $class);
 
     class 'BankAccount' => sub {
-        has my $balance, ( initial_value => \0 );
+        has( my $balance ) = 0;
 
         method 'balance' => sub { $balance };
 
