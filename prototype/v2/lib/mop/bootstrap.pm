@@ -168,8 +168,8 @@ sub init {
             '$initial_value' => mop::internal::attribute::create( name => '$initial_value', initial_value => \(my $initial_value) ),
         },
         methods      => {
-            'get_name'          => $::Method->new( name => 'get_name', body => sub { mop::internal::instance::get_data_at( $::SELF, '$name' ) } ),
-            'get_initial_value' => $::Method->new( name => 'get_name', body => sub { mop::internal::instance::get_data_at( $::SELF, '$initial_value' ) } ),
+            'get_name'          => $::Method->new( name => 'get_name',          body => sub { mop::internal::instance::get_data_at( $::SELF, '$name' ) } ),
+            'get_initial_value' => $::Method->new( name => 'get_initial_value', body => sub { mop::internal::instance::get_data_at( $::SELF, '$initial_value' ) } ),
         },
     );
 
