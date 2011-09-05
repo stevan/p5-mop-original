@@ -16,44 +16,43 @@ methods.
 
 =cut
 
-# create a meta-class (class to create classes with)
-my $FooMeta = $::Class->new(
-    superclasses => [ $::Class ],
-    methods      => {
-        'static_method' => $::Method->new( name => 'static_method', body => sub { 'STATIC' } )
-    }
-);
+BEGIN {
+    # create a meta-class (class to create classes with)
+    class 'FooMeta' => sub {
+        extends $::Class;
+        method 'static_method' => sub { 'STATIC' };
+    };
+}
 
-is $FooMeta->class, $::Class, '... got the class we expected';
-ok $FooMeta->is_a( $::Object ), '... FooMeta is an Object';
-ok $FooMeta->is_a( $::Class ), '... FooMeta is a Class';
-ok $FooMeta->is_subclass_of( $::Object ), '... FooMeta is a subclass of Object';
-ok $FooMeta->is_subclass_of( $::Class ), '... FooMeta is a subclass of Class';
+is FooMeta->class, $::Class, '... got the class we expected';
+ok FooMeta->is_a( $::Object ), '... FooMeta is an Object';
+ok FooMeta->is_a( $::Class ), '... FooMeta is a Class';
+ok FooMeta->is_subclass_of( $::Object ), '... FooMeta is a subclass of Object';
+ok FooMeta->is_subclass_of( $::Class ), '... FooMeta is a subclass of Class';
 
-# create a class (using our meta-class)
-my $Foo = $FooMeta->new(
-    superclasses => [ $::Object ],
-    methods      => {
-        'hello' => $::Method->new( name => 'hello', body => sub { 'FOO' } )
-    }
-);
+BEGIN {
+    # create a class (using our meta-class)
+    class 'Foo' => ('metaclass' => FooMeta) => sub {
+        method 'hello' => sub { 'FOO' };
+    };
+}
 
-is $Foo->class, $FooMeta, '... got the class we expected';
-ok $Foo->is_a( $::Object ), '... Foo is an Object';
-ok $Foo->is_a( $::Class ), '... Foo is a Class';
-ok $Foo->is_a( $FooMeta ), '... Foo is a FooMeta';
-ok $Foo->is_subclass_of( $::Object ), '... Foo is a subclass of Object';
+is Foo->class, FooMeta, '... got the class we expected';
+ok Foo->is_a( $::Object ), '... Foo is an Object';
+ok Foo->is_a( $::Class ), '... Foo is a Class';
+ok Foo->is_a( FooMeta ), '... Foo is a FooMeta';
+ok Foo->is_subclass_of( $::Object ), '... Foo is a subclass of Object';
 
-is $Foo->static_method, 'STATIC', '... called the static method on Foo';
+is Foo->static_method, 'STATIC', '... called the static method on Foo';
 
 # create an instance ...
-my $foo = $Foo->new;
+my $foo = Foo->new;
 
-is $foo->class, $Foo, '... got the class we expected';
-ok $foo->is_a( $Foo ), '... foo is a Foo';
+is $foo->class, Foo, '... got the class we expected';
+ok $foo->is_a( Foo ), '... foo is a Foo';
 ok $foo->is_a( $::Object ), '... foo is an Object';
 ok !$foo->is_a( $::Class ), '... foo is not a Class';
-ok !$foo->is_a( $FooMeta ), '... foo is not a FooMeta';
+ok !$foo->is_a( FooMeta ), '... foo is not a FooMeta';
 
 like exception { $foo->static_method }, qr/^Could not find method \'static_method\'/, '... got an expection here';
 

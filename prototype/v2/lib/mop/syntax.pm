@@ -9,8 +9,9 @@ use PadWalker     ();
 use Devel::Caller ();
 use Sub::Name     ();
 
-sub has (\$) {
-    my $var = shift;
+sub has (\$@) {
+    my $var      = shift;
+    my %metadata = @_;
 
 	my %names = reverse %{ PadWalker::peek_sub( Devel::Caller::caller_cv( 1 ) ) };
 	my $name = $names{ $var };
@@ -19,18 +20,21 @@ sub has (\$) {
     ${ $pad->{'$class'} }->add_attribute(
         $::Attribute->new(
             name          => $name,
-            initial_value => $var
+            initial_value => $var,
+            %metadata
         )
     );
 }
 
 sub method {
-    my ($name, $body) = @_;
+    my $body = pop @_;
+    my ($name, %metadata) = @_;
     my $pad = PadWalker::peek_my(2);
     ${ $pad->{'$class'} }->add_method(
         $::Method->new(
             name => $name,
-            body => Sub::Name::subname( $name, $body )
+            body => Sub::Name::subname( $name, $body ),
+            %metadata
         )
     );
 }
@@ -41,14 +45,26 @@ sub extends {
     ${ $pad->{'$class'} }->add_superclass( $superclass );
 }
 
-sub class (&) {
-    my $body = shift;
-    my $class = $::Class->new;
+sub class {
+    my $body = pop @_;
+    my ($name, %metadata) = @_;
+
+    my $class_Class = $::Class;
+    if ( exists $metadata{ 'metaclass' } ) {
+        $class_Class = delete $metadata{ 'metaclass' };
+    }
+
+    my $class = $class_Class->new( name => $name, %metadata );
     {
         local $::CLASS = $class;
         $body->();
     }
     $class->FINALIZE;
+    {
+        no strict 'refs';
+        my $pkg = caller();
+        *{"${pkg}::${name}"} = sub () { $class };
+    }
     $class;
 }
 
