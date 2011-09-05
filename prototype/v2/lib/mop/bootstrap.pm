@@ -16,63 +16,25 @@ sub init {
         version      => '0.01',
         authority    => 'cpan:STEVAN',
         superclasses => [],
-        attributes   => {
-            '$name'         => mop::internal::attribute::create( name => '$name',         initial_value => \(my $class_name) ),
-            '$version'      => mop::internal::attribute::create( name => '$version',      initial_value => \(my $class_version) ),
-            '$authority'    => mop::internal::attribute::create( name => '$authority',    initial_value => \(my $class_authority) ),
-            '$superclasses' => mop::internal::attribute::create( name => '$superclasses', initial_value => \([]) ),
-            '$attributes'   => mop::internal::attribute::create( name => '$attributes',   initial_value => \({}) ),
-            '$methods'      => mop::internal::attribute::create( name => '$methods',      initial_value => \({}) ),
-        },
+        attributes   => {},
         methods      => {
-            'get_name'         => mop::internal::method::create( name => 'get_name',         body => sub { mop::internal::instance::get_data_at( $::SELF, '$name' )         } ),
-            'get_version'      => mop::internal::method::create( name => 'get_version',      body => sub { mop::internal::instance::get_data_at( $::SELF, '$version' )      } ),
-            'get_authority'    => mop::internal::method::create( name => 'get_authority',    body => sub { mop::internal::instance::get_data_at( $::SELF, '$authority' )    } ),
-            'get_superclasses' => mop::internal::method::create( name => 'get_superclasses', body => sub { mop::internal::instance::get_data_at( $::SELF, '$superclasses' ) } ),
-            'get_methods'      => mop::internal::method::create( name => 'get_methods',      body => sub { mop::internal::instance::get_data_at( $::SELF, '$methods' )      } ),
-            'get_attributes'   => mop::internal::method::create( name => 'get_attributes',   body => sub { mop::internal::instance::get_data_at( $::SELF, '$attributes' )   } ),
-            'get_mro'          => mop::internal::method::create( name => 'get_mro',          body => sub { mop::internal::class::get_mro( $::SELF )                         } ),
-            'find_method'      => mop::internal::method::create(
-                name => 'find_method',
+            'add_method' => mop::internal::method::create(
+                name => 'add_method',
                 body => sub {
-                    my $method_name = shift;
-                    mop::internal::class::find_method( $::SELF, $method_name )
+                    my $method = shift;
+                    mop::internal::instance::get_data_at( $::SELF, '$methods' )->{
+                        mop::internal::instance::get_data_at( $method, '$name' )
+                    } = $method;
                 }
             ),
-            # ... methods to build the class
-            'add_superclass' => mop::internal::method::create( name => 'add_superclass', body => sub {
-                my $superclass = shift;
-                push @{ $::SELF->get_superclasses } => $superclass;
-            }),
-            'add_method' => mop::internal::method::create( name => 'add_method', body => sub {
-                my $method = shift;
-                $::SELF->get_methods->{ mop::internal::instance::get_data_at( $method, '$name' ) } = $method;
-            }),
-            'add_attribute' => mop::internal::method::create( name => 'add_attribute', body => sub {
-                my $attr = shift;
-                $::SELF->get_attributes->{ mop::internal::instance::get_data_at( $attr, '$name' ) } = $attr;
-            }),
-            # ... predicate methods
-            'is_subclass_of' => mop::internal::method::create( name => 'is_subclass_of', body => sub {
-                my $super = shift;
-                my @mro   = @{ $::SELF->get_mro };
-                shift @mro;
-                scalar grep { $super->id eq $_->id } @mro;
-            }),
-            # ... class API
-            'FINALIZE' => mop::internal::method::create( name => 'FINALIZE', body => sub {
-                $::SELF->add_superclass( $::Object )
-                    unless scalar @{ $::SELF->get_superclasses };
-            }),
-            # instance data creation
             'CREATE'   => mop::internal::method::create(
                 name => 'CREATE',
                 body => sub {
                     my $args = shift;
                     my $data = {};
 
-                    foreach my $class ( @{ $::SELF->get_mro } ) {
-                        my $attrs = $class->get_attributes;
+                    foreach my $class ( @{ mop::internal::class::get_mro( $::SELF ) } ) {
+                        my $attrs = mop::internal::instance::get_data_at( $class, '$attributes' );
                         foreach my $attr_name ( keys %$attrs ) {
                             unless ( exists $data->{ $attr_name } ) {
                                 $data->{ $attr_name } = mop::internal::attribute::get_initial_value_for_instance(
@@ -101,9 +63,6 @@ sub init {
         superclasses => [],
         attributes   => {},
         methods      => {
-            'id'    => mop::internal::method::create( name => 'id',    body => sub { mop::internal::instance::get_uuid( $::SELF )  } ),
-            'class' => mop::internal::method::create( name => 'class', body => sub { mop::internal::instance::get_class( $::SELF ) } ),
-            'is_a'  => mop::internal::method::create( name => 'is_a',  body => sub { $::CLASS->id eq $_[0]->id || $::CLASS->is_subclass_of( $_[0] ) } ),
             'new'   => mop::internal::method::create(
                 name => 'new',
                 body => sub {
@@ -112,10 +71,7 @@ sub init {
                     my $data = $::CLASS->CREATE( \%args );
 
                     my $self = bless(
-                        mop::internal::instance::create(
-                            \$::SELF,
-                            $data
-                        ),
+                        mop::internal::instance::create( \$::SELF, $data ),
                         'mop::syntax::dispatchable'
                     );
 
@@ -128,8 +84,8 @@ sub init {
                 name => 'BUILDALL',
                 body => sub {
                     my $args = shift;
-                    foreach my $class ( reverse @{ $::CLASS->get_mro } ) {
-                        if ( my $BUILD = $class->find_method( 'BUILD' ) ) {
+                    foreach my $class ( reverse @{ mop::internal::class::get_mro( $::CLASS ) } ) {
+                        if ( my $BUILD = mop::internal::class::find_method( $class, 'BUILD' ) ) {
                             mop::internal::method::execute( $BUILD, $::SELF, $args );
                         }
                     }
@@ -148,14 +104,8 @@ sub init {
         version      => '0.01',
         authority    => 'cpan:STEVAN',
         superclasses => [ $::Object ],
-        attributes   => {
-            '$name' => mop::internal::attribute::create( name => '$name', initial_value => \(my $method_name) ),
-            '$body' => mop::internal::attribute::create( name => '$body', initial_value => \(my $method_body) ),
-        },
-        methods      => {
-            'get_name' => mop::internal::method::create( name => 'get_name', body => sub { mop::internal::instance::get_data_at( $::SELF, '$name' ) } ),
-            'get_body' => mop::internal::method::create( name => 'get_name', body => sub { mop::internal::instance::get_data_at( $::SELF, '$body' ) } ),
-        },
+        attributes   => {},
+        methods      => {},
     );
 
     $::Attribute = $::Class->new(
@@ -163,15 +113,100 @@ sub init {
         version      => '0.01',
         authority    => 'cpan:STEVAN',
         superclasses => [ $::Object ],
-        attributes   => {
-            '$name'          => mop::internal::attribute::create( name => '$name',          initial_value => \(my $attribute_name) ),
-            '$initial_value' => mop::internal::attribute::create( name => '$initial_value', initial_value => \(my $initial_value) ),
-        },
-        methods      => {
-            'get_name'          => $::Method->new( name => 'get_name',          body => sub { mop::internal::instance::get_data_at( $::SELF, '$name' ) } ),
-            'get_initial_value' => $::Method->new( name => 'get_initial_value', body => sub { mop::internal::instance::get_data_at( $::SELF, '$initial_value' ) } ),
-        },
+        attributes   => {},
+        methods      => {},
     );
+
+    bless( mop::internal::instance::get_data_at( $::Class, '$methods' )->{'add_method'}, 'mop::syntax::dispatchable' );
+    bless( mop::internal::instance::get_data_at( $::Class, '$methods' )->{'CREATE'},     'mop::syntax::dispatchable' );
+    bless( mop::internal::instance::get_data_at( $::Object, '$methods' )->{'new'},       'mop::syntax::dispatchable' );
+    bless( mop::internal::instance::get_data_at( $::Object, '$methods' )->{'BUILDALL'},  'mop::syntax::dispatchable' );
+
+    ## --------------------------------
+    ## $::Class
+    ## --------------------------------
+
+    ## accessors
+
+    $::Class->add_method( $::Method->new( name => 'get_name',         body => sub { mop::internal::instance::get_data_at( $::SELF, '$name' )         } ) );
+    $::Class->add_method( $::Method->new( name => 'get_version',      body => sub { mop::internal::instance::get_data_at( $::SELF, '$version' )      } ) );
+    $::Class->add_method( $::Method->new( name => 'get_authority',    body => sub { mop::internal::instance::get_data_at( $::SELF, '$authority' )    } ) );
+    $::Class->add_method( $::Method->new( name => 'get_superclasses', body => sub { mop::internal::instance::get_data_at( $::SELF, '$superclasses' ) } ) );
+    $::Class->add_method( $::Method->new( name => 'get_methods',      body => sub { mop::internal::instance::get_data_at( $::SELF, '$methods' )      } ) );
+    $::Class->add_method( $::Method->new( name => 'get_attributes',   body => sub { mop::internal::instance::get_data_at( $::SELF, '$attributes' )   } ) );
+    $::Class->add_method( $::Method->new( name => 'get_mro',          body => sub { mop::internal::class::get_mro( $::SELF ) } ) );
+    $::Class->add_method( $::Method->new( name => 'find_method', body => sub {
+        my $method_name = shift;
+        mop::internal::class::find_method( $::SELF, $method_name )
+    }));
+
+    ## mutators
+
+    $::Class->add_method( $::Method->new( name => 'add_superclass', body => sub {
+        my $superclass = shift;
+        push @{ $::SELF->get_superclasses } => $superclass;
+    }));
+    $::Class->add_method( $::Method->new( name => 'add_attribute', body => sub {
+        my $attr = shift;
+        $::SELF->get_attributes->{ mop::internal::instance::get_data_at( $attr, '$name' ) } = $attr;
+    }));
+
+    ## predicate methods ...
+
+    $::Class->add_method( $::Method->new( name => 'is_subclass_of', body => sub {
+        my $super = shift;
+        my @mro   = @{ $::SELF->get_mro };
+        shift @mro;
+        scalar grep { $super->id eq $_->id } @mro;
+    }));
+
+    ## class protocol
+
+    $::Class->add_method( $::Method->new( name => 'FINALIZE', body => sub {
+        $::SELF->add_superclass( $::Object )
+            unless scalar @{ $::SELF->get_superclasses };
+    }));
+
+    ## add in the attributes
+
+    $::Class->add_attribute( $::Attribute->new( name => '$name',         initial_value => \(my $class_name) ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$version',      initial_value => \(my $class_version) ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$authority',    initial_value => \(my $class_authority) ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$superclasses', initial_value => \([]) ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$attributes',   initial_value => \({}) ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$methods',      initial_value => \({}) ) );
+
+    ## --------------------------------
+    ## $::Object
+    ## --------------------------------
+
+    $::Object->add_method( $::Method->new( name => 'id',    body => sub { mop::internal::instance::get_uuid( $::SELF )  } ) );
+    $::Object->add_method( $::Method->new( name => 'class', body => sub { mop::internal::instance::get_class( $::SELF ) } ) );
+    $::Object->add_method( $::Method->new( name => 'is_a',  body => sub { $::CLASS->id eq $_[0]->id || $::CLASS->is_subclass_of( $_[0] ) } ) );
+
+    ## --------------------------------
+    ## $::Method
+    ## --------------------------------
+
+    $::Method->add_attribute( $::Attribute->new( name => '$name', initial_value => \(my $method_name) ) );
+    $::Method->add_attribute( $::Attribute->new( name => '$body', initial_value => \(my $method_body) ) );
+
+    $::Method->add_method( $::Method->new( name => 'get_name', body => sub { mop::internal::instance::get_data_at( $::SELF, '$name' ) } ) );
+    $::Method->add_method( $::Method->new( name => 'get_body', body => sub { mop::internal::instance::get_data_at( $::SELF, '$body' ) } ) );
+
+    ## --------------------------------
+    ## $::Attribute
+    ## --------------------------------
+
+    $::Attribute->add_attribute( $::Attribute->new( name => '$name',          initial_value => \(my $attribute_name) ) );
+    $::Attribute->add_attribute( $::Attribute->new( name => '$initial_value', initial_value => \(my $initial_value) ) );
+
+    $::Attribute->add_method( $::Method->new( name => 'get_name',          body => sub { mop::internal::instance::get_data_at( $::SELF, '$name' ) } ) );
+    $::Attribute->add_method( $::Method->new( name => 'get_initial_value', body => sub { mop::internal::instance::get_data_at( $::SELF, '$initial_value' ) } ) );
+    $::Attribute->add_method( $::Method->new( name => 'get_initial_value_for_instance', body => sub {
+        mop::internal::attribute::get_initial_value_for_instance( $::SELF )
+    }));
+
 
     return;
 }
