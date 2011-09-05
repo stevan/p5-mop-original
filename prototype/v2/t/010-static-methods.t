@@ -32,8 +32,9 @@ ok FooMeta->is_subclass_of( $::Class ), '... FooMeta is a subclass of Class';
 
 BEGIN {
     # create a class (using our meta-class)
-    class 'Foo' => ('metaclass' => FooMeta) => sub {
-        method 'hello' => sub { 'FOO' };
+    class 'Foo' => (metaclass => FooMeta) => sub {
+        method 'hello'            => sub { 'FOO' };
+        method 'hello_from_class' => sub { $::CLASS->static_method }
     };
 }
 
@@ -56,7 +57,8 @@ ok !$foo->is_a( FooMeta ), '... foo is not a FooMeta';
 
 like exception { $foo->static_method }, qr/^Could not find method \'static_method\'/, '... got an expection here';
 
+is $foo->hello_from_class, 'STATIC', '... got the class method via the instance however';
+is $foo->class->static_method, 'STATIC', '... got access to the class method via the ->class instance method';
 is $foo->hello, 'FOO', '... got the instance method however';
-
 
 done_testing;
