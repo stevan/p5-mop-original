@@ -7,8 +7,6 @@ use Test::More;
 use Test::Fatal;
 
 use mop;
-use mop::internal::attribute::set;
-use mop::internal::method::set;
 
 =pod
 
@@ -21,9 +19,9 @@ methods.
 # create a meta-class (class to create classes with)
 my $FooMeta = $::Class->new(
     superclasses => [ $::Class ],
-    methods      => mop::internal::method::set::create(
-        mop::internal::method::create( name => 'static_method', body => sub { 'STATIC' } )
-    )
+    methods      => {
+        'static_method' => $::Method->new( name => 'static_method', body => sub { 'STATIC' } )
+    }
 );
 
 is $FooMeta->class, $::Class, '... got the class we expected';
@@ -35,9 +33,9 @@ ok $FooMeta->is_subclass_of( $::Class ), '... FooMeta is a subclass of Class';
 # create a class (using our meta-class)
 my $Foo = $FooMeta->new(
     superclasses => [ $::Object ],
-    methods      => mop::internal::method::set::create(
-        mop::internal::method::create( name => 'hello', body => sub { 'FOO' } )
-    )
+    methods      => {
+        'hello' => $::Method->new( name => 'hello', body => sub { 'FOO' } )
+    }
 );
 
 is $Foo->class, $FooMeta, '... got the class we expected';

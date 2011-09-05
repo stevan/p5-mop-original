@@ -60,11 +60,8 @@ ok $Point->is_a( $::Object ), '... class Point is a Object';
 ok $Point->is_subclass_of( $::Object ), '... class Point is a subclass of Object';
 is_deeply $Point->get_superclasses, [ $::Object ], '... got the superclasses we expected';
 is_deeply
-    [ sort { $a->{'name'} cmp $b->{'name'} } mop::internal::attribute::set::members( $Point->get_attributes ) ],
-    [
-        { name => '$x', initial_value => \undef, associated_class => $Point },
-        { name => '$y', initial_value => \undef, associated_class => $Point },
-    ],
+    [ sort { $a cmp $b } map { $_->get_name } values %{ $Point->get_attributes } ],
+    [ '$x', '$y' ],
     '... got the superclasses we expected';
 
 ## Test an instance
@@ -124,10 +121,8 @@ ok $Point3D->is_subclass_of( $Point ), '... class Point3D is a subclass of Point
 ok $Point3D->is_subclass_of( $::Object ), '... class Point3D is a subclass of Object';
 is_deeply $Point3D->get_superclasses, [ $Point ], '... got the superclasses we expected';
 is_deeply
-    [ mop::internal::attribute::set::members( $Point3D->get_attributes ) ],
-    [
-        { name => '$z', initial_value => \undef, associated_class => $Point3D },
-    ],
+    [ map { $_->get_name } values %{ $Point3D->get_attributes } ],
+    [ '$z' ],
     '... got the superclasses we expected';
 
 
