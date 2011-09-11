@@ -14,6 +14,15 @@ This test immitates the Smalltalk style
 parallel metaclass way of doing class
 methods.
 
+    class FooMeta extends Class {
+        method static_method { 'STATIC' }
+    }
+
+    class Foo ( metaclass => FooMeta ) {
+        method hello            { 'FOO' }
+        method hello_from_class { $self->class->static_method }
+    }
+
 =cut
 
 BEGIN {
