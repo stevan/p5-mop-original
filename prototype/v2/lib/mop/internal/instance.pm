@@ -19,9 +19,15 @@ sub create {
 sub get_uuid  { (shift)->{'uuid'}     }
 sub get_class { ${(shift)->{'class'}} }
 sub get_data  { (shift)->{'data'}     }
+
 sub get_data_at {
     my ($instance, $name) = @_;
     ${ $instance->{'data'}->{ $name } || \undef }
+}
+
+sub set_data_at {
+    my ($instance, $name, $value) = @_;
+    $instance->{'data'}->{ $name } = $value
 }
 
 1;
