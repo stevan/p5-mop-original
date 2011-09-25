@@ -26,8 +26,8 @@ sub init {
                 name => 'add_method',
                 body => sub {
                     my $method = shift;
-                    mop::internal::instance::get_data_at( $::SELF, '$methods' )->{
-                        mop::internal::instance::get_data_at( $method, '$name' )
+                    mop::internal::instance::get_slot_at( $::SELF, '$methods' )->{
+                        mop::internal::instance::get_slot_at( $method, '$name' )
                     } = $method;
                 }
             ),
@@ -38,7 +38,7 @@ sub init {
                     my $data = {};
 
                     foreach my $class ( @{ mop::internal::class::get_mro( $::SELF ) } ) {
-                        my $attrs = mop::internal::instance::get_data_at( $class, '$attributes' );
+                        my $attrs = mop::internal::instance::get_slot_at( $class, '$attributes' );
                         foreach my $attr_name ( keys %$attrs ) {
                             unless ( exists $data->{ $attr_name } ) {
                                 my $param_name = $attr_name;
@@ -133,24 +133,24 @@ sub init {
     ## START BOOTSTRAP
     ## --------------------------------
 
-    mop::internal::instance::get_data_at( $::Class, '$superclasses' )->[0] = $::Object;
+    mop::internal::instance::get_slot_at( $::Class, '$superclasses' )->[0] = $::Object;
 
     bless( $::Object,    'mop::syntax::dispatchable' );
     bless( $::Class,     'mop::syntax::dispatchable' );
     bless( $::Method,    'mop::syntax::dispatchable' );
     bless( $::Attribute, 'mop::syntax::dispatchable' );
 
-    bless( mop::internal::instance::get_data_at( $::Class, '$methods' )->{'add_method'}, 'mop::syntax::dispatchable' );
-    bless( mop::internal::instance::get_data_at( $::Class, '$methods' )->{'CREATE'},     'mop::syntax::dispatchable' );
+    bless( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'add_method'}, 'mop::syntax::dispatchable' );
+    bless( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'CREATE'},     'mop::syntax::dispatchable' );
 
-    bless( mop::internal::instance::get_data_at( $::Object, '$methods' )->{'new'},      'mop::syntax::dispatchable' );
-    bless( mop::internal::instance::get_data_at( $::Object, '$methods' )->{'BUILDALL'}, 'mop::syntax::dispatchable' );
+    bless( mop::internal::instance::get_slot_at( $::Object, '$methods' )->{'new'},      'mop::syntax::dispatchable' );
+    bless( mop::internal::instance::get_slot_at( $::Object, '$methods' )->{'BUILDALL'}, 'mop::syntax::dispatchable' );
 
-    bless( mop::internal::instance::get_data_at( $::Method, '$attributes' )->{'$name'}, 'mop::syntax::dispatchable' );
-    bless( mop::internal::instance::get_data_at( $::Method, '$attributes' )->{'$body'}, 'mop::syntax::dispatchable' );
+    bless( mop::internal::instance::get_slot_at( $::Method, '$attributes' )->{'$name'}, 'mop::syntax::dispatchable' );
+    bless( mop::internal::instance::get_slot_at( $::Method, '$attributes' )->{'$body'}, 'mop::syntax::dispatchable' );
 
-    bless( mop::internal::instance::get_data_at( $::Attribute, '$attributes' )->{'$name'},          'mop::syntax::dispatchable' );
-    bless( mop::internal::instance::get_data_at( $::Attribute, '$attributes' )->{'$initial_value'}, 'mop::syntax::dispatchable' );
+    bless( mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$name'},          'mop::syntax::dispatchable' );
+    bless( mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$initial_value'}, 'mop::syntax::dispatchable' );
 
     ## --------------------------------
     ## $::Class
@@ -158,12 +158,12 @@ sub init {
 
     ## accessors
 
-    $::Class->add_method( $::Method->new( name => 'get_name',         body => sub { mop::internal::instance::get_data_at( $::SELF, '$name' )         } ) );
-    $::Class->add_method( $::Method->new( name => 'get_version',      body => sub { mop::internal::instance::get_data_at( $::SELF, '$version' )      } ) );
-    $::Class->add_method( $::Method->new( name => 'get_authority',    body => sub { mop::internal::instance::get_data_at( $::SELF, '$authority' )    } ) );
-    $::Class->add_method( $::Method->new( name => 'get_superclasses', body => sub { mop::internal::instance::get_data_at( $::SELF, '$superclasses' ) } ) );
-    $::Class->add_method( $::Method->new( name => 'get_methods',      body => sub { mop::internal::instance::get_data_at( $::SELF, '$methods' )      } ) );
-    $::Class->add_method( $::Method->new( name => 'get_attributes',   body => sub { mop::internal::instance::get_data_at( $::SELF, '$attributes' )   } ) );
+    $::Class->add_method( $::Method->new( name => 'get_name',         body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' )         } ) );
+    $::Class->add_method( $::Method->new( name => 'get_version',      body => sub { mop::internal::instance::get_slot_at( $::SELF, '$version' )      } ) );
+    $::Class->add_method( $::Method->new( name => 'get_authority',    body => sub { mop::internal::instance::get_slot_at( $::SELF, '$authority' )    } ) );
+    $::Class->add_method( $::Method->new( name => 'get_superclasses', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$superclasses' ) } ) );
+    $::Class->add_method( $::Method->new( name => 'get_methods',      body => sub { mop::internal::instance::get_slot_at( $::SELF, '$methods' )      } ) );
+    $::Class->add_method( $::Method->new( name => 'get_attributes',   body => sub { mop::internal::instance::get_slot_at( $::SELF, '$attributes' )   } ) );
     $::Class->add_method( $::Method->new( name => 'get_mro',          body => sub { mop::internal::class::get_mro( $::SELF ) } ) );
     $::Class->add_method( $::Method->new( name => 'find_method', body => sub {
         my $method_name = shift;
@@ -178,7 +178,7 @@ sub init {
     }));
     $::Class->add_method( $::Method->new( name => 'add_attribute', body => sub {
         my $attr = shift;
-        $::SELF->get_attributes->{ mop::internal::instance::get_data_at( $attr, '$name' ) } = $attr;
+        $::SELF->get_attributes->{ mop::internal::instance::get_slot_at( $attr, '$name' ) } = $attr;
     }));
 
     ## predicate methods ...
@@ -218,15 +218,15 @@ sub init {
     ## $::Method
     ## --------------------------------
 
-    $::Method->add_method( $::Method->new( name => 'get_name', body => sub { mop::internal::instance::get_data_at( $::SELF, '$name' ) } ) );
-    $::Method->add_method( $::Method->new( name => 'get_body', body => sub { mop::internal::instance::get_data_at( $::SELF, '$body' ) } ) );
+    $::Method->add_method( $::Method->new( name => 'get_name', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' ) } ) );
+    $::Method->add_method( $::Method->new( name => 'get_body', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$body' ) } ) );
 
     ## --------------------------------
     ## $::Attribute
     ## --------------------------------
 
-    $::Attribute->add_method( $::Method->new( name => 'get_name',          body => sub { mop::internal::instance::get_data_at( $::SELF, '$name' ) } ) );
-    $::Attribute->add_method( $::Method->new( name => 'get_initial_value', body => sub { mop::internal::instance::get_data_at( $::SELF, '$initial_value' ) } ) );
+    $::Attribute->add_method( $::Method->new( name => 'get_name',          body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' ) } ) );
+    $::Attribute->add_method( $::Method->new( name => 'get_initial_value', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$initial_value' ) } ) );
     $::Attribute->add_method( $::Method->new( name => 'get_initial_value_for_instance', body => sub {
         mop::internal::attribute::get_initial_value_for_instance( $::SELF )
     }));

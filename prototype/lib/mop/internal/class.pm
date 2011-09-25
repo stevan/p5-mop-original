@@ -35,13 +35,13 @@ sub get_mro {
     my $class = shift;
     return [
         $class,
-        map { @{ get_mro( $_ ) } } @{ mop::internal::instance::get_data_at( $class, '$superclasses' ) }
+        map { @{ get_mro( $_ ) } } @{ mop::internal::instance::get_slot_at( $class, '$superclasses' ) }
     ]
 }
 
 sub find_method {
     my ($class, $method_name) = @_;
-    mop::internal::instance::get_data_at( $class, '$methods' )->{ $method_name };
+    mop::internal::instance::get_slot_at( $class, '$methods' )->{ $method_name };
 }
 
 1;

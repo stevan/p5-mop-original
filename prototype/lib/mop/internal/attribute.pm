@@ -22,7 +22,7 @@ sub create {
 
 sub get_initial_value_for_instance {
     my $attr = shift;
-    my $value = ${ mop::internal::instance::get_data_at( $attr, '$initial_value' ) };
+    my $value = ${ mop::internal::instance::get_slot_at( $attr, '$initial_value' ) };
     $value = Clone::clone( $value ) if ref $value;
     return \$value;
 }
