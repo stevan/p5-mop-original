@@ -1,0 +1,75 @@
+=pod
+
+=head1 NAME
+
+Perl 5 MOP - Introduction
+
+=head1 SYNOPSIS
+
+  Perl was always designed to be an evolving language.
+    -- Larry Wall
+
+=head1 DESCRIPTION
+
+The following is a proposal for the introduction of a completely
+new object system for Perl 5.
+
+=head1 FAQs
+
+Much of the details of what and why will be covered in the
+individual documents that detail the various parts of the
+system. So in this document I have decided to address what
+I believe will be frequently asked questions about the proposal
+as a whole.
+
+=head2 Why a completely new object system?
+
+It is my opinion that this is the best way to both maintain
+backwards and forwards compatability as well as not burden
+ourselves with the choices of the past. Allow me expand on
+this somewhat.
+
+How this helps backwards compatability is fairly obvious since
+the system will be completely new and just simply live beside
+the old one. But it also helps forward compatability, by which
+I mean the ability for old-style Perl OO and new-style Perl OO
+to interoperate. There are billions of lines of Perl code on
+the CPAN which B<must not> be left behind. By keeping the two
+system separate and assuring that the new system is equally
+as flexible as the classic system, an interoperability layer
+can be created to bridge the two.
+
+I also feel that it is critically important that we not burden
+ourselves with the past. The classic Perl OO system is almost
+20 years old, and what was state of the art in OO 20 years ago
+is not state of the art now. It is my opinion that it is
+important for Perl as a language to start fresh.
+
+=head2 What if I don't like "the way you do it"?
+
+This is Perl, so obviously there will be "more then one way".
+
+For starters you can always go back to the classic OO system,
+should not be removed or deprecated. However, this new system
+is being designed with the spirit of TIMTOWTDI at the core. It
+is my intention that the internals of the system will be
+pluggable in the same way that the regexp engine is pluggable.
+Additionally this system is being built to be fully meta-circular
+with a  powerful and flexible MOP at the core. This, along with
+the custom keyword functionality, means that there is very
+little you won't be able to change in the end.
+
+=head1 AUTHOR
+
+Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2011 Infinity Interactive, Inc.
+
+L<http://www.iinteractive.com>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

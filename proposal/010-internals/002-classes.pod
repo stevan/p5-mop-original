@@ -1,0 +1,159 @@
+
+=pod
+
+=head1 NAME
+
+Perl 5 MOP - Classes
+
+=head1 DESCRIPTION
+
+Now we have arrived at classes, which really should be thought
+of as simply being factories for instances. In this proposal
+we treat classes as first class citizens in that they too are
+just instances of the class C<Class>.
+
+It is important to note throughough this document the punctuation
+used on the word "class". When you see the lowercase "class" it
+is referring to the concept of a class, but when you see the
+uppercase "Class" this is referring to the specific class whose
+name is "Class".
+
+=head2 The problem with class being "just a package"
+
+As was touched on in previous documents, it is my opinion that
+the package based object system, while very powerful and flexible,
+is ultimately not the right foundation upon which to build.
+
+The first major issue is with methods and the whole question of
+what is a method.
+
+As was mentioned in the F<001-dispatching> document that it is
+difficult to distinguish between functions and methods within a
+package. In fact, it is only possible to really distinguish between
+imported functions and locally defined functions/methods with any
+degree of certainty. To  distinguish between a method or a function
+would require guessing the intent of the defined C<sub> by
+examining the code within its body. The same is true of trying to
+determine if a method is a class method or an instance method,
+and made even trickier by the dual-use methods which are a not
+un-common trick in classic Perl OO.
+
+It is an almost impossible task to divine the intended use of
+a CODE entry in a stash with any degree of certainty, without that
+certainty fading pretty quickly into guesswork and reliance on
+idiomatic code patterns. The result is that we have a dispatch
+table that is potentially cluttered with entries to which it
+should never dispatch.
+
+The second issue really has to do with a package only being
+suitable storage for methods.
+
+Classic Perl OO carries with it no real concept of "attributes"
+or "members". This is the instance slot data which, in most
+modern OO languages, is typically defined in the class and then
+used to build the instance slots. There were a number of
+attempts over the years to solve this problem, but nothing has
+really caught on except for L<Moose>.
+
+I believe that this stems from the fact that a package (and
+the underlying stash) do not actually have a way to store this
+type of data.
+
+Each stash entry is a name which can hold any of the following
+types of items at one time; C<SCALAR>, C<ARRAY>, C<HASH>, C<CODE>
+and C<GLOB>. To store some kind of attribute definition in one
+of these slots would require a fairly large amount of wizardry
+to make it useful in an OO context. But even if that were done,
+the same issue we have with methods would arise. There would be
+no way to determine the intention of that usage.
+
+The final issue has to do with inheritance.
+
+In classic Perl OO, inheritance is determined by looking at
+the C<@ISA> for a string which should match the name of another
+package. The C<@ISA> variable has no special status and is
+simply just another variable. The fragility of this is obvious
+and while an elegant solution for its time, is not something
+suitable for building a future upon.
+
+In conclusion, using a package as a means of defining a class
+is elegant and simple, but breaks down pretty quickly when
+attempting to manage a large class hierarchy. Its lack of
+structure forces people to adopt conventions to stay consistent,
+but provides to good ways to actually enforce those conventions.
+
+=head2 The problem of C<bless>
+
+As described above, classes are defined simply as packages in
+which certain assumptions are made about the contents. But this
+is only part of an OO system, it leaves out the instances
+of the classes. Enter the C<bless> function.
+
+Any Perl reference (C<SCALAR>, C<ARRAY>, C<HASH>, C<CODE>
+or C<GLOB>) can be C<bless>-ed into a package (specified again
+by a string name). The resulting blessed instance can then be
+used to dispatch methods, which are just C<CODE> entries in
+the package.
+
+While convention dictates the use of a C<new> method in your
+package to define your objects, this is only convention and
+there is nothing to prevent wildly different structures from
+being blessed into the same package.
+
+This breaks what I believe is a fundemental concept of an
+object system. Which is that the class should be a factory
+for the creation of instances.
+
+=head2 TIMTOWTDI-BSCIABTE
+
+This states that: "There is more then one way to do it, but
+consistency isn't a bad thing either". It has long been
+acknowledged that TIMTOWTDI is a double-edged sword and has
+a particularly insidious dark side. To see this in all its
+glory, simply spend a hour or two reading the source of
+randomly chosen CPAN modules.
+
+XXX - explain that large scale OO requires consistenc
+XXX - explain that convention is no way to reliably handle this
+XXX - explain that if Perl is to compete in large scale app
+      building, it must fix this at a language level
+
+=head2 The importance of meta-circularity
+
+XXX - meta-circularity provides extensibility
+XXX - Perl OO is known for its extensibility
+XXX - meta-circularity should provide that same level of
+      extensibility and more, in a safe and verifyable way
+
+=head2 The parts of a class
+
+=over 4
+
+=item B<$name>
+
+=item B<$version>
+
+=item B<$authority>
+
+=item B<@superclasses>
+
+=item B<%attributes>
+
+=item B<%methods>
+
+=back
+
+=head1 AUTHOR
+
+Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2011 Infinity Interactive, Inc.
+
+L<http://www.iinteractive.com>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
