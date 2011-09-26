@@ -65,36 +65,6 @@ __END__
 
 mop::internal::dispatcher
 
-=head1 DESCRIPTION
-
-The real useful parts of the dispatcher are the three methods;
-WALKMETH, WALKCLASS and DISPATCH. These were somewhat borrowed
-from Perl 6, but with some modifications. Each one has a specific
-set of responsibilities.
-
-WALKMETH is primarliy responsible for finding a method within a
-given class. This means that it must know enough about a Class
-object to be able to find a method within it.
-
-WALKCLASS is primarily responsible for traversing the MRO of
-a Class object and applying a $solver callback to each class
-until the callback returns something.
-
-CALLMETHOD is concerned with setting up a method to be executed.
-This means setting up the lexical environment for the method and
-then executing the method.
-
-DISPATCH is concerned with finding the method, after which it
-will call CALLMETHOD to execute it.
-
-NEXTMETHOD is actually kind of in between DISPATCH and
-the AUTOLOAD handler. It is actually treated as a method
-by the instances, and given a method name it will call the
-superclass method (if there is one) for that method. It
-should be noted that this is not a recommendation for how
-to implement such a feature, it is simply here to show behavior
-and nothing more.
-
 =head1 AUTHOR
 
 Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
