@@ -50,7 +50,7 @@ important for Perl as a language to start fresh.
 This is Perl, so obviously there will be "more then one way".
 
 For starters you can always go back to the classic OO system,
-should not be removed or deprecated. However, this new system
+it should not be removed or deprecated. However, this new system
 is being designed with the spirit of TIMTOWTDI at the core. It
 is my intention that the internals of the system will be
 pluggable in the same way that the regexp engine is pluggable.
