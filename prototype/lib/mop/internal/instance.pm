@@ -3,14 +3,12 @@ package mop::internal::instance;
 use strict;
 use warnings;
 
-use Data::UUID;
-
-my $UUID = Data::UUID->new;
+use UUID::Tiny qw/create_uuid_as_string UUID_V4/;
 
 sub create {
     my ($class, $slots) = @_;
     return +{
-        uuid  => $UUID->create_str,
+        uuid  => create_uuid_as_string(UUID_V4),
         class => $class,
         slots => $slots
     }

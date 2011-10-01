@@ -18,7 +18,7 @@ sub has (\$@) : lvalue {
 
     my $pad = PadWalker::peek_my(2);
     ${ $pad->{'$class'} }->add_attribute(
-        $::Attribute->new(
+        ${ $pad->{'$class'} }->attribute_class->new(
             name          => $name,
             initial_value => $var,
             %metadata
@@ -33,7 +33,7 @@ sub method {
     my ($name, %metadata) = @_;
     my $pad = PadWalker::peek_my(2);
     ${ $pad->{'$class'} }->add_method(
-        $::Method->new(
+        ${ $pad->{'$class'} }->method_class->new(
             name => $name,
             body => Sub::Name::subname( $name, $body ),
             %metadata
