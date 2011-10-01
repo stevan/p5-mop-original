@@ -53,7 +53,7 @@ BEGIN {
 
 ## Test the class
 
-like Point->id, qr/[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}/, '... got the expected uuid format';
+like Point->id, qr/[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}/i, '... got the expected uuid format';
 is Point->class, $::Class, '... got the class we expected';
 ok Point->is_a( $::Object ), '... class Point is a Object';
 ok Point->is_subclass_of( $::Object ), '... class Point is a subclass of Object';
@@ -69,7 +69,7 @@ is_deeply
 my $p = Point->new( x => 100, y => 320 );
 ok $p->is_a( Point ), '... p is a Point';
 
-like $p->id, qr/[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}/, '... got the expected uuid format';
+like $p->id, qr/[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}/i, '... got the expected uuid format';
 is $p->class, Point, '... got the class we expected';
 
 is $p->x, 100, '... got the right value for x';
