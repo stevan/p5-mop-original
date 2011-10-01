@@ -165,6 +165,8 @@ sub init {
     $::Class->add_method( $::Method->new( name => 'get_methods',      body => sub { mop::internal::instance::get_slot_at( $::SELF, '$methods' )      } ) );
     $::Class->add_method( $::Method->new( name => 'get_attributes',   body => sub { mop::internal::instance::get_slot_at( $::SELF, '$attributes' )   } ) );
     $::Class->add_method( $::Method->new( name => 'get_mro',          body => sub { mop::internal::class::get_mro( $::SELF ) } ) );
+    $::Class->add_method( $::Method->new( name => 'attribute_class',  body => sub { $::Attribute } ) );
+    $::Class->add_method( $::Method->new( name => 'method_class',     body => sub { $::Method } ) );
     $::Class->add_method( $::Method->new( name => 'find_method', body => sub {
         my $method_name = shift;
         mop::internal::class::find_method( $::SELF, $method_name )
