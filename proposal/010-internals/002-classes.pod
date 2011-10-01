@@ -104,10 +104,10 @@ This breaks what I believe is a fundemental concept of an
 object system. Which is that the class should be a factory
 for the creation of instances.
 
-=head2 TIMTOWTDI-BSCIABTE
+=head2 TIMTOWTDI-BSCINABTE
 
 This states that: "There is more then one way to do it, but
-consistency isn't a bad thing either". It has long been
+consistency is not a bad thing either". It has long been
 acknowledged that TIMTOWTDI is a double-edged sword and has
 a particularly insidious dark side. To see this in all its
 glory, simply spend a hour or two reading the source of
