@@ -56,7 +56,12 @@ sub class {
         $class_Class = delete $metadata{ 'metaclass' };
     }
 
-    my $class = $class_Class->new( name => $name, %metadata );
+    my $caller = caller();
+
+    my $class = $class_Class->new(
+        name => ($caller eq 'main' ? $name : "${caller}::${name}"),
+        %metadata
+    );
     {
         local $::CLASS = $class;
         $body->();
@@ -64,8 +69,7 @@ sub class {
     $class->FINALIZE;
     {
         no strict 'refs';
-        my $pkg = caller();
-        *{"${pkg}::${name}"} = sub () { $class };
+        *{"${caller}::${name}"} = sub () { $class };
     }
     $class;
 }
