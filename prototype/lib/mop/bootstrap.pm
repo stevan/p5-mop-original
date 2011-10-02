@@ -58,7 +58,10 @@ sub init {
                         }
                     }
 
-                    return $data;
+                    return bless(
+                        mop::internal::instance::create( \$::SELF, $data ),
+                        'mop::syntax::dispatchable'
+                    );
                 }
             )
         }
@@ -76,16 +79,8 @@ sub init {
                 name => 'new',
                 body => sub {
                     my %args = @_;
-
-                    my $data = $::SELF->CREATE( \%args );
-
-                    my $self = bless(
-                        mop::internal::instance::create( \$::SELF, $data ),
-                        'mop::syntax::dispatchable'
-                    );
-
+                    my $self = $::SELF->CREATE( \%args );
                     $self->BUILDALL( \%args );
-
                     return $self;
                 }
             ),
