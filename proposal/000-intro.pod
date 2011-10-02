@@ -11,8 +11,32 @@ Perl 5 MOP - Introduction
 
 =head1 DESCRIPTION
 
-The following is a proposal for the introduction of a completely
-new object system for Perl 5.
+The following is a proposal for the introduction of a new
+object system for Perl 5. The documentation is split into
+different parts and are meant to be read in order so as to
+build the conceptual understandings necessary for the
+subsequent parts. The major parts are as follows:
+
+=head2 Meta Object Protocol
+
+These documents can be found in the F<000-mop> folder and
+they explain some of the core concepts of the class system.
+
+This really should be read first in order for the later
+documents to make sense. If nothing more just the intro
+document should be read, the rest can be reviewed later on.
+
+=head2 Syntax and Semantics
+
+These documents can be found in the F<001-syntax-and-semantics>
+folder and they explain the proposed syntax and semantics for
+this new object system.
+
+=head2 Interals
+
+These documents can be found in the F<010-internals> folder
+and contain a number of documents detailing some of the
+internal mechansims of this proposal.
 
 =head1 FAQs
 
