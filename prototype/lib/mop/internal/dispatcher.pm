@@ -31,10 +31,11 @@ sub WALKCLASS {
 sub DISPATCH {
     my $method_name = shift;
     my $invocant    = shift;
+    my $class       = mop::internal::instance::get_class( $invocant );
     my $method = WALKMETH(
-        mop::internal::instance::get_class( $invocant ),
+        $class,
         $method_name
-    ) || die "Could not find method '$method_name'";
+    ) || die "Could not find method '$method_name' in class(" . mop::internal::instance::get_slot_at( $class, '$name' ) . ")";
     CALLMETHOD( $method, $invocant, @_ );
 }
 
