@@ -1,0 +1,43 @@
+=pod
+
+=head1 NAME
+
+Perl 5 MOP - MOP - Introduction
+
+=head1 SYNOPSIS
+
+
+=head1 DESCRIPTION
+
+
+Class is an instance of Class
+Object is an instance of Class
+Class is a subclass of Object
+
+Here is this represented visually.
+
+  ---> is subclass of
+  ...> is instance of
+
+       .....
+       :   :
+       V   :
+       Class -----+
+         ^        |
+         :        |
+      Object <----+
+
+=head1 AUTHOR
+
+Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2011 Infinity Interactive, Inc.
+
+L<http://www.iinteractive.com>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
