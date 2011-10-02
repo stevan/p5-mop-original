@@ -9,10 +9,10 @@ use Test::More;
 
 This test is kind of experimental, it is
 based on the ideas in the Newspeak language
-(http://newspeaklanguage.org/) where they
+(L<http://newspeaklanguage.org/>) where they
 have have a concept of "nested classes" or
 sometimes called "modules as objects"
-(http://bracha.org/newspeak-modules.pdf).
+(L<http://bracha.org/newspeak-modules.pdf>).
 
 These concepts and these papers can get
 very complex and a little weird, but a
