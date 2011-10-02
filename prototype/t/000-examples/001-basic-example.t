@@ -28,6 +28,10 @@ BEGIN {
             $x = $new_x;
         };
 
+        method 'clear' => sub {
+            ($x, $y) = (0, 0);
+        };
+
         method 'dump' => sub {
             +{ x => $self->x, y => $self->y }
         };
@@ -96,6 +100,11 @@ is_deeply $p2->dump, { x => 500, y => 30 }, '... got the right value from dump';
 is $p->x, 10, '... got the right value for x';
 is $p->y, 320, '... got the right value for y';
 is_deeply $p->dump, { x => 10, y => 320 }, '... got the right value from dump';
+
+$p->clear;
+is $p->x, 0, '... got the right value for x';
+is $p->y, 0, '... got the right value for y';
+is_deeply $p->dump, { x => 0, y => 0 }, '... got the right value from dump';
 
 ## Test the subclass
 
