@@ -1,0 +1,93 @@
+=pod
+
+=head1 NAME
+
+Perl 5 MOP - Syntax - Metadata
+
+=head1 DESCRIPTION
+
+A core component of this object system and (IMO) the key to
+getting a truely Perlish level of flexibility and extensibility,
+is the idea of metadata. Since this is a pretty over-used term,
+this document attempts to clarify exactly what this means.
+
+It would be safe to say that what I am proposing is along the
+same lines as Python Decorators, C#/.NET Attributes and Java
+Annotations. Which is to say that this is metadata being
+declared at compile time and being used by the compiler to
+make certain decisions as it does its work.
+
+However, unlike these other languages though, my proposed syntax
+is quite simple and should require nothing beyond what the Perl
+lexer can already understand.
+
+=head2 Metadata (the expression)
+
+A metadata expression is simply a Perl expression contained
+within a set of parantheses which, when evaluated, should
+result in metadata (the noun). Here are a few examples:
+
+  ( is => 'rw', default => 100 )
+
+  ( map { $_ => 1 } qw( lazy closed ) )
+
+The context in which this metedata expression is evaluated in
+is somewhat tricky since it will happen during compile-time.
+However this is not all that different in complexity from how
+C<BEGIN> and other compile time blocks are dealt with.
+
+=head2 Metadata (noun)
+
+Metadata is the result of a metadata expression and simply a
+set of key-value pairs otherwise known in Perl as a hash.
+
+In later documents I will introduce three keywords; C<class>,
+C<has> and C<method>. Each of these keywords should accept
+an optional metadata expression which would be feed to the
+underlying objects being constructed.
+
+=head1 NOTES
+
+In some ways I can see this as being some kind of general
+purpose mechanism, however it could get a little messy
+where the metadata is passed to the thing being annotated
+with the metadata. There would need to be an API for this
+and I believe that to be beyond the scope of these
+documents.
+
+=head1 LINKS
+
+=over 4
+
+=item Python Decorators
+
+L<http://wiki.python.org/moin/PythonDecorators>
+L<http://www.python.org/dev/peps/pep-0318/>
+L<http://www.artima.com/weblogs/viewpost.jsp?thread=240808>
+
+=item C# Attributes
+
+L<http://msdn.microsoft.com/en-us/library/aa288059(v=VS.71).aspx>
+
+=item Java Annotations
+
+L<http://download.oracle.com/javase/1,5.0/docs/guide/language/annotations.html>
+L<http://www.eclipse.org/aspectj/doc/released/adk15notebook/annotations.html>
+L<http://en.wikipedia.org/wiki/Java_annotation>
+
+=back
+
+=head1 AUTHOR
+
+Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2011 Infinity Interactive, Inc.
+
+L<http://www.iinteractive.com>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

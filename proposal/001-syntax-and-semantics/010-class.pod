@@ -1,0 +1,148 @@
+=pod
+
+=head1 NAME
+
+Perl 5 MOP - Syntax & Semantics - Classes
+
+=head1 DESCRIPTION
+
+This document introduces the proposed class syntax for the
+new object system for Perl.
+
+=head1 CLASS
+
+The main component of any object system is the class
+declarations, and for this we propose a new C<class> keyword
+with which to declare classes.
+
+The new C<class> keyword helps to separate the old style
+classes from the new style classes. This will not only
+contribute to eaiser to maintain backwards compatability,
+but will allow us to contain all the other syntactic
+extensions within it.
+
+Keep in mind that the C<class> keyword is really just sugar
+around the construction of an instance of C<Class>, for more
+information about this refer to the documents in the
+F<000-mop> directory. For instance, the following two lines
+would be equivalent:
+
+  class Foo {}
+
+  *Foo = Class->new( name => 'Foo' );
+
+The syntax of a C<class> definintion has four variants, I
+will describe each one here, after which I will delve into
+the exact defitition of a class body.
+
+=over 4
+
+=item C<< class <NAME> { <BODY> } >>
+
+This is the simplest varient and it is simply the C<class>
+keyword, followed by a name, followed by block in which
+the class body would be defined.
+
+A simple example of this would be:
+
+  class Foo {}
+
+The name would conform to the same rules as package and
+subroutine names in Perl, which is that it must begin with
+an non-numeric character and is followed by any number of
+other characters after that.
+
+=item C<< class <NAME> extends <NAME>(, <NAME>) { <BODY> } >>
+
+This is the varient for when you are extending a superclass
+or superclasses. This simply injects between the class name
+and body definition, the C<extends> keyword followed by one
+or more comma seperated class names.
+
+A few simple example of this would be:
+
+  class Bar extends Foo {}
+
+  class Baz extends Foo, Bar {}
+
+The superclass list should also be optionally enclosed by
+paratheses as well, like this:
+
+  class Baz extends (Foo, Bar) {}
+
+It is important to note that the superclasses are B<not>
+quoted strings. As will be decribed in later documents,
+a class should be considered a first-class citizen and so
+should be a valid bareword.
+
+B<AUTHORS NOTE>
+
+I am not 100% happy with this, both the C<extends> keyword
+(I kind of like C<isa> though I worry that might make parsing
+complex), and I am not 100% sure this is the right way for
+multiple inheritance to look either.
+
+=item C<< class <NAME> (<METADATA>) { <BODY> } >>
+
+This is the varient where we provide custom metadata to the
+class itself. The metadata will be simply a perl-expression
+which will be evaluated at class creation time and passed
+into the underlying class constructor (NOTE: we will discuss
+more the details of what is metadata in later documents).
+
+Here is a simple example of this:
+
+  class Foo ( is_closed => 1 ) {}
+
+Here the metadata being passed is a simple flag that,
+assuming the class object supports it, would tell the
+metaclass that the class should be 'closed' (for whatever
+that means as determined by your metaclass).
+
+  *Foo = Class->new( is_closed => 1 );
+
+The only special condition here is that if you pass in
+the a metadata key-value pair with the key C<metaclass>
+then the value of this will be used as the metaclass to
+construct this class with. So for example, the following
+two lines are equivalent:
+
+  class Foo ( metaclass => FooMeta ) {}
+
+  *Foo = FooMeta->new( name => 'Foo' );
+
+Again it is important to note that the metaclass is not
+given as a string, but as a first-class citizen bareword.
+
+=item C<< class <NAME> (<METADATA>) extends <NAME>(, <NAME>) { <BODY> } >>
+
+This last varient is actually fairly obvious by now, it is
+just an example of a class which passes metadata as well as
+inheriting from a superclass.
+
+Here is a simple example of this:
+
+  class Foo ( is_closed => 1 ) extends Bar {}
+
+=back
+
+=head1 NOTES
+
+I wonder if the best way to handle the class barewords would be to
+add a CLASS slot into the TYPEGLOB? To go along with the existing
+SCALAR, ARRAY, HASH, IO, etc.
+
+=head1 AUTHOR
+
+Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2011 Infinity Interactive, Inc.
+
+L<http://www.iinteractive.com>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
