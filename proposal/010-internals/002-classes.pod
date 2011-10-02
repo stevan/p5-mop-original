@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-Perl 5 MOP - Classes
+Perl 5 MOP - Internals - Classes
 
 =head1 DESCRIPTION
 
@@ -113,7 +113,7 @@ a particularly insidious dark side. To see this in all its
 glory, simply spend a hour or two reading the source of
 randomly chosen CPAN modules.
 
-XXX - explain that large scale OO requires consistenc
+XXX - explain that large scale OO requires consistency
 XXX - explain that convention is no way to reliably handle this
 XXX - explain that if Perl is to compete in large scale app
       building, it must fix this at a language level

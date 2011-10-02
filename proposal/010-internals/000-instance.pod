@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-Perl 5 MOP - The Instance Structure
+Perl 5 MOP - Internals - The Instance Structure
 
 =head1 DESCRIPTION
 
