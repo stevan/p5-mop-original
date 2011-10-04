@@ -9,7 +9,7 @@ Perl 5 MOP - Syntax & Semantics - Classes
 This document introduces the proposed class syntax for the
 new object system for Perl.
 
-=head1 CLASS
+=head1 SYNTAX
 
 The main component of any object system is the class
 declarations, and for this we propose a new C<class> keyword
@@ -125,6 +125,57 @@ Here is a simple example of this:
   class Foo ( is_closed => 1 ) extends Bar {}
 
 =back
+
+=head1 QUESTIONS
+
+=head2 How do classes interact with packages?
+
+A class is a first-class citizen, which means it should behave in a
+way similar to subroutines. So given the following code:
+
+  package Foo;
+  use strict;
+  use warnings;
+
+  class Bar { ... }
+
+In order to access the class C<Bar> you would need to use the fully
+qualified name C<Foo::Bar>.
+
+Additionally all the variables and subroutines inside the package
+would be visisble inside the class, and the class itself visible
+to the subroutines in the package. This would mean that in the
+following code:
+
+  package Foo;
+  use strict;
+  use warnings;
+  sub get_bar { Bar->new }
+  class Bar { ... }
+
+Calling C<Foo::get_bar> would return an instance of the C<Bar> class.
+And in the following code:
+
+  package Foo;
+  use strict;
+  use warnings;
+  our $BAZ = 100_000;
+  class Bar {
+      method get_foo_baz { $BAZ }
+  }
+
+Calling the C<get_foo_baz> method on an instance of C<Bar> would
+return the value of C<$BAZ>.
+
+Additionally the C<__PACKAGE__> variable in C<Bar> would be "Foo"
+just as it would be inside the package scope.
+
+=head2 How does C<strict> and C<warnings> affect classes?
+
+Within the body of a class, strictures should be on. I am of the
+opinion that warnings should also be enabled, but I know there is some
+debate as to the details of that (see L<common::sense>). So I believe
+that while strictures are for sure, warnings is up for debate.
 
 =head1 NOTES
 
