@@ -3,12 +3,12 @@
 
 =head1 NAME
 
-Perl 5 MOP - Internals -Method Dispatching
+Perl 5 MOP - Internals - Dispatching
 
 =head1 DESCRIPTION
 
 The next thing we need to discuss is how methods get dispatched.
-This is fundemental part of any object system and the primary
+This is fundamental part of any object system and the primary
 thing which you do with the instances that are discussed in the
 previous document.
 
@@ -31,7 +31,7 @@ a specific set of responsibilities described below.
 
 =item B<WALKMETH ($class, $method_name, ?%opts)>
 
-This is primarliy responsible for finding a method within a
+This is primarily responsible for finding a method within a
 given class. This means that it must know enough about a class
 to be able to find a method within it.
 

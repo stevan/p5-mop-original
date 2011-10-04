@@ -17,7 +17,7 @@ with which to declare classes.
 
 The new C<class> keyword helps to separate the old style
 classes from the new style classes. This will not only
-contribute to eaiser to maintain backwards compatability,
+contribute to easier to maintain backwards compatibility,
 but will allow us to contain all the other syntactic
 extensions within it.
 
@@ -31,15 +31,15 @@ would be equivalent:
 
   *Foo = Class->new( name => 'Foo' );
 
-The syntax of a C<class> definintion has four variants, I
+The syntax of a C<class> definition has four variants, I
 will describe each one here, after which I will delve into
-the exact defitition of a class body.
+the exact definition of a class body.
 
 =over 4
 
 =item C<< class <NAME> { <BODY> } >>
 
-This is the simplest varient and it is simply the C<class>
+This is the simplest variant and it is simply the C<class>
 keyword, followed by a name, followed by block in which
 the class body would be defined.
 
@@ -54,10 +54,10 @@ other characters after that.
 
 =item C<< class <NAME> extends <NAME>(, <NAME>) { <BODY> } >>
 
-This is the varient for when you are extending a superclass
+This is the variant for when you are extending a superclass
 or superclasses. This simply injects between the class name
 and body definition, the C<extends> keyword followed by one
-or more comma seperated class names.
+or more comma separated class names.
 
 A few simple example of this would be:
 
@@ -71,7 +71,7 @@ paratheses as well, like this:
   class Baz extends (Foo, Bar) {}
 
 It is important to note that the superclasses are B<not>
-quoted strings. As will be decribed in later documents,
+quoted strings. As will be described in later documents,
 a class should be considered a first-class citizen and so
 should be a valid bareword.
 
@@ -84,7 +84,7 @@ multiple inheritance to look either.
 
 =item C<< class <NAME> (<METADATA>) { <BODY> } >>
 
-This is the varient where we provide custom metadata to the
+This is the variant where we provide custom metadata to the
 class itself. The metadata will be simply a perl-expression
 which will be evaluated at class creation time and passed
 into the underlying class constructor (NOTE: we will discuss
@@ -116,7 +116,7 @@ given as a string, but as a first-class citizen bareword.
 
 =item C<< class <NAME> (<METADATA>) extends <NAME>(, <NAME>) { <BODY> } >>
 
-This last varient is actually fairly obvious by now, it is
+This last variant is actually fairly obvious by now, it is
 just an example of a class which passes metadata as well as
 inheriting from a superclass.
 
@@ -143,7 +143,7 @@ In order to access the class C<Bar> you would need to use the fully
 qualified name C<Foo::Bar>.
 
 Additionally all the variables and subroutines inside the package
-would be visisble inside the class, and the class itself visible
+would be visible inside the class, and the class itself visible
 to the subroutines in the package. This would mean that in the
 following code:
 

@@ -32,11 +32,11 @@ These documents can be found in the F<001-syntax-and-semantics>
 folder and they explain the proposed syntax and semantics for
 this new object system.
 
-=head2 Interals
+=head2 Internals
 
 These documents can be found in the F<010-internals> folder
 and contain a number of documents detailing some of the
-internal mechansims of this proposal.
+internal mechanisms of this proposal.
 
 =head1 FAQs
 
@@ -49,15 +49,15 @@ as a whole.
 =head2 Why a completely new object system?
 
 It is my opinion that this is the best way to both maintain
-backwards and forwards compatability as well as not burden
+backwards and forwards compatibility as well as not burden
 ourselves with the choices of the past. Allow me expand on
 this somewhat.
 
-How this helps backwards compatability is fairly obvious since
+How this helps backwards compatibility is fairly obvious since
 the system will be completely new and just simply live beside
-the old one. But it also helps forward compatability, by which
+the old one. But it also helps forward compatibility, by which
 I mean the ability for old-style Perl OO and new-style Perl OO
-to interoperate. There are billions of lines of Perl code on
+to inter-operate. There are billions of lines of Perl code on
 the CPAN which B<must not> be left behind. By keeping the two
 system separate and assuring that the new system is equally
 as flexible as the classic system, an interoperability layer

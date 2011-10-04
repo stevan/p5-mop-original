@@ -13,7 +13,7 @@ that, rants. I personally have some strong opinions about the existing
 object system and how the newly proposed one would best be implemented,
 but I am not so egotistical as to believe that I am actually right.
 
-Please take all rants contained herein with a large camel-size chunck
+Please take all rants contained herein with a large camel-size chunk
 of salt.
 
 =head2 The problem with HASH based instances
@@ -32,7 +32,7 @@ the individual instance slots, which can be accessed by anyone anywhere,
 but also on the entire instance structure itself. Recent trends have
 pushed hard the fact that this is considered "rude" and that accessor
 methods should always be used instead. However, while it is certainly
-good taste (and common OO practive in most all languages) to force the
+good taste (and common OO practice in most all languages) to force the
 use of accessor methods I<outside> of an object's methods, it is not so
 true for access I<inside> of an object's methods.
 
@@ -166,12 +166,12 @@ package to define your objects, this is only convention and
 there is nothing to prevent wildly different structures from
 being blessed into the same package.
 
-This breaks what I believe is a fundemental concept of an
+This breaks what I believe is a fundamental concept of an
 object system. Which is that the class should be a factory
 for the creation of instances. Instead it places this
-responsiblity upon the user to do any number of different
+responsibility upon the user to do any number of different
 ways. This is, IMO, a case where TIMTOWTDI has been a
-hinderence rather then a help.
+hindrance rather then a help.
 
 =head2 TIMTOWTDI-BSCINABTE
 

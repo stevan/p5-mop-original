@@ -7,7 +7,7 @@ Perl 5 MOP - Syntax - Metadata
 =head1 DESCRIPTION
 
 A core component of this object system and (IMO) the key to
-getting a truely Perlish level of flexibility and extensibility,
+getting a truly Perlish level of flexibility and extensibility,
 is the idea of metadata. Since this is a pretty over-used term,
 this document attempts to clarify exactly what this means.
 
@@ -24,7 +24,7 @@ lexer can already understand.
 =head2 Metadata (the expression)
 
 A metadata expression is simply a Perl expression contained
-within a set of parantheses which, when evaluated, should
+within a set of parentheses which, when evaluated, should
 result in metadata (the noun). Here are a few examples:
 
   ( is => 'rw', default => 100 )

@@ -28,8 +28,8 @@ will likely be implemented in C and be what is used internally.
 
 Object identity is a very important thing, especially in the highly
 distributed and networked world we live in. Not only should an identity
-be thread-safe, but it should also be safe across process boundries as
-well as machine boundries.
+be thread-safe, but it should also be safe across process boundaries as
+well as machine boundaries.
 
 B<AUTHORS NOTE>
 
@@ -42,7 +42,7 @@ criteria.
 
 At the most basic level, an object must know what class created it so
 that it knows where to find the methods that can be called on it. This
-is also very important for programatic introspection of the MOP.
+is also very important for programmatic introspection of the MOP.
 
 =item B<Slot container>
 

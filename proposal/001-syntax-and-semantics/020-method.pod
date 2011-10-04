@@ -38,7 +38,7 @@ example code to illustrate.
   }
 
 Since classes can live inside packages, and share the package
-scope, there is nothing stoping a method in a class from calling
+scope, there is nothing stopping a method in a class from calling
 a subroutine defined in the package. The result is that we have
 code which is visible inside the class, but which does not
 participate in the dispatching.
