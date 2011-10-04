@@ -1,0 +1,89 @@
+=pod
+
+=head1 NAME
+
+Perl 5 MOP - Syntax & Semantics - Methods
+
+=head1 DESCRIPTION
+
+=head1 SYNTAX
+
+=head1 QUESTIONS
+
+=head2 How do create a private method?
+
+Actually, private methods are not needed, allow me to explain.
+
+In most object systems that have true private methods, the private
+methods are completely hidden from the method dispatcher outside
+the scope of the defining class. This is different then most
+implementations of private methods that appear on CPAN because in
+most of those if the method is dispatched to from outside of the
+defining class, an error is thrown.
+
+In this proposed system we have a third alternative, which has
+the privacy necessary and can not be dispatched to. Here is some
+example code to illustrate.
+
+  package Foo;
+  use strict;
+  use warnings;
+
+  sub my_private_routine { ... }
+
+  class Bar {
+      method baz {
+          my_private_routine( $self, ... );
+      }
+  }
+
+Since classes can live inside packages, and share the package
+scope, there is nothing stoping a method in a class from calling
+a subroutine defined in the package. The result is that we have
+code which is visible inside the class, but which does not
+participate in the dispatching.
+
+The only drawback here is that these are subroutines and not
+methods, so if they need to access the instance, it will need
+to be passed to them explicitly.
+
+Additionally, while this subroutine is private to the class, it
+is still public within the package. Exactly how much this matters
+is up for debate and if it does present a problem it is simple
+enough to place a guard at the beginning of the subroutine like
+so:
+
+  sub my_private_routine {
+      die "This is a private routine"
+          unless caller() eq __PACKAGE__;
+      # ...
+  }
+
+This should work correctly because the value of C<__PACKAGE__>
+within class should be that of the containing class.
+
+=head2 How do I create a protected method?
+
+I would propose that since private methods would be replaced
+by package subroutines, then protected methods could take the
+"prefix method name with an underscore" convention. There would
+be no actual enforcement of this, as with classic Perl OO it
+would purely be convention.
+
+=head1 NOTES
+
+
+=head1 AUTHOR
+
+Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2011 Infinity Interactive, Inc.
+
+L<http://www.iinteractive.com>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
