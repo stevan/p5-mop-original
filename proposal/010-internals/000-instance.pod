@@ -11,70 +11,32 @@ So the first thing we need to discuss about the internals is the instance
 structure itself. Every object in the entire MOP eco-system will be
 represented with one of these, so it is important to describe them first.
 
-=head2 The problem with HASH based instances
-
-The HASH ref instance has served Perl well over the many years when it was
-considered the defacto instance structure. However, the HASH ref based
-instance has some very well known issues.
-
-One of the most common issues is that of typos on key names. The recent
-trend of Inside-Out objects aimed itself at trying to fix this by inverting
-the instance structure such that a typo would result in a compile-time
-syntax error.
-
-Another very common issue is the complete lack of privacy for not only
-the individual instance slots, which can be accessed by anyone anywhere,
-but also on the entire instance structure itself. Recent trends have
-pushed hard the fact that this is considered "rude" and that accessor
-methods should always be used instead. However, while it is certainly
-good taste (and common OO practive in most all languages) to force the
-use of accessor methods I<outside> of an object's methods, it is not so
-true for access I<inside> of an object's methods.
-
-Still another less common issue is object identity. In a single threaded,
-single process non-networked application, then using the existing Perl
-convention of "reference address as object identity" would be fine. But
-we live in a heavily threaded multi-process networked world and this is
-simply not sufficient.
-
-It is my opinion that the best way to do this is to create a defacto
-instance structure for use with a new style Perl OO. The proposed
-instance structure aims to solve all of these issues in a satisfactory
-way.
-
-B<AUTHORS NOTE>
-
-It should be noted that how we solve these issues will likely not be
-obvious just from this document, but I think it best to start off
-addressing this early.
-
-Additionally it is my intention to allow for the MOP internals to
-be pluggable, so while this may be the I<standard> instance structure,
-it won't be the I<only> instance structure.
-
 =head2 The structure of an instance
 
 This describes the basic structure of the instance, it is expected that
-this is a C-level component and so likely implemented as C struct.
+this is a C-level component. The exact implementation details are still
+up for debate, but in some way each instance of a new-style class should
+have access the information described here.
 
-There should be Perl-level access to these structures through the
+There should also be Perl-level access to this information through the
 functions in the L<mop::internal::instance> package. These functions
 will likely be implemented in C and be what is used internally.
 
 =over 4
 
-=item B<UUID>
+=item B<OID>
 
 Object identity is a very important thing, especially in the highly
 distributed and networked world we live in. Not only should an identity
 be thread-safe, but it should also be safe across process boundries as
-well as machine boundries. A UUID (sometimes referred to as GUID) is
-likely the best way to accomplish this.
+well as machine boundries.
 
 B<AUTHORS NOTE>
 
-I am perfectly willing to entertain other ideas for this, but whatever
-is chosen must meet the criteria as well as a UUID/GUID would.
+A UUID or GUID could be used to accomplish this, and is what is used
+by the prototype, but it might be become a memory bloat issue. If so,
+we could use something else as long as it meet the above described
+criteria.
 
 =item B<Class pointer>
 
@@ -84,7 +46,7 @@ is also very important for programatic introspection of the MOP.
 
 =item B<Slot container>
 
-This is a set of key-value pairs that hold the data for each slot.
+This is a set of key-value pairs that holds the data for each slot.
 
 B<AUTHORS NOTE>
 
@@ -95,9 +57,33 @@ with the C<PadWalker::set_closed_over> function. The reason for this
 will become more obvious when we discuss methods in that document.
 
 It should also be noted that this is simply an implementation choice,
-as with the object identity, I am very open to other suggestions
-assuming they can meet the criteria that will become more obvious in
-some of the later documents.
+and I am very open to other suggestions assuming they can meet the
+criteria described here and in later documents.
+
+=back
+
+=head1 NOTES
+
+=head2 What about just blessed HASH refs?
+
+It is possible that this can simply be a blessed HASH ref with some
+slightly different "magic" attached to it. This magic would understand
+how to access the other above defined information, dispatch differently,
+etc. 
+
+As I am unfamiliar with the perl guts, I am unsure if this is a sane 
+route or not, but it is most certainly up for discussion.
+
+=head1 RELATED
+
+=over 4
+
+=item L<100-rants.pod>
+
+Personally I am not a fan of HASH ref based instances, and in
+"The problem with HASH based instances" section of the linked
+document I explain this in more detail. This should be viewed only
+as opinion and not as any guiding principle.
 
 =back
 

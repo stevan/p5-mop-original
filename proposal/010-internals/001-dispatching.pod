@@ -15,54 +15,17 @@ previous document.
 Note that we will allude to classes here, but we won't actually
 get into the details of them until the next document.
 
-=head2 The problem with Package based dispatching
-
-The classic Perl object system uses packages, and the underlying
-stashes, as the main means of location and dispatching of methods.
-
-The first problem with this is that there is no (simple) way to
-distinguish between methods and functions, nor is there any good
-way to distinguish between class methods and instance methods.
-Simply put, if it is in the package stash, it can be dispatched
-on, regardless of the suitability of the actual code reference.
-And worst of all, most of these issues are not detectable either
-at compile time or at runtime, expect through their failures.
-
-The second problem is with how inheritance is dispatched. The
-magical C<@ISA> variable is expected to contain a string which
-represents a package name. That package name is then looked up
-internally and the same local package dispatching rules are
-then applied. No only does this open up the possibility of
-"typo as bug", but because the C<@ISA> variable must be declared
-with C<our> it is not private to the package and therefore
-is exposed to outside code. Of course this is considered "rude"
-much like violating instance encapsulation is, but the fact
-remains that it is still exposed.
-
-To compound this second problem, the newly added C<mro> features,
-while better encapsulated behind an API, still deal with strings
-as package names.
-
-In short, the "class is just a package" system is fragile and
-produces very difficult to resolve ambiguity, both due to the fact
-that the package and stash serve too many, sometimes conflicting,
-purposes at once.
-
-It is my opinion that this new system no longer use the package
-mechanism for dispatching or stashing of methods.
-
 =head2 The dispatching API
 
-Through the process of dispatching, the new instance structures
+Through the process of dispatching, the instance structures
 (described in F<000-instance.pod>) should be passed into functions
 in the L<mop::internal::dispatcher> module. These functions will
 use the other L<mop::internal::> APIs to accomplish the
 dispatching of the method.
 
 The most useful parts of the dispatcher are the three methods;
-C<WALKMETH>, C<WALKCLASS> and C<DISPATCH>. These were somewhat
-borrowed from Perl 6, but with some modifications. Each one has
-a specific set of responsibilities.
+C<WALKMETH>, C<WALKCLASS> and C<DISPATCH>. Each one has
+a specific set of responsibilities described below.
 
 =over 4
 
@@ -108,6 +71,50 @@ by no means a user-exposed syntax. How that is handled is
 pretty much irrelevant to this (though how this is handled
 is critically important to the user-level syntax, and
 therein lies my uncertainty).
+
+=head1 NOTES
+
+=head2 Is dispatching stash based?
+
+Perhaps.
+
+I think it entirely possible that if we were to have proper
+anonymous stashes whose C<@ISA> and C<mro> can both understand
+a anonymous stash "object" as well as strings, then it would be
+possible to compile, upon class finalization, a set of stashes
+which could be used for dispatching on the new style classes.
+
+This would mean that the above described functions would not
+actually be executed at runtime, instead the existing built-in
+method dispatching mechanism would be used.
+
+Not knowing the guts well enough, i am not sure which is
+really the saner option, to write a whole new dispatching
+mechanism based on the above described spec, or to somehow
+try and re-use the existing dispatching mechanism.
+
+I have experimented somewhat with this using the prototype
+and the C<Package::Anon> experiment created by Florian Ragwitz
+but have not produced anything successful yet.
+
+Some of the details of this are discussed here:
+L<http://www.nntp.perl.org/group/perl.perl5.porters/2011/09/msg177099.html>
+
+Florian's C<Package::Anon> experiment is here:
+L<https://github.com/rafl/package-anon>
+
+=head1 RELATED
+
+=over 4
+
+=item L<100-rants.pod>
+
+This document contains a section entitled "The problem with Package
+based dispatching", which discussed my issues with package based
+dispatching (obviously). This should be viewed only as opinion and not
+as any guiding principle.
+
+=back
 
 =head1 AUTHOR
 
