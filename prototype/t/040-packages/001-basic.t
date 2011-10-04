@@ -45,6 +45,7 @@ BEGIN {
         method 'foo' => sub {
             do_something( $gorch, $FOO )
         };
+        method 'my_package' => sub { __PACKAGE__ }
     };
 }
 
@@ -54,5 +55,6 @@ ok( $baz->is_a( $::Object ), '... the object is derived from class Object' );
 is( $baz->class, Bar::Baz, '... the class of this object is Baz' );
 
 is( $baz->foo, 100_010, '... got the value we expected' );
+is( $baz->my_package, 'Bar', '... got the value we expected' );
 
 done_testing;
