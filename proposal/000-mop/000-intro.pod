@@ -26,14 +26,15 @@ That is to say, it is an abstraction (the MOP) of a system
 of abstractions (classes and objects) that is used to build
 abstractions (the classes you define).
 
+=head2 Metacircularity
 
+The proposed MOP is a meta-circular one, this means that
+during the bootstrap process, we "tie the knot" such that
+the following three statements are true:
 
-
-
-
-Class is an instance of Class
-Object is an instance of Class
-Class is a subclass of Object
+  Class is an instance of Class
+  Object is an instance of Class
+  Class is a subclass of Object
 
 Here is this represented visually.
 
@@ -47,6 +48,8 @@ Here is this represented visually.
          ^        |
          :        |
       Object <----+
+
+XXX - explain why this is useful
 
 =head1 AUTHOR
 

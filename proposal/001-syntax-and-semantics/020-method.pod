@@ -70,9 +70,6 @@ by package subroutines, then protected methods could take the
 be no actual enforcement of this, as with classic Perl OO it
 would purely be convention.
 
-=head1 NOTES
-
-
 =head1 AUTHOR
 
 Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
