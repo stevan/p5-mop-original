@@ -27,8 +27,7 @@ methods.
 
 BEGIN {
     # create a meta-class (class to create classes with)
-    class 'FooMeta' => sub {
-        extends $::Class;
+    class 'FooMeta' => (extends => $::Class) => sub {
         method 'static_method' => sub { 'STATIC' };
     };
 }

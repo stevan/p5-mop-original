@@ -41,12 +41,6 @@ sub method {
     );
 }
 
-sub extends {
-    my ($superclass) = @_;
-    my $pad = PadWalker::peek_my(2);
-    ${ $pad->{'$class'} }->add_superclass( $superclass );
-}
-
 sub class {
     my $body = pop @_;
     my ($name, %metadata) = @_;
@@ -54,6 +48,10 @@ sub class {
     my $class_Class = $::Class;
     if ( exists $metadata{ 'metaclass' } ) {
         $class_Class = delete $metadata{ 'metaclass' };
+    }
+
+    if ( exists $metadata{ 'extends' } ) {
+        $metadata{ 'superclasses' } = [ delete $metadata{ 'extends' } ];
     }
 
     my $caller = caller();

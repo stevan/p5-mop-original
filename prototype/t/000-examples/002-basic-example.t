@@ -34,9 +34,7 @@ BEGIN {
         };
     };
 
-    class 'CheckingAccount' => sub {
-        extends BankAccount();
-
+    class 'CheckingAccount' => (extends => BankAccount()) => sub {
         has my $overdraft_account;
 
         method 'overdraft_account' => sub { $overdraft_account };

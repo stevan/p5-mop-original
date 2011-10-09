@@ -27,16 +27,14 @@ BEGIN {
         };
     };
 
-    class 'Bar' => sub {
-        extends Foo();
+    class 'Bar' => (extends => Foo()) => sub {
 
         method 'BUILD' => sub {
             $self->collect( 'Bar' );
         };
     };
 
-    class 'Baz' => sub {
-        extends Bar();
+    class 'Baz' => (extends => Bar()) => sub {
 
         method 'BUILD' => sub {
             $self->collect( 'Baz' );

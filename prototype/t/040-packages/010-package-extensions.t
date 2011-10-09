@@ -68,12 +68,11 @@ BEGIN {
 
     our @ISA = ('Foo');
 
-    class 'Baz' => sub {
-        # NOTE:
-        # make sure to inherit from the
-        # Baz in the parent, this is a
-        # nice generic way to do this.
-        extends __PACKAGE__->SUPER::Baz;
+    # NOTE:
+    # make sure to inherit from the
+    # Baz in the parent, this is a
+    # nice generic way to do this.
+    class 'Baz' => (extends => __PACKAGE__->SUPER::Baz) => sub {
 
         method 'gorch' => sub { 'Foo::Extended::Baz::gorch' };
 

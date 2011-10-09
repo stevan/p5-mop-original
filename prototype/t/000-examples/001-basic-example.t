@@ -39,9 +39,7 @@ BEGIN {
 
     # ... subclass it ...
 
-    class 'Point3D' => sub {
-        extends Point();
-
+    class 'Point3D' => (extends => Point()) =>sub {
         has( my $z ) = 0;
 
         method 'z' => sub { $z };

@@ -12,8 +12,7 @@ use mop;
 BEGIN {
     my ($self, $class);
 
-    class 'ClassAccessorMeta' => sub {
-        extends $::Class;
+    class 'ClassAccessorMeta' => (extends => $::Class) =>sub {
         method 'FINALIZE' => sub {
 
             foreach my $attribute ( values %{ $self->get_attributes } ) {

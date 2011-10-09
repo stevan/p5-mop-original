@@ -10,8 +10,7 @@ use mop;
 
 BEGIN {
     # create a meta-class (class to create classes with)
-    class 'MetaWithData' => sub {
-        extends $::Class;
+    class 'MetaWithData' => (extends => $::Class) => sub {
 
         has( my $data ) = [];
 

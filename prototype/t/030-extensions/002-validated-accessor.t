@@ -12,8 +12,7 @@ use mop;
 BEGIN {
     my ($self, $class);
 
-    class 'ValidatedAttribute' => sub {
-        extends $::Attribute;
+    class 'ValidatedAttribute' => (extends => $::Attribute) => sub {
         has( my $validator ) = sub { 1 };
 
         method get_validator => sub { $validator };
@@ -23,8 +22,8 @@ BEGIN {
 BEGIN {
     my ($self, $class);
 
-    class 'ValidatedAccessorMeta' => sub {
-        extends $::Class;
+    class 'ValidatedAccessorMeta' => (extends => $::Class) => sub {
+
         method attribute_class => sub { ValidatedAttribute };
 
         method 'FINALIZE' => sub {
