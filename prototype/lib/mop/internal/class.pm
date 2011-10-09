@@ -10,7 +10,7 @@ sub create {
 
     my $class        = $params{'class'}        || die "A class must have a (meta) class";
     my $name         = $params{'name'}         || die "A class must have a name";
-    my $version      = $params{'version'}      || '0.01';
+    my $version      = $params{'version'}      || undef;
     my $authority    = $params{'authority'}    || '';
     my $superclasses = $params{'superclasses'} || [];
     my $attributes   = $params{'attributes'}   || {};
