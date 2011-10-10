@@ -44,7 +44,7 @@ BEGIN {
 
         method 'data' => sub { $data };
 
-        method 'BUILD' => sub {
+        BUILD {
             $file = file( $path );
             $data = [ $file->slurp( chomp => 1 ) ];
         };

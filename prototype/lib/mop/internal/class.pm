@@ -15,6 +15,8 @@ sub create {
     my $superclasses = $params{'superclasses'} || [];
     my $attributes   = $params{'attributes'}   || {};
     my $methods      = $params{'methods'}      || {};
+    my $constructor  = $params{'constructor'}  || undef;
+    my $destructor   = $params{'destructor'}   || undef;
 
     mop::internal::instance::create(
         $class,
@@ -24,7 +26,9 @@ sub create {
             '$authority'    => \$authority,
             '$superclasses' => \$superclasses,
             '$attributes'   => \$attributes,
-            '$methods'      => \$methods
+            '$methods'      => \$methods,
+            '$constructor'  => \$constructor,
+            '$destructor'   => \$destructor
         }
     );
 }
@@ -42,6 +46,11 @@ sub get_mro {
 sub find_method {
     my ($class, $method_name) = @_;
     mop::internal::instance::get_slot_at( $class, '$methods' )->{ $method_name };
+}
+
+sub get_constructor {
+    my $class = shift;
+    mop::internal::instance::get_slot_at( $class, '$constructor' );
 }
 
 1;

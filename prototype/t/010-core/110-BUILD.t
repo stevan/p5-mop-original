@@ -22,21 +22,21 @@ BEGIN {
             push @{ $collector } => $stuff;
         };
 
-        method 'BUILD' => sub {
+        BUILD {
             $self->collect( 'Foo' );
         };
     };
 
     class 'Bar' => (extends => Foo()) => sub {
 
-        method 'BUILD' => sub {
+        BUILD {
             $self->collect( 'Bar' );
         };
     };
 
     class 'Baz' => (extends => Bar()) => sub {
 
-        method 'BUILD' => sub {
+        BUILD {
             $self->collect( 'Baz' );
         };
     };

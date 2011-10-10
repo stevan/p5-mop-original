@@ -41,6 +41,17 @@ sub method {
     );
 }
 
+sub BUILD (&) {
+    my $body = shift;
+    my $pad  = PadWalker::peek_my(2);
+    ${ $pad->{'$class'} }->set_constructor(
+        ${ $pad->{'$class'} }->method_class->new(
+            name => 'BUILD',
+            body => Sub::Name::subname( 'BUILD', $body )
+        )
+    );
+}
+
 sub class {
     my $body = pop @_;
     my ($name, %metadata) = @_;

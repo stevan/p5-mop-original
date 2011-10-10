@@ -58,7 +58,7 @@ sub init {
                         }
                     }
 
-                    return bless(
+                    bless(
                         mop::internal::instance::create( \$::SELF, $data ),
                         'mop::syntax::dispatchable'
                     );
@@ -80,19 +80,12 @@ sub init {
                 body => sub {
                     my %args = @_;
                     my $self = $::SELF->CREATE( \%args );
-                    $self->BUILDALL( \%args );
-                    return $self;
-                }
-            ),
-            'BUILDALL' => mop::internal::method::create(
-                name => 'BUILDALL',
-                body => sub {
-                    my $args = shift;
-                    foreach my $class ( reverse @{ mop::internal::class::get_mro( $::CLASS ) } ) {
-                        if ( my $BUILD = mop::internal::class::find_method( $class, 'BUILD' ) ) {
-                            mop::internal::method::execute( $BUILD, $::SELF, $args );
+                    foreach my $class ( reverse @{ mop::internal::class::get_mro( $::SELF ) } ) {
+                        if ( my $constructor = mop::internal::class::get_constructor( $class ) ) {
+                            mop::internal::method::execute( $constructor, $self, \%args );
                         }
                     }
+                    $self;
                 }
             ),
         },
@@ -139,7 +132,6 @@ sub init {
     bless( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'CREATE'},     'mop::syntax::dispatchable' );
 
     bless( mop::internal::instance::get_slot_at( $::Object, '$methods' )->{'new'},      'mop::syntax::dispatchable' );
-    bless( mop::internal::instance::get_slot_at( $::Object, '$methods' )->{'BUILDALL'}, 'mop::syntax::dispatchable' );
 
     bless( mop::internal::instance::get_slot_at( $::Method, '$attributes' )->{'$name'}, 'mop::syntax::dispatchable' );
     bless( mop::internal::instance::get_slot_at( $::Method, '$attributes' )->{'$body'}, 'mop::syntax::dispatchable' );
@@ -168,6 +160,11 @@ sub init {
     }));
 
     ## mutators
+
+    $::Class->add_method( $::Method->new( name => 'set_constructor', body => sub {
+        my $constructor = shift;
+        mop::internal::instance::set_slot_at( $::SELF, '$constructor', \$constructor );
+    }));
 
     $::Class->add_method( $::Method->new( name => 'add_superclass', body => sub {
         my $superclass = shift;
@@ -202,6 +199,8 @@ sub init {
     $::Class->add_attribute( $::Attribute->new( name => '$superclasses', initial_value => \([]) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$attributes',   initial_value => \({}) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$methods',      initial_value => \({}) ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$constructor',  initial_value => \undef ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$destructor',   initial_value => \undef ) );
 
     ## --------------------------------
     ## $::Object
