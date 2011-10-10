@@ -39,7 +39,12 @@ C<BEGIN> and other compile time blocks are dealt with.
 =head2 Metadata (noun)
 
 Metadata is the result of a metadata expression and simply a
-set of key-value pairs otherwise known in Perl as a hash.
+list of normal Perl values.
+
+It will likely be the common case that it will be a list of
+key-value pairs (aka. Perl hash) but it should not be restricted
+to be just that. This is a judgement for the consumer of
+the metadata to make.
 
 In later documents I will introduce three keywords; C<class>,
 C<has> and C<method>. Each of these keywords should accept
@@ -58,6 +63,10 @@ documents.
 =head1 LINKS
 
 =over 4
+
+=item Expression evaluation at compile-time
+
+L<https://www.metacpan.org/module/Memoize::Lift>
 
 =item Python Decorators
 
