@@ -43,6 +43,10 @@ XXX - meta-circularity should provide that same level of
 
 =item B<%methods>
 
+=item B<$constructor>
+
+=item B<$destructor>
+
 =back
 
 =head1 AUTHOR
