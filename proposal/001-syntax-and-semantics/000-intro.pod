@@ -15,7 +15,7 @@ Perl 5 MOP - Syntax & Semantics - Introduction
       }
   }
 
-  class Point3D extends Point {
+  class Point3D ( extends => Point ) {
       has $z ( is => 'rw' ) = 0;
 
       method clear {

@@ -31,7 +31,7 @@ would be equivalent:
 
   *Foo = Class->new( name => 'Foo' );
 
-The syntax of a C<class> definition has four variants, I
+The syntax of a C<class> definition has two variants, I
 will describe each one here, after which I will delve into
 the exact definition of a class body.
 
@@ -52,43 +52,13 @@ subroutine names in Perl, which is that it must begin with
 an non-numeric character and is followed by any number of
 other characters after that.
 
-=item C<< class <NAME> extends <NAME>(, <NAME>) { <BODY> } >>
-
-This is the variant for when you are extending a superclass
-or superclasses. This simply injects between the class name
-and body definition, the C<extends> keyword followed by one
-or more comma separated class names.
-
-A few simple example of this would be:
-
-  class Bar extends Foo {}
-
-  class Baz extends Foo, Bar {}
-
-The superclass list should also be optionally enclosed by
-paratheses as well, like this:
-
-  class Baz extends (Foo, Bar) {}
-
-It is important to note that the superclasses are B<not>
-quoted strings. As will be described in later documents,
-a class should be considered a first-class citizen and so
-should be a valid bareword.
-
-B<AUTHORS NOTE>
-
-I am not 100% happy with this, both the C<extends> keyword
-(I kind of like C<isa> though I worry that might make parsing
-complex), and I am not 100% sure this is the right way for
-multiple inheritance to look either.
-
 =item C<< class <NAME> (<METADATA>) { <BODY> } >>
 
 This is the variant where we provide custom metadata to the
 class itself. The metadata will be simply a perl-expression
 which will be evaluated at class creation time and passed
-into the underlying class constructor (NOTE: we will discuss
-more the details of what is metadata in later documents).
+into the underlying class constructor (see L<001-metadata.pod>
+for more details about what metadata is and how it behaves).
 
 Here is a simple example of this:
 
@@ -99,30 +69,37 @@ assuming the class object supports it, would tell the
 metaclass that the class should be 'closed' (for whatever
 that means as determined by your metaclass).
 
-  *Foo = Class->new( is_closed => 1 );
+  *Foo = Class->new( ..., is_closed => 1 );
 
-The only special condition here is that if you pass in
-the a metadata key-value pair with the key C<metaclass>
-then the value of this will be used as the metaclass to
-construct this class with. So for example, the following
-two lines are equivalent:
+The are two special conditions here, which need to be
+discussed.
+
+First, if you pass in the key C<extends> and either a
+single class or an array-ref of classes, these should
+set the superclass(es) accordingly. So for example,
+the following two lines are equivalent:
+
+  class Foo ( extends => Bar ) {}
+
+  *Foo = Class->new( ..., superclasses => [ Bar ] );
+
+as are these following two lines:
+
+  class Foo ( extends => [ Bar, Baz ] ) {}
+
+  *Foo = Class->new( ..., superclasses => [ Bar, Baz ] );
+
+Second, if you pass in the key C<metaclass> then the value
+of this will be used as the metaclass to construct this
+class with. So for example, the following two lines are
+equivalent:
 
   class Foo ( metaclass => FooMeta ) {}
 
-  *Foo = FooMeta->new( name => 'Foo' );
+  *Foo = FooMeta->new( name => 'Foo', ... );
 
-Again it is important to note that the metaclass is not
+It is important to note that the metaclass is not
 given as a string, but as a first-class citizen bareword.
-
-=item C<< class <NAME> (<METADATA>) extends <NAME>(, <NAME>) { <BODY> } >>
-
-This last variant is actually fairly obvious by now, it is
-just an example of a class which passes metadata as well as
-inheriting from a superclass.
-
-Here is a simple example of this:
-
-  class Foo ( is_closed => 1 ) extends Bar {}
 
 =back
 
