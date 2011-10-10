@@ -162,7 +162,7 @@ The Future
 # - the extends syntax
 # - that $self exists inside methods
 # - the next::method syntax calling the superclass-method
-    class Point3D extends Point {
+    class Point3D (extends => Point) {
         has $z ( is => 'rw' ) = 0;
 
         method clear {
@@ -193,7 +193,7 @@ The Future
 # - $balance is not accessible in the subclass methods
 #     - attributes are completely private
 #     - which means we can now use undescore prefixed methods for protected
-    class CheckingAccount extends BankAccount {
+    class CheckingAccount (extends => BankAccount) {
         has $overdraft_account ( is => 'rw' );
 
         method withdraw ($amount) {
