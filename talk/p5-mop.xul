@@ -273,7 +273,7 @@ The Future
         has $file;
         has $data ( is => 'ro' );
 
-        method BUILD {
+        BUILD {
             $file = file( $path );
             $data = [ $file->slurp( chomp => 1 ) ];
         }
