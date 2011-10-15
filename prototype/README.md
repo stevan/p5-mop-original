@@ -22,3 +22,12 @@ find in here will likely use scary and tricky techniques
 to accomplish desired behaviors, and it would be
 expected that a real implementation would *NOT* use
 such scary and tricky techniques.
+
+# TODO
+
+* consider locking the method and attribute hashes when
+  they are returned from the Class methods
+    * can this also be done with the superclass list?
+* add &clone methods to all the elements of the MOP
+    * specifically methods and attributes
+* build out an instance protocol
