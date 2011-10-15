@@ -60,7 +60,7 @@ with the metadata. There would need to be an API for this
 and I believe that to be beyond the scope of these
 documents.
 
-=head1 LINKS
+=head1 SEE ALSO
 
 =over 4
 
