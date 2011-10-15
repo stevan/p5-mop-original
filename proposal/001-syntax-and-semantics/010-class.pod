@@ -109,6 +109,38 @@ Additionally, there would also be unnamed, or anonymous
 variants of the class syntax as well. These would look
 and act the same way, just without a name.
 
+=head2 Constructor/Destructor definition
+
+We propose that constructors and destructors actually be
+treated differently then regular methods. The reason being
+that we believe that you should not be able dispatch to
+the constructor or destructor in the normal way of method
+dispatching. Hence the definition of these methods must
+be a little special as well.
+
+So in addition to the class keyword, we propose that there
+be a special syntax for constructors and destructors. Here
+is an example:
+
+  class Foo {
+      has $bar;
+
+      BUILD ( $params ) {
+          $bar = IO::File->new( $params->{'filename'} );
+      }
+
+      DEMOLISH {
+          $bar->close;
+      }
+  }
+
+XXX - explain that they are just methods, and just not
+      stored with the other methods
+XXX - explain where BUILD gets $params from
+XXX - explain that DEMOLISH gets no args
+XXX - explain the order in which these are executed
+      on class construction and destruction
+
 =head1 QUESTIONS
 
 =head2 How do classes interact with packages?
