@@ -7,7 +7,22 @@ Perl 5 MOP - Meta Object Protocol - Introduction
 =head1 DESCRIPTION
 
 This is an introduction to the MOP oriented documents of
-this proposal.
+this proposal. The purpose of this document is to try and
+explain in basic terms what a MOP is, what you can do with
+it and lastly a note about metacircularity.
+
+The purpose of this document is to give you enough of a
+basic understanding of what a MOP is so that the later
+documents make more sense. Even if you know a lot about
+MOPs, it is probably not a bad idea to skim this since it
+will talk somewhat about how we will approach the proposed
+MOP.
+
+The key thing to keep in mind with all this MOP stuff is
+that we believe, based on practical experience with Moose,
+that building a MOP oriented class system is the right
+way to get the level of flexibility and extensibility that
+this system requires.
 
 =head2 What is a MOP?
 
@@ -25,6 +40,65 @@ One of my favorite ways to describe a MOP is as follows:
 That is to say, it is an abstraction (the MOP) of a system
 of abstractions (classes and objects) that is used to build
 abstractions (the classes you define).
+
+=head2 What can I do with a MOP?
+
+And just like the Socket class in a network API would have
+methods to manipulate aspects of the Socket, the MOP API
+would have methods to manipulate the aspects of the MOP
+(Classes, Methods, Attributes, etc.).
+
+The proposed MOP is constructed of four sub protocols,
+each which deals with a certain aspect of the object
+system. Below is a brief overview of each section.
+
+=over 4
+
+=item Classes
+
+The concept of a class is core to the entire MOP and
+is the top-level container for the remaining three
+concepts. A class itself will contain a set of
+attributes, a set of methods and its primary
+responsibility is that of constructing instances.
+
+The class sub-protocol would have methods to do things
+like introspect the set of attributes, add a new
+method or traverse the method resolution order.
+
+=item Attributes
+
+The concept of an attribute is that of the internal
+state of a class. Just a class can be viewed as the
+definition of instances of it, an attribute in a class
+is the definition of a specific slot inside an instance.
+
+The attribute sub-protocol would have methods to
+introspect things like the name of the attribute, the
+default value assigned.
+
+=item Methods
+
+The concept of a method is simple really, it is just
+a function which can be dispatched from an instance and
+whose scope is that of the instance itself.
+
+The method sub-protocol would have methods to
+introspect things like the name, arity and signature
+of the method.
+
+=item Instances
+
+The concept of an instance is a value which knows from
+what class it was created and contains a set of slots
+which correspond to the attributes in the class (and
+any superclasses).
+
+The instance sub-protocol would have methods to
+find the associated class, get/set the values in the
+slots or list the set of slots.
+
+=back
 
 =head2 Metacircularity
 
@@ -49,7 +123,96 @@ Here is this represented visually.
          :        |
       Object <----+
 
-XXX - explain why this is useful
+At first view this might seem hopelessly mind bending and
+not very useful. But the fact is, we must start somewhere.
+The idea of modeling a "class" can be a thought of a as a
+variant of the chicken-and-egg problem (which came first).
+
+In many OO languages, especially those that are not explicitly
+meta-circular, the idea of a "class" is simply part of the
+language and springs forth from the compiler fully formed.
+While this approach is perhaps easier to understand for some
+it leaves a large conceptual gap in the object system
+and puts the burden for object-system extensibility on the
+compiler authors.
+
+This proposal takes a different route, one taken by languages
+such as LISP and Smalltalk, whereby we model the idea of
+a "class" with a class itself. This is probably best
+illustrated through code (using the newly proposed syntax).
+
+B<AUTHORS NOTE:> Before we go too much further, I need to
+call attention to the capitalization of the word class. When
+we say "Class", we are speaking of the noun which indicates
+the actual item that models the concept of classes, when we
+say "class" we are speaking of the concept of a class. This
+distinction is very important.
+
+And now onto the code:
+
+    class Class ( extends => Object ) {
+        has $name;
+
+        has $superclasses = [];
+        has $attributes   = {};
+        has $methods      = {};
+    }
+
+As with all classes in our system, we are derived from the
+universal base class Object. Then we model Class to have
+a C<$name> attribute, a C<$superclasses> attribute, an
+C<$attributes> attribute and a C<$methods> attribute. If
+you stop and think for a moment, this is the base elements
+which make up a class (somewhat simplified of course).
+
+Of course we are back with our chicken-and-egg problem again
+because in order for this to work, several things had to
+exist. First the Object class must be there, second Class
+is itself a class (implemented in terms of itself). But this
+is where the bootstrap process comes into play. We simply
+use very low level primitives to construct all the necessary
+parts, then hook them together accordingly, using those
+similarly low level features.
+
+So basically what we end up with is a self-describing system
+which can be understood and explored in terms of itself as
+well as be extended by itself. The result is a very flexible
+and highly extensible system which keeps true to the idea of
+TIMTOWTDI at the very core.
+
+=head1 SEE ALSO
+
+=head2 Moose
+
+L<https://www.metacpan.org/module/Moose>
+
+=head2 LISP resources
+
+=over 4
+
+=item The Art of the Metaobject Protocol
+
+L<http://en.wikipedia.org/wiki/The_Art_of_the_Metaobject_Protocol>
+
+=item The Common Lisp Object System MetaObject Protocol
+
+L<http://www.alu.org/mop/index.html>
+
+=back
+
+=head2 Smalltalk resources
+
+=over 4
+
+=item Smalltalk "Blue Book"
+
+L<http://stephane.ducasse.free.fr/FreeBooks/BlueBook/>
+
+=item Smalltalk: a Reflective Language
+
+L<http://www2.parc.com/csl/groups/sda/projects/reflection96/docs/rivard/rivard.html>
+
+=back
 
 =head1 AUTHOR
 
