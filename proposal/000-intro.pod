@@ -23,7 +23,7 @@ These documents can be found in the F<000-mop> folder and
 they explain some of the core concepts of the class system.
 
 This really should be read first in order for the later
-documents to make sense. If nothing more just the intro
+documents to make sense. If nothing more, just the intro
 document should be read, the rest can be reviewed later on.
 
 =head2 Syntax and Semantics
