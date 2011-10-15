@@ -5,6 +5,24 @@ use warnings;
 
 use Test::More;
 
+=pod
+
+This test illustrates the "virtual" nature of
+attributes. While they are not public (meaning
+they are not accessible from outside the class)
+they are maybe better described as "protected",
+however, even that is not quite right. The best
+description really is "virtual", and really maps
+to what an old school Perl OO programmer might
+expect.
+
+The key thing here is predictability, no one
+likes to have to remember complex rules. This
+may seem unsophisticated to some, but it is
+understandable to everyone else.
+
+=cut
+
 use mop;
 
 BEGIN {
