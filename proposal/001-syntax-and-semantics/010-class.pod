@@ -154,6 +154,19 @@ opinion that warnings should also be enabled, but I know there is some
 debate as to the details of that (see L<common::sense>). So I believe
 that while strictures are for sure, warnings is up for debate.
 
+=head2 Can I use C<my> or C<our> within a class?
+
+It is my opinion that no, this should not be allowed. That said,
+any variables declared with C<my> or C<our> in the enclosing package
+will be visible within the class definition.
+
+=head2 Can I define a C<sub> within a class?
+
+Again, I am of the opinion that no, this should not be allowed. The
+same reason as stated above applied. Any C<sub> defined in the
+enclosing package will be visible, so there is no need to declare
+then within the class definition.
+
 =head1 NOTES
 
 I wonder if the best way to handle the class barewords would be to
