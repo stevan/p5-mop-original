@@ -6,6 +6,9 @@ Perl 5 MOP - Syntax & Semantics - Methods
 
 =head1 DESCRIPTION
 
+This document introduces the proposed method syntax for the
+new object system for Perl.
+
 =head1 SYNTAX
 
 =head1 QUESTIONS
