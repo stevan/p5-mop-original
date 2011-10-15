@@ -7,6 +7,13 @@ use mop::internal::class;
 use mop::internal::instance;
 use mop::internal::method;
 
+=pod
+
+This module should be able to give you an
+optimizer vtable for a given class.
+
+=cut
+
 sub WALKMETH {
     my ($class, $method_name, %opts) = @_;
     WALKCLASS(
