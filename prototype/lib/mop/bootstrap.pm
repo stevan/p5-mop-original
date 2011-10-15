@@ -216,6 +216,10 @@ sub init {
 
     $::Method->add_method( $::Method->new( name => 'get_name', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' ) } ) );
     $::Method->add_method( $::Method->new( name => 'get_body', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$body' ) } ) );
+    $::Method->add_method( $::Method->new( name => 'execute', body => sub {
+        my ($invocant, @args) = @_;
+        mop::internal::method::execute( $::SELF, $invocant, @args );
+    }));
 
     ## --------------------------------
     ## $::Attribute
