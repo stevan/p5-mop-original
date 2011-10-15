@@ -1,0 +1,73 @@
+=pod
+
+=head1 NAME
+
+Perl 5 MOP - Meta Object Protocol - Method Sub Protocol
+
+=head1 DESCRIPTION
+
+This document will describe the proposed API for the
+method sub-protocol of the MOP.
+
+Currently the method sub-protocol is very small, this is
+largely because the exact details of what we can have
+with methods is still unclear.
+
+Ideally methods would have signatures, which means it
+would be nice to have methods to introspect those
+signatures. However if this cannot be done, then the
+method protocol will likely stay this small.
+
+=head2 API
+
+The method sub-protocol is (at this stage) completely
+immutable. The reason being that we believe it is
+dangerous to allow the manipulation of method internals
+simply for the huge potential impact that could have.
+Instead you are encouraged to simply clone a method
+and change the values during the clone process.
+
+B<AUTHORS NOTE:> This is by no means a comprehensive
+list, nor is it a fixed list, of methods. This is simply
+the first draft of this, and a rough one at that.
+
+=head3 General
+
+=over 4
+
+=item C<get_name>
+
+This returns the name of this particular method as a string.
+
+=item C<get_body>
+
+This returns the body of this method as a CODE reference,
+which can be called using the normal CODE ref syntax.
+
+=item C<execute( $invocant, @args )>
+
+Given an C<$invocant> and an optional array of arguments,
+this will execute the method within the scope of the
+C<$invocant>.
+
+=item C<clone( %params )>
+
+Clone this object and override any internal elements using
+the values in C<%params>.
+
+=back
+
+=head1 AUTHOR
+
+Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2011 Infinity Interactive, Inc.
+
+L<http://www.iinteractive.com>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

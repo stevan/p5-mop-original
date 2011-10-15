@@ -1,0 +1,68 @@
+=pod
+
+=head1 NAME
+
+Perl 5 MOP - Meta Object Protocol - Attribute Sub Protocol
+
+=head1 DESCRIPTION
+
+This document will describe the proposed API for the
+attribute sub-protocol of the MOP.
+
+Currently the method sub-protocol is very small, and
+it will likely stay this way. However, as has been
+found with Moose, this sub-protocol is an extremely
+powerful extension point.
+
+=head2 API
+
+The attribute sub-protocol is (at this stage) completely
+immutable. The reason being that we believe it is
+dangerous to allow the manipulation of attribute internals
+simply for the huge potential impact that could have.
+Instead you are encouraged to simply clone an attribute
+and change the values during the clone process.
+
+B<AUTHORS NOTE:> This is by no means a comprehensive
+list, nor is it a fixed list, of methods. This is simply
+the first draft of this.
+
+=head3 General
+
+=over 4
+
+=item C<get_name>
+
+This returns the name of the attribute as a string.
+
+=item C<get_initial_value>
+
+This returns the initial value (if any) that the attribute
+was given.
+
+=item C<get_initial_value_for_instance>
+
+This returns a suitable copy of the initial value of the
+attribute to be used in instance construction.
+
+=item C<clone( %params )>
+
+Clone this object and override any internal elements using
+the values in C<%params>.
+
+=back
+
+=head1 AUTHOR
+
+Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2011 Infinity Interactive, Inc.
+
+L<http://www.iinteractive.com>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

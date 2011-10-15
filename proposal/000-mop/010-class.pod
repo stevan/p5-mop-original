@@ -1,0 +1,183 @@
+=pod
+
+=head1 NAME
+
+Perl 5 MOP - Meta Object Protocol - Class Sub Protocol
+
+=head1 DESCRIPTION
+
+This document will describe the proposed API for the
+class sub-protocol of the MOP.
+
+=head2 API
+
+As you will see, we are leaning on the side of immutability
+here, and only allowing the class to be changed in certain
+specific ways. This may be losened up over time, but we
+feel it is a good starting point.
+
+B<AUTHORS NOTE:> This is by no means a comprehensive
+list, nor is it a fixed list, of methods. This is simply
+the first draft of this, and a rough one at that.
+
+=head3 General
+
+These methods are simply accessors for specific metadata
+about a class.
+
+=over 4
+
+=item C<get_name>
+
+This returns the class name as a string.
+
+=item C<get_version>
+
+This returns the class version as a value (type of value is TBD).
+
+=item C<get_authority>
+
+This returns the class authority as a string.
+
+=item C<is_subclass_of( $class )>
+
+This is simply a predicate to determine if a given C<$class> is
+in the MRO of this class.
+
+=item C<clone( %params )>
+
+Clone this object and override any internal elements using
+the values in C<%params>.
+
+=back
+
+=head3 Events
+
+Right now we only have two events defined, but it is possible
+that we will make more.
+
+=over 4
+
+=item C<FINALIZE>
+
+Once a class has been completely constructed, this event method
+is called.
+
+=item C<CREATE ( \%params )>
+
+When a class must construct an instance, this method is called.
+The default action is to loop through all the attributes in the
+MRO and add slots to the instance accordingly and fill them with
+either the intial value, or a value from the C<%params>.
+
+=back
+
+=head3 Superclasses
+
+These methods provide access to the superclass list, as
+well as the compiled method resolution order of a class.
+
+=over 4
+
+=item C<get_superclasses>
+
+This returns an array reference which contains the superclasses
+for this given class.
+
+=item C<add_superclasses( \@superclasses )>
+
+This accepts an array reference of class objects which will be
+pushed onto the end of the superclass list.
+
+=item C<get_mro>
+
+This traverses the inheritance hierarchy to gather up all the
+classes in the same order in which method resolution would happen.
+
+=back
+
+=head3 Constructor/Destructor
+
+We propose that constructors and destructors be implemented
+as methods, but not be available through the normal method
+dispatch. The following methods provide access to those items.
+
+=over 4
+
+=item C<get_constructor>
+
+This returns the method object used for constructing the object.
+
+=item C<set_constructor( $method )>
+
+Given a C<$method>, this sets it to the value of the constructor.
+
+=item C<get_destructor>
+
+This returns the method object used for destructing the object.
+
+=item C<set_destructor( $method )>
+
+Given a C<$method>, this sets it to the value of the destructor.
+
+=back
+
+=head3 Attributes
+
+=over 4
+
+=item C<attribute_class>
+
+This is the default attribute class that should be used in making
+any new attributes for this class.
+
+=item C<get_attributes>
+
+This returns the set of attributes for this given class.
+
+=item C<add_attribute( $attribute )>
+
+This will add an C<$attribute> object to the set of attributes
+in this class.
+
+=back
+
+=head3 Methods
+
+=over 4
+
+=item C<method_class>
+
+This is the default method class that should be used in making any
+new method for this class.
+
+=item C<get_methods>
+
+This returns the set of method for this given class.
+
+=item C<add_method( $method )>
+
+This will add an C<$method> object to the set of methods in this
+class.
+
+=item C<find_method( $name )>
+
+Given a C<$name>, this will attempt to locate a method by that name
+within the MRO of the class.
+
+=back
+
+=head1 AUTHOR
+
+Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2011 Infinity Interactive, Inc.
+
+L<http://www.iinteractive.com>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
