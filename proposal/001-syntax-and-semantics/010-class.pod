@@ -15,6 +15,8 @@ The main component of any object system is the class
 declarations, and for this we propose a new C<class> keyword
 with which to declare classes.
 
+=head2 Class definition
+
 The new C<class> keyword helps to separate the old style
 classes from the new style classes. This will not only
 contribute to easier to maintain backwards compatibility,
@@ -102,6 +104,10 @@ It is important to note that the metaclass is not
 given as a string, but as a first-class citizen bareword.
 
 =back
+
+Additionally, there would also be unnamed, or anonymous
+variants of the class syntax as well. These would look
+and act the same way, just without a name.
 
 =head1 QUESTIONS
 
