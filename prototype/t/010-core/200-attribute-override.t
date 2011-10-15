@@ -17,12 +17,12 @@ BEGIN {
     };
 
     class 'FooBar' => ( extends => Foo() ) => sub {
-        has( my $bar );
+        has( my $bar ) = 100;
         method 'derived_bar' => sub { $bar };
     };
 }
 
-my $foobar = FooBar->new( bar => 100 );
+my $foobar = FooBar->new;
 
 is($foobar->bar, 100, '... got the expected value (for the superclass method)');
 is($foobar->derived_bar, 100, '... got the expected value (for the derived method)');
