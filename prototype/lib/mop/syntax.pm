@@ -7,6 +7,7 @@ use mop::syntax::dispatchable;
 
 use base 'Devel::Declare::Context::Simple';
 
+use Sub::Name      ();
 use Devel::Declare ();
 use B::Hooks::EndOfScope;
 use Carp qw[ confess ];
@@ -19,6 +20,15 @@ sub setup_for {
         *{ $pkg . '::class'  } = sub (&@) {};
         *{ $pkg . '::method' } = sub (&)  {};
         *{ $pkg . '::has'    } = sub ($)  {};
+        *{ $pkg . '::BUILD'  } = sub (&)  {
+            my $body = shift;
+            $::CLASS->set_constructor(
+                $::CLASS->method_class->new(
+                    name => 'BUILD',
+                    body => Sub::Name::subname( 'BUILD', $body )
+                )
+            )
+        };
     }
 
     my $context = $class->new;
@@ -65,7 +75,7 @@ sub class_parser {
 
         {
             no strict 'refs';
-            *{"${caller}::${name}"} = sub () { $class };
+            *{"${caller}::${name}"} = Sub::Name::subname( $name, sub () { $class } );
         }
 
         return;
@@ -114,7 +124,7 @@ sub method_parser {
         $::CLASS->add_method(
             $::Method->new(
                 name => $name,
-                body => $body
+                body => Sub::Name::subname( $name, $body )
             )
         )
     } );
