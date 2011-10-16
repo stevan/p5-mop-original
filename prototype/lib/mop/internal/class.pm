@@ -53,6 +53,32 @@ sub get_constructor {
     mop::internal::instance::get_slot_at( $class, '$constructor' );
 }
 
+sub get_compatible_class {
+    my @classes = @_;
+
+    return unless @classes;
+
+    my $compatible = shift @classes;
+    for my $class ( @classes ) {
+        if ( $class->is_subclass_of( $compatible ) ) {
+            # replace the class with a subclass of itself
+            $compatible = $class;
+        }
+        elsif ( $compatible->is_subclass_of( $class  ) ) {
+            # it's already okay
+        }
+        elsif ( $class->equals( $compatible ) ) {
+            # it's already okay
+        }
+        else {
+            # reconciling this group of metaclasses isn't possible
+            return;
+        }
+    }
+
+    return $compatible;
+}
+
 1;
 
 __END__

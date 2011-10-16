@@ -233,6 +233,23 @@ sub init {
     }));
 
     ## --------------------------------
+    ## enable metaclass compatibility checks
+    ## --------------------------------
+
+    $::Class->set_constructor( $::Method->new( name => 'BUILD', body => sub {
+        my @superclasses = @{ mop::internal::instance::get_slot_at( $::SELF, '$superclasses' ) };
+        if ( @superclasses ) {
+            my $compatible = mop::internal::class::get_compatible_class( $::CLASS, map { mop::internal::instance::get_class( $_ ) } @superclasses );
+            if ( !defined( $compatible ) ) {
+                die "While creating class " . $::SELF->get_name . ": "
+                  . "Metaclass " . $::CLASS->get_name . " is not compatible "
+                  . "with the metaclass of its superclasses: "
+                  . join(', ', map { mop::internal::instance::get_class( $_ )->get_name } @superclasses);
+            }
+        }
+    } ) );
+
+    ## --------------------------------
     ## END BOOTSTRAP
     ## --------------------------------
 
