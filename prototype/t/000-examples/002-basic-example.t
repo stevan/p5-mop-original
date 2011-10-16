@@ -9,55 +9,6 @@ use mop;
 
 BEGIN {
 
-    # FIXME:
-    # we should be able to import
-    # these, but exactly how is
-    # currently escaping me.
-    # - SL
-    my ($self, $class);
-
-    class 'BankAccount' => sub {
-        has( my $balance ) = 0;
-
-        method 'balance' => sub { $balance };
-
-        method 'deposit' => sub {
-            my $amount = shift;
-            $balance += $amount;
-        };
-
-        method 'withdraw' => sub {
-            my $amount = shift;
-            ($balance >= $amount)
-                || die "Account overdrawn";
-            $balance -= $amount;
-        };
-    };
-
-    class 'CheckingAccount' => (extends => BankAccount()) => sub {
-        has my $overdraft_account;
-
-        method 'overdraft_account' => sub { $overdraft_account };
-
-        method 'withdraw' => sub {
-            my $amount = shift;
-
-            my $overdraft_amount = $amount - $self->balance;
-
-            if ( $overdraft_account && $overdraft_amount > 0 ) {
-                $overdraft_account->withdraw( $overdraft_amount );
-                $self->deposit( $overdraft_amount );
-            }
-
-            $self->NEXTMETHOD( 'withdraw', $amount );
-        };
-    };
-}
-
-=pod
-
-Here is how this example might look with the real syntax:
-
   class BankAccount {
       has $balance = 0;
 
@@ -72,7 +23,7 @@ Here is how this example might look with the real syntax:
       }
   }
 
-  class CheckingAccount extends BankAccount {
+  class CheckingAccount (extends => BankAccount()) {
       has $overdraft_account;
 
       method overdraft_account { $overdraft_account }
@@ -86,11 +37,11 @@ Here is how this example might look with the real syntax:
               $self->deposit( $overdraft_amount );
           }
 
-          $self->next::method( $amount );
+          $self->NEXTMETHOD( 'withdraw' => $amount );
       }
   }
 
-=cut
+}
 
 ok BankAccount->is_subclass_of( $::Object ), '... BankAccount is a subclass of Object';
 

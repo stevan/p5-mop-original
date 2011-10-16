@@ -14,22 +14,13 @@ This test immitates the Smalltalk style
 parallel metaclass way of doing class
 methods.
 
-    class FooMeta extends Class {
-        method static_method { 'STATIC' }
-    }
-
-    class Foo ( metaclass => FooMeta ) {
-        method hello            { 'FOO' }
-        method hello_from_class { $self->class->static_method }
-    }
-
 =cut
 
 BEGIN {
     # create a meta-class (class to create classes with)
-    class 'FooMeta' => (extends => $::Class) => sub {
-        method 'static_method' => sub { 'STATIC' };
-    };
+    class FooMeta (extends => $::Class) {
+        method static_method { 'STATIC' }
+    }
 }
 
 is FooMeta->class, $::Class, '... got the class we expected';
@@ -40,10 +31,10 @@ ok FooMeta->is_subclass_of( $::Class ), '... FooMeta is a subclass of Class';
 
 BEGIN {
     # create a class (using our meta-class)
-    class 'Foo' => (metaclass => FooMeta) => sub {
-        method 'hello'            => sub { 'FOO' };
-        method 'hello_from_class' => sub { $::CLASS->static_method }
-    };
+    class Foo (metaclass => FooMeta) {
+        method hello            { 'FOO' }
+        method hello_from_class { $::CLASS->static_method }
+    }
 }
 
 is Foo->class, FooMeta, '... got the class we expected';

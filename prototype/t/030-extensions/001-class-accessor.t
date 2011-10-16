@@ -10,10 +10,9 @@ use Test::Moose;
 use mop;
 
 BEGIN {
-    my ($self, $class);
 
-    class 'ClassAccessorMeta' => (extends => $::Class) =>sub {
-        method 'FINALIZE' => sub {
+    class ClassAccessorMeta (extends => $::Class) {
+        method FINALIZE {
 
             foreach my $attribute ( values %{ $self->get_attributes } ) {
                 my $name = $attribute->get_name;
@@ -32,16 +31,16 @@ BEGIN {
             }
 
             $self->NEXTMETHOD('FINALIZE');
-        };
-    };
+        }
+    }
 
 }
 
 BEGIN {
 
-    class 'Foo' => (metaclass => ClassAccessorMeta) => sub {
-        has( my $bar );
-        has( my $baz );
+    class Foo (metaclass => ClassAccessorMeta) {
+        has $bar;
+        has $baz;
     };
 }
 

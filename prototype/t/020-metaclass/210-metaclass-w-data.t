@@ -10,16 +10,16 @@ use mop;
 
 BEGIN {
     # create a meta-class (class to create classes with)
-    class 'MetaWithData' => (extends => $::Class) => sub {
+    class MetaWithData (extends => $::Class) {
 
-        has( my $data ) = [];
+        has $data = [];
 
-        method 'get_data' => sub { $data };
-        method 'add_to_data' => sub {
-            my $value = shift;
+        method get_data { $data }
+
+        method add_to_data ($value) {
             push @$data => $value;
         }
-    };
+    }
 }
 
 is MetaWithData->class, $::Class, '... got the class we expected';
@@ -31,18 +31,18 @@ ok MetaWithData->is_subclass_of( $::Class ), '... MetaWithData is a subclass of 
 BEGIN {
 
     # create a class (using our meta-class)
-    class 'Foo' => (metaclass => MetaWithData) => sub {
-        method 'get_meta_data' => sub {
+    class Foo (metaclass => MetaWithData) {
+        method get_meta_data {
             $::CLASS->get_data
         }
-    };
+    }
 
     # create a class (using our meta-class and extra data)
-    class 'Bar' => (metaclass => MetaWithData, data => [ 1, 2, 3 ]) => sub {
-        method 'get_meta_data' => sub {
+    class Bar (metaclass => MetaWithData, data => [ 1, 2, 3 ]) {
+        method get_meta_data {
             $::CLASS->get_data
         }
-    };
+    }
 }
 
 is Foo->class, MetaWithData, '... got the class we expected';

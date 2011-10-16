@@ -9,37 +9,34 @@ use mop;
 
 BEGIN {
 
-    my ($self, $class);
+    class Foo {
 
-    class 'Foo' => sub {
+        has $collector = [];
 
-        has( my $collector ) = [];
+        method collector { $collector };
 
-        method 'collector' => sub { $collector };
-
-        method 'collect' => sub {
-            my $stuff = shift;
+        method collect ($stuff) {
             push @{ $collector } => $stuff;
-        };
+        }
 
         BUILD {
             $self->collect( 'Foo' );
-        };
-    };
+        }
+    }
 
-    class 'Bar' => (extends => Foo()) => sub {
+    class Bar (extends => Foo()) {
 
         BUILD {
             $self->collect( 'Bar' );
-        };
-    };
+        }
+    }
 
-    class 'Baz' => (extends => Bar()) => sub {
+    class Baz (extends => Bar()) {
 
         BUILD {
             $self->collect( 'Baz' );
-        };
-    };
+        }
+    }
 
 }
 

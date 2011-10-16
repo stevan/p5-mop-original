@@ -16,9 +16,7 @@ but it should link back to the same class data.
 
 BEGIN {
 
-    my ($self, $class);
-
-    class 'Foo' => sub {};
+    class Foo {}
 }
 
 my $foo = Foo->new;

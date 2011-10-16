@@ -19,13 +19,11 @@ my $BAZ;
 
 BEGIN {
 
-    my ($self, $class);
-
     $BAZ = [];
 
-    class 'Foo' => sub {
-        has( my $bar ) = { baz => $BAZ };
-        method 'bar' => sub { $bar };
+    class Foo {
+        has $bar = { baz => $BAZ };
+        method bar { $bar }
     };
 }
 

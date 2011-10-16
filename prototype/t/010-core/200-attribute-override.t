@@ -27,17 +27,15 @@ use mop;
 
 BEGIN {
 
-    my ($self, $class);
+    class Foo {
+        has $bar = 10;
+        method bar { $bar }
+    }
 
-    class 'Foo' => sub {
-        has( my $bar ) = 10;
-        method 'bar' => sub { $bar };
-    };
-
-    class 'FooBar' => ( extends => Foo() ) => sub {
-        has( my $bar ) = 100;
-        method 'derived_bar' => sub { $bar };
-    };
+    class FooBar ( extends => Foo() ) {
+        has $bar = 100;
+        method derived_bar { $bar }
+    }
 }
 
 my $foobar = FooBar->new;

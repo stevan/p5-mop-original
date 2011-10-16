@@ -9,48 +9,39 @@ use mop;
 
 BEGIN {
 
-    # FIXME:
-    # we should be able to import
-    # these, but exactly how is
-    # currently escaping me.
-    # - SL
-    my ($self, $class);
+    class Point {
+        has $x = 0;
+        has $y = 0;
 
-    class 'Point' => sub {
-        has( my $x ) = 0;
-        has( my $y ) = 0;
+        method x { $x }
+        method y { $y }
 
-        method 'x' => sub { $x };
-        method 'y' => sub { $y };
-
-        method 'set_x' => sub {
-            my $new_x = shift;
+        method set_x ($new_x) {
             $x = $new_x;
-        };
+        }
 
-        method 'clear' => sub {
+        method clear {
             ($x, $y) = (0, 0);
-        };
+        }
 
-        method 'dump' => sub {
+        method dump {
             +{ x => $self->x, y => $self->y }
-        };
-    };
+        }
+    }
 
     # ... subclass it ...
 
-    class 'Point3D' => (extends => Point()) =>sub {
-        has( my $z ) = 0;
+    class Point3D (extends => Point()) {
+        has $z = 0;
 
-        method 'z' => sub { $z };
+        method z { $z }
 
-        method 'dump' => sub {
+        method dump {
             my $orig = $self->NEXTMETHOD('dump');
             $orig->{'z'} = $z;
             $orig;
-        };
-    };
-
+        }
+    }
 }
 
 ## Test the class
