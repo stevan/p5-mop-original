@@ -5,56 +5,81 @@ use warnings;
 
 use mop::syntax::dispatchable;
 
-use PadWalker     ();
-use Devel::Caller ();
-use Sub::Name     ();
+use base 'Devel::Declare::Context::Simple';
 
-sub has (\$@) : lvalue {
-    my $var      = shift;
+use Devel::Declare ();
+use B::Hooks::EndOfScope;
+use Carp qw[ confess ];
+
+sub setup_for {
+    my $class = shift;
+    my $pkg   = shift;
+    {
+        no strict 'refs';
+        *{ $pkg . '::class'  } = sub (&@) {};
+        *{ $pkg . '::method' } = sub (&)  {};
+        *{ $pkg . '::has'    } = sub ($)  {};
+    }
+
+    my $context = $class->new;
+    Devel::Declare->setup_for(
+        $pkg,
+        {
+            'class'  => { const => sub { $context->class_parser( @_ ) } },
+            'method' => { const => sub { $context->method_parser( @_ )    } },
+            'has'    => { const => sub { $context->attribute_parser( @_ ) } },
+        }
+    );
+}
+
+sub class_parser {
+    my $self = shift;
+
+    $self->init( @_ );
+
+    $self->skip_declarator;
+
+    my $name   = $self->strip_name;
+    my $proto  = $self->strip_proto;
+    my $caller = $self->get_curstash_name;
+
+    my $inject = $self->scope_injector_call
+               . 'my $d = shift;'
+               . '$d->{"class"} = ' . __PACKAGE__ . '->build_class('
+                    . 'name   => "' . $name . '", '
+                    . 'caller => "' . $caller . '"'
+                    . ($proto ? (', ' . $proto) : '')
+               . ');'
+               . 'local $::CLASS = $d->{"class"};'
+               . 'my ($self, $class);';
+    $self->inject_if_block( $inject );
+
+    $self->shadow(sub (&@) {
+        my $body = shift;
+        my $data = {};
+
+        $body->( $data );
+
+        my $class = $data->{'class'};
+        $class->FINALIZE;
+
+        {
+            no strict 'refs';
+            *{"${caller}::${name}"} = sub () { $class };
+        }
+
+        return;
+    });
+
+    return;
+}
+
+sub build_class {
+    shift;
     my %metadata = @_;
 
-	my %names = reverse %{ PadWalker::peek_sub( Devel::Caller::caller_cv( 1 ) ) };
-	my $name = $names{ $var };
-
-    my $pad = PadWalker::peek_my(2);
-    ${ $pad->{'$class'} }->add_attribute(
-        ${ $pad->{'$class'} }->attribute_class->new(
-            name          => $name,
-            initial_value => $var,
-            %metadata
-        )
-    );
-
-    $$var;
-}
-
-sub method {
-    my $body = pop @_;
-    my ($name, %metadata) = @_;
-    my $pad = PadWalker::peek_my(2);
-    ${ $pad->{'$class'} }->add_method(
-        ${ $pad->{'$class'} }->method_class->new(
-            name => $name,
-            body => Sub::Name::subname( $name, $body ),
-            %metadata
-        )
-    );
-}
-
-sub BUILD (&) {
-    my $body = shift;
-    my $pad  = PadWalker::peek_my(2);
-    ${ $pad->{'$class'} }->set_constructor(
-        ${ $pad->{'$class'} }->method_class->new(
-            name => 'BUILD',
-            body => Sub::Name::subname( 'BUILD', $body )
-        )
-    );
-}
-
-sub class {
-    my $body = pop @_;
-    my ($name, %metadata) = @_;
+    my $name   = delete $metadata{ 'name' };
+    my $caller = delete $metadata{ 'caller' };
 
     my $class_Class = $::Class;
     if ( exists $metadata{ 'metaclass' } ) {
@@ -65,52 +90,97 @@ sub class {
         $metadata{ 'superclasses' } = [ delete $metadata{ 'extends' } ];
     }
 
-    my $caller = caller();
-
-    my $class = $class_Class->new(
+    $class_Class->new(
         name => ($caller eq 'main' ? $name : "${caller}::${name}"),
         %metadata
     );
-    {
-        local $::CLASS = $class;
-        $body->();
+}
+
+sub method_parser {
+    my $self = shift;
+
+    $self->init( @_ );
+
+    $self->skip_declarator;
+
+    my $name   = $self->strip_name;
+    my $proto  = $self->strip_proto;
+    my $inject = $self->scope_injector_call;
+    $inject .= 'my (' . $proto . ') = @_;' if $proto;
+
+    $self->inject_if_block( $inject );
+    $self->shadow( sub (&) {
+        my $body = shift;
+        $::CLASS->add_method(
+            $::Method->new(
+                name => $name,
+                body => $body
+            )
+        )
+    } );
+
+    return;
+}
+
+sub attribute_parser {
+    my $self = shift;
+
+    $self->init( @_ );
+
+    $self->skip_declarator;
+    $self->skipspace;
+
+    my $name;
+
+    my $linestr = $self->get_linestr;
+    my $next    = substr( $linestr, $self->offset, 1 );
+    if ( $next eq '$' ) { # || $next eq '@' || $next eq '%' ) {
+        my $length = Devel::Declare::toke_scan_ident( $self->offset );
+        $name = substr( $linestr, $self->offset, $length  );
+        substr( $linestr, $self->offset, $length ) = '(\(my ' . $name . '))';
+        $self->set_linestr( $linestr );
     }
-    $class->FINALIZE;
-    {
-        no strict 'refs';
-        *{"${caller}::${name}"} = sub () { $class };
-    }
-    $class;
+
+    $self->shadow(sub ($) : lvalue {
+        my $initial_value;
+        $::CLASS->add_attribute(
+            $::Attribute->new(
+                name          => $name,
+                initial_value => \$initial_value
+            )
+        );
+        $initial_value
+    });
+
+    return;
+}
+
+sub inject_scope {
+    my $class  = shift;
+    my $inject = shift || ';';
+    on_scope_end {
+        my $linestr = Devel::Declare::get_linestr;
+        return unless defined $linestr;
+        my $offset  = Devel::Declare::get_linestr_offset;
+        if ( $inject eq ';' ) {
+            substr( $linestr, $offset, 0 ) = $inject;
+        }
+        else {
+            substr( $linestr, $offset - 1, 0 ) = $inject;
+        }
+        Devel::Declare::set_linestr($linestr);
+    };
 }
 
 1;
 
 __END__
 
-=pod
+# ABSTRACT: A Moosey solution to this problem
 
-=head1 NAME
+=head1 SYNOPSIS
 
-mop::syntax
+  use mop::syntax;
 
 =head1 DESCRIPTION
 
-The primary responsibility of these 3 functions is to provide a
-sugar layer for the creation of classes. Exactly how this would
-work in a real implementation is unknown, but this does the job
-(in a kind of scary PadWalker-ish way) for now.
-
-=head1 AUTHOR
-
-Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
-
-=head1 COPYRIGHT AND LICENSE
-
-Copyright 2011 Infinity Interactive, Inc.
-
-L<http://www.iinteractive.com>
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
-
-=cut

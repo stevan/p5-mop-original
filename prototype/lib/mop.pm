@@ -31,17 +31,7 @@ use mop::syntax;
 
 mop::bootstrap::init();
 
-sub import {
-    my $from = shift;
-    my $to   = caller;
-    {
-         no strict 'refs';
-         *{"${to}::class"}   = \&mop::syntax::class;
-         *{"${to}::has"}     = \&mop::syntax::has;
-         *{"${to}::method"}  = \&mop::syntax::method;
-         *{"${to}::BUILD"}   = \&mop::syntax::BUILD;
-    }
-}
+sub import { mop::syntax->setup_for( caller ) }
 
 1;
 

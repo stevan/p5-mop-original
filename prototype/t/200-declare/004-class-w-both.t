@@ -5,8 +5,7 @@ use warnings;
 
 use Test::More;
 
-use mop ();
-use mop::declare;
+use mop;
 
 BEGIN {
     class Foo {
