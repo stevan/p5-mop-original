@@ -75,7 +75,8 @@ sub method_parser {
 
     my $name   = $self->strip_name;
     my $proto  = $self->strip_proto;
-    my $inject = $self->scope_injector_call() . 'my (' . $proto . ') = @_;';
+    my $inject = $self->scope_injector_call();
+    $inject .= 'my (' . $proto . ') = @_;' if $proto;
 
     $self->inject_if_block( $inject );
     $self->shadow( sub (&) {
