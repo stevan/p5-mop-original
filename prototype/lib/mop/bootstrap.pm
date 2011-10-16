@@ -183,6 +183,7 @@ sub init {
         shift @mro;
         scalar grep { $super->id eq $_->id } @mro;
     }));
+    $::Class->add_method( $::Method->new( name => 'equals', body => sub { $::SELF->id eq $_[0]->id } ) );
 
     ## class protocol
 
@@ -208,7 +209,7 @@ sub init {
 
     $::Object->add_method( $::Method->new( name => 'id',    body => sub { mop::internal::instance::get_uuid( $::SELF )  } ) );
     $::Object->add_method( $::Method->new( name => 'class', body => sub { mop::internal::instance::get_class( $::SELF ) } ) );
-    $::Object->add_method( $::Method->new( name => 'is_a',  body => sub { $::CLASS->id eq $_[0]->id || $::CLASS->is_subclass_of( $_[0] ) } ) );
+    $::Object->add_method( $::Method->new( name => 'is_a',  body => sub { $::CLASS->equals( $_[0] ) || $::CLASS->is_subclass_of( $_[0] ) } ) );
 
     ## --------------------------------
     ## $::Method
