@@ -37,7 +37,7 @@ BEGIN {
               $self->deposit( $overdraft_amount );
           }
 
-          $self->NEXTMETHOD( 'withdraw' => $amount );
+          $self->NEXTMETHOD( $amount );
       }
   }
 

@@ -7,7 +7,7 @@ use mop::internal::dispatcher;
 
 sub NEXTMETHOD {
     my $invocant    = shift;
-    my $method_name = shift;
+    my $method_name = (split '::' => ((caller(1))[3]))[-1];
     mop::internal::dispatcher::NEXTMETHOD( $method_name, $invocant, @_ );
 }
 

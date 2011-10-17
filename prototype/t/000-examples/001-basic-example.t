@@ -37,7 +37,7 @@ BEGIN {
         method z { $z }
 
         method dump {
-            my $orig = $self->NEXTMETHOD('dump');
+            my $orig = $self->NEXTMETHOD;
             $orig->{'z'} = $z;
             $orig;
         }
