@@ -177,12 +177,8 @@ sub init {
 
     ## predicate methods ...
 
-    $::Class->add_method( $::Method->new( name => 'is_subclass_of', body => sub {
-        my $super = shift;
-        my @mro   = @{ $::SELF->get_mro };
-        shift @mro;
-        scalar grep { $super->id eq $_->id } @mro;
-    }));
+    $::Class->add_method( $::Method->new( name => 'is_subclass_of', body => sub { mop::internal::class::is_subclass_of( $::SELF, $_[0] ) } ) );
+    $::Class->add_method( $::Method->new( name => 'equals', body => sub { mop::internal::class::equals( $::SELF, $_[0] ) } ) );
 
     ## class protocol
 
@@ -208,7 +204,7 @@ sub init {
 
     $::Object->add_method( $::Method->new( name => 'id',    body => sub { mop::internal::instance::get_uuid( $::SELF )  } ) );
     $::Object->add_method( $::Method->new( name => 'class', body => sub { mop::internal::instance::get_class( $::SELF ) } ) );
-    $::Object->add_method( $::Method->new( name => 'is_a',  body => sub { $::CLASS->id eq $_[0]->id || $::CLASS->is_subclass_of( $_[0] ) } ) );
+    $::Object->add_method( $::Method->new( name => 'is_a',  body => sub { $::CLASS->equals( $_[0] ) || $::CLASS->is_subclass_of( $_[0] ) } ) );
 
     ## --------------------------------
     ## $::Method
@@ -230,6 +226,23 @@ sub init {
     $::Attribute->add_method( $::Method->new( name => 'get_initial_value_for_instance', body => sub {
         mop::internal::attribute::get_initial_value_for_instance( $::SELF )
     }));
+
+    ## --------------------------------
+    ## enable metaclass compatibility checks
+    ## --------------------------------
+
+    $::Class->set_constructor( $::Method->new( name => 'BUILD', body => sub {
+        my @superclasses = @{ mop::internal::instance::get_slot_at( $::SELF, '$superclasses' ) };
+        if ( @superclasses ) {
+            my $compatible = mop::internal::class::get_compatible_class( $::CLASS, map { mop::internal::instance::get_class( $_ ) } @superclasses );
+            if ( !defined( $compatible ) ) {
+                die "While creating class " . $::SELF->get_name . ": "
+                  . "Metaclass " . $::CLASS->get_name . " is not compatible "
+                  . "with the metaclass of its superclasses: "
+                  . join(', ', map { mop::internal::instance::get_class( $_ )->get_name } @superclasses);
+            }
+        }
+    } ) );
 
     ## --------------------------------
     ## END BOOTSTRAP
