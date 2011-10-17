@@ -17,27 +17,22 @@ sub setup_for {
     my $pkg   = shift;
     {
         no strict 'refs';
-        *{ $pkg . '::class'  } = sub (&@) {};
-        *{ $pkg . '::method' } = sub (&)  {};
-        *{ $pkg . '::has'    } = sub ($@) {};
-        *{ $pkg . '::BUILD'  } = sub (&)  {
-            my $body = shift;
-            $::CLASS->set_constructor(
-                $::CLASS->method_class->new(
-                    name => 'BUILD',
-                    body => Sub::Name::subname( 'BUILD', $body )
-                )
-            )
-        };
+        *{ $pkg . '::class'    } = sub (&@) {};
+        *{ $pkg . '::method'   } = sub (&)  {};
+        *{ $pkg . '::has'      } = sub ($@) {};
+        *{ $pkg . '::BUILD'    } = sub (&)  {};
+        *{ $pkg . '::DEMOLISH' } = sub (&)  {};
     }
 
     my $context = $class->new;
     Devel::Declare->setup_for(
         $pkg,
         {
-            'class'  => { const => sub { $context->class_parser( @_ ) } },
-            'method' => { const => sub { $context->method_parser( @_ )    } },
-            'has'    => { const => sub { $context->attribute_parser( @_ ) } },
+            'class'    => { const => sub { $context->class_parser( @_ )     } },
+            'method'   => { const => sub { $context->method_parser( @_ )    } },
+            'has'      => { const => sub { $context->attribute_parser( @_ ) } },
+            'BUILD'    => { const => sub { $context->BUILD_parser( @_ )     } },
+            'DEMOLISH' => { const => sub { $context->DEMOLISH_parser( @_ )  } },
         }
     );
 }
@@ -136,6 +131,51 @@ sub method_parser {
             $::CLASS->method_class->new(
                 name => $name,
                 body => Sub::Name::subname( $name, $body )
+            )
+        )
+    } );
+
+    return;
+}
+
+sub BUILD_parser {
+    my $self = shift;
+
+    $self->init( @_ );
+
+    $self->skip_declarator;
+
+    my $proto  = $self->strip_proto;
+    my $inject = $self->scope_injector_call;
+    $inject .= 'my (' . $proto . ') = @_;' if $proto;
+
+    $self->inject_if_block( $inject );
+    $self->shadow( sub (&) {
+        my $body = shift;
+        $::CLASS->set_constructor(
+            $::CLASS->method_class->new(
+                name => 'BUILD',
+                body => Sub::Name::subname( 'BUILD', $body )
+            )
+        )
+    } );
+
+    return;
+}
+
+sub DEMOLISH_parser {
+    my $self = shift;
+
+    $self->init( @_ );
+
+    $self->skip_declarator;
+    $self->inject_if_block( $self->scope_injector_call );
+    $self->shadow( sub (&) {
+        my $body = shift;
+        $::CLASS->set_destructor(
+            $::CLASS->method_class->new(
+                name => 'DEMOLISH',
+                body => Sub::Name::subname( 'DEMOLISH', $body )
             )
         )
     } );
