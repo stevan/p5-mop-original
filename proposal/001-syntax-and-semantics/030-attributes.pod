@@ -77,14 +77,14 @@ as well.
 
 Now, in an ideal world (but not currently supported in the
 prototype), we would be able to actually just  do the
-following in cases where the rhs of C<=> was a value and
-not an expression.
+following in cases where the rhs of C<=> was a expression
+and not a statement.
 
   has $bar = Some::Object->new;
 
 This would be transformed internally to be a thunk and to
 behave just as the C<do> block behaves above, but it would
-be a shortcut for simple non-expression cases.
+be a shortcut for simple non-statement cases.
 
 =head1 QUESTIONS
 
