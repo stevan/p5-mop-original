@@ -100,6 +100,17 @@ sub build_class {
         $metadata{ 'superclasses' } = [ delete $metadata{ 'extends' } ];
     }
 
+    my @superclasses = @{ $metadata{ 'superclasses' } || [] };
+
+    if ( @superclasses ) {
+        my $compatible = mop::internal::class::get_compatible_class(
+            $class_Class,
+            map { mop::internal::instance::get_class( $_ ) } @superclasses
+        );
+        $class_Class = $compatible
+            if defined $compatible;
+    }
+
     $class_Class->new(
         name => ($caller eq 'main' ? $name : "${caller}::${name}"),
         %metadata
