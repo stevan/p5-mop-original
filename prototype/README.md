@@ -31,12 +31,8 @@ such scary and tricky techniques.
 * add &clone methods to all the elements of the MOP
     * specifically methods and attributes
 * build out an instance protocol
-* implement DEMOLISH
 
 # Things to ponder
 
-* moving the "call all BUILD methods" to the internals::class module
-    * same with handling DEMOLISH
-    * or perhaps this belongs in the DISPATCHER?
 * adding support for @foo and %bar with `has`
-    * this could get really messy
+    * this could get really messy, i don't like it
