@@ -23,7 +23,19 @@ sub create {
 sub get_initial_value_for_instance {
     my $attr = shift;
     my $value = ${ mop::internal::instance::get_slot_at( $attr, '$initial_value' ) };
-    $value = Clone::clone( $value ) if ref $value;
+
+    if ( ref $value ) {
+        if ( ref $value eq 'ARRAY' || ref $value eq 'HASH' ) {
+            $value = Clone::clone( $value );
+        }
+        elsif ( ref $value eq 'CODE' ) {
+            $value = $value->();
+        }
+        else {
+            die "References of type(" . ref $value . ") are not supported";
+        }
+    }
+
     return \$value;
 }
 

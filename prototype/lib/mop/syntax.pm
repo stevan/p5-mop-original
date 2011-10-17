@@ -210,11 +210,22 @@ sub attribute_parser {
             $proto = Devel::Declare::get_lex_stuff();
             $full_length += $length;
             Devel::Declare::clear_lex_stuff();
+            $self->inc_offset( $length );
+        }
+
+        $self->skipspace;
+        if ( substr( $linestr, $self->offset, 1 ) eq '=' ) {
+            $self->inc_offset( 1 );
+            $self->skipspace;
+            if ( substr( $linestr, $self->offset, 1 ) eq '{' ) {
+                substr( $linestr, $self->offset, 0 ) = 'sub';
+            }
         }
 
         substr( $linestr, $old_offset, $full_length ) = '(\(my ' . $name . ')' . ( $proto ? (', (' . $proto) : '') . ')';
 
         $self->set_linestr( $linestr );
+        $self->inc_offset( $full_length );
     }
 
     $self->shadow(sub ($@) : lvalue {

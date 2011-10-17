@@ -22,7 +22,7 @@ BEGIN {
     $BAZ = [];
 
     class Foo {
-        has $bar = { baz => $BAZ };
+        has $bar = +{ baz => $BAZ };
         method bar { $bar }
     };
 }
