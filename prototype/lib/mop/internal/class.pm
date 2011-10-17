@@ -39,7 +39,10 @@ sub get_mro {
     my $class = shift;
     return [
         $class,
-        map { @{ get_mro( $_ ) } } @{ mop::internal::instance::get_slot_at( $class, '$superclasses' ) }
+        map {
+            @{ get_mro( $_ ) }
+        } @{ mop::internal::instance::get_slot_at( $class, '$superclasses' ) || [] }
+                # NOTE: the C<|| []> stuff fixes an issue during global destruction
     ]
 }
 
