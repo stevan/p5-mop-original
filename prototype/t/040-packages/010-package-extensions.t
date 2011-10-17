@@ -37,15 +37,14 @@ BEGIN {
     use strict;
     use warnings;
     use mop;
-    my ($self, $class);
 
-    class 'Bar' => sub {
-        method 'baz' => sub { 'Foo::Bar::baz' };
-    };
+    class Bar {
+        method baz { 'Foo::Bar::baz' }
+    }
 
-    class 'Baz' => sub {
-        method 'gorch' => sub { 'Foo::Baz::gorch' };
-    };
+    class Baz {
+        method gorch { 'Foo::Baz::gorch' }
+    }
 }
 
 {
@@ -64,7 +63,6 @@ BEGIN {
     use strict;
     use warnings;
     use mop;
-    my ($self, $class);
 
     our @ISA = ('Foo');
 
@@ -72,15 +70,15 @@ BEGIN {
     # make sure to inherit from the
     # Baz in the parent, this is a
     # nice generic way to do this.
-    class 'Baz' => (extends => __PACKAGE__->SUPER::Baz) => sub {
+    class Baz (extends => __PACKAGE__->SUPER::Baz) {
 
-        method 'gorch' => sub { 'Foo::Extended::Baz::gorch' };
+        method gorch { 'Foo::Extended::Baz::gorch' }
 
         # NOTE:
         # can also easily make sure to use the
         # class from the previously derived
         # package as well.
-        method 'bar' => sub { __PACKAGE__->Bar->new( @_ ) };
+        method bar { __PACKAGE__->Bar->new( @_ ) }
     };
 }
 

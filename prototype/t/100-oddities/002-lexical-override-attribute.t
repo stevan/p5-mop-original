@@ -21,19 +21,17 @@ it doesn't).
 =cut
 
 BEGIN {
-    my ($self, $class);
 
-    class 'Foo' => sub {
-        has( my $bar ) = 99;
+    class Foo {
+        has $bar = 99;
 
-        method 'bar' => sub { $bar };
+        method bar { $bar }
 
-        method 'test' => sub {
+        method test {
             my $bar = 'bottles of beer';
             join " " => ( $self->bar, $bar );
-        };
-
-    };
+        }
+    }
 }
 
 my $foo = Foo->new;

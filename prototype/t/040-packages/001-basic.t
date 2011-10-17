@@ -13,12 +13,9 @@ BEGIN {
     use warnings;
     use mop;
 
-    my ($self, $class);
-
-    class 'Bar' => sub {
-        has( my $baz );
-    };
-
+    class Bar {
+        has $baz;
+    }
 }
 
 my $foo = Foo::Bar->new;
@@ -35,18 +32,16 @@ BEGIN {
     use warnings;
     use mop;
 
-    my ($self, $class);
-
     our $FOO = 100_000;
     sub do_something { $_[0] + $_[1] }
 
-    class 'Baz' => sub {
-        has( my $gorch ) = 10;
-        method 'foo' => sub {
+    class Baz {
+        has $gorch = 10;
+        method foo {
             do_something( $gorch, $FOO )
-        };
-        method 'my_package' => sub { __PACKAGE__ }
-    };
+        }
+        method my_package { __PACKAGE__ }
+    }
 }
 
 my $baz = Bar::Baz->new;

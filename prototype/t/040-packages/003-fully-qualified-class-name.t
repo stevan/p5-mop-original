@@ -19,7 +19,7 @@ for you automagically.
 =cut
 
 BEGIN {
-    class 'Foo::Bar' => sub {};
+    class Foo::Bar {};
 }
 
 my $foo = Foo::Bar->new;

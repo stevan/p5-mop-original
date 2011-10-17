@@ -8,7 +8,7 @@ use strict;
 use warnings;
 use mop;
 BEGIN {
-    class 'Foo::Bar' => sub {};
+    class Foo::Bar {}
 }
 
 1;

@@ -10,11 +10,11 @@ use Test::Moose;
 use mop;
 
 eval q{
-    class 'Foo' => sub {
-        has( my $bar );
+    class Foo {
+        has $bar;
 
-        method 'bar' => sub { $baz };
-    };
+        method bar { $baz }
+    }
 };
 
 like "$@", qr/^Global symbol \"\$baz\" requires explicit package name/, '... got the syntax error we expected';

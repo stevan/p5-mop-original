@@ -12,19 +12,6 @@ into your package, and then use them in your
 class this removes the need to import anything
 into your class namespace.
 
-  package DB::FlatFile;
-  use strict;
-  use warnings;
-  use Path::Class qw[ file dir ]
-
-  class DataFile {
-      has $path;
-      has $file;
-      method BUILD {
-          $file = file( $path );
-      }
-  }
-
 =cut
 
 BEGIN {
@@ -33,23 +20,21 @@ BEGIN {
     use strict;
     use warnings;
     use mop;
-    my ($self, $class);
 
     use Path::Class qw[ file ];
 
-    class 'DataFile' => sub {
-        has( my $path );
-        has( my $file );
-        has( my $data );
+    class DataFile {
+        has $path;
+        has $file;
+        has $data;
 
-        method 'data' => sub { $data };
+        method data { $data }
 
         BUILD {
             $file = file( $path );
             $data = [ $file->slurp( chomp => 1 ) ];
-        };
-    };
-
+        }
+    }
 }
 
 my $data_file = My::DB::FlatFile::DataFile->new( path => __FILE__ );
