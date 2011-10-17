@@ -47,6 +47,17 @@ This is concerned with finding the method, after which it
 will call C<CALLMETHOD> to execute it. It uses the C<WALKMETH>
 and C<WALKCLASS> functions to accomplish this.
 
+=item B<SUBDISPATCH ($method_finder, $is_reverse, $invocant, @args)>
+
+This is mostly used internally and it will traverse the C<mro>
+(using C<WALKCLASS>) and (using the C<$method_finder> callback)
+finds and calls each matching method in the C<mro>. It can also
+be called in reverse C<mro> order by setting the C<$is_reverse>
+flag to true.
+
+This is specifically used for calling the constructor (BUILD)
+and destructor (DEMOLISH) on instance creation and destruction.
+
 =item B<CALLMETHOD ($method, $invocant, @args)>
 
 This is concerned with setting up a method to be executed
