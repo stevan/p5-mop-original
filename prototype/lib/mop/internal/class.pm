@@ -53,6 +53,11 @@ sub get_constructor {
     mop::internal::instance::get_slot_at( $class, '$constructor' );
 }
 
+sub get_destructor {
+    my $class = shift;
+    mop::internal::instance::get_slot_at( $class, '$destructor' );
+}
+
 sub is_subclass_of {
     my $class = shift;
     my ($super) = @_;
