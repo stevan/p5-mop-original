@@ -6,6 +6,7 @@ use warnings;
 use mop::internal::instance;
 
 use PadWalker ();
+use Scope::Guard 'guard';
 
 sub create {
     my %params = @_;
@@ -34,6 +35,13 @@ sub execute {
         '$self'  => \$invocant,
         '$class' => \$class
     });
+    my $g = guard {
+        PadWalker::set_closed_over( $body, {
+            (map { $_ => \undef } keys %$instance),
+            '$self' => \undef,
+            '$class' => \undef,
+        });
+    };
 
     # localize the global invocant
     # and class variables here
