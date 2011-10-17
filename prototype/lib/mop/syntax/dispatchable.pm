@@ -14,8 +14,16 @@ sub NEXTMETHOD {
 sub AUTOLOAD {
     my @autoload    = (split '::', our $AUTOLOAD);
     my $method_name = $autoload[-1];
-    return if $method_name eq 'DESTROY';
     mop::internal::dispatcher::DISPATCH( $method_name, @_ );
+}
+
+sub DESTROY {
+    my $invocant = shift;
+    foreach my $class ( @{ mop::internal::class::get_mro( mop::internal::instance::get_class( $invocant ) ) } ) {
+        if ( my $destructor = mop::internal::class::get_destructor( $class ) ) {
+            mop::internal::method::execute( $destructor, $invocant );
+        }
+    }
 }
 
 1;
