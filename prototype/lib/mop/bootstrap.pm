@@ -177,13 +177,8 @@ sub init {
 
     ## predicate methods ...
 
-    $::Class->add_method( $::Method->new( name => 'is_subclass_of', body => sub {
-        my $super = shift;
-        my @mro   = @{ $::SELF->get_mro };
-        shift @mro;
-        scalar grep { $super->id eq $_->id } @mro;
-    }));
-    $::Class->add_method( $::Method->new( name => 'equals', body => sub { $::SELF->id eq $_[0]->id } ) );
+    $::Class->add_method( $::Method->new( name => 'is_subclass_of', body => sub { mop::internal::class::is_subclass_of( $::SELF, $_[0] ) } ) );
+    $::Class->add_method( $::Method->new( name => 'equals', body => sub { mop::internal::class::equals( $::SELF, $_[0] ) } ) );
 
     ## class protocol
 

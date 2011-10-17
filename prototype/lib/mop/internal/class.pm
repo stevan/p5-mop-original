@@ -53,6 +53,22 @@ sub get_constructor {
     mop::internal::instance::get_slot_at( $class, '$constructor' );
 }
 
+sub is_subclass_of {
+    my $class = shift;
+    my ($super) = @_;
+
+    my @mro = @{ get_mro($class) };
+    shift @mro;
+    return scalar grep { mop::internal::instance::get_uuid($super) eq mop::internal::instance::get_uuid($_) } @mro;
+}
+
+sub equals {
+    my $class = shift;
+    my ($other) = @_;
+
+    return mop::internal::instance::get_uuid($class) eq mop::internal::instance::get_uuid($other);
+}
+
 sub get_compatible_class {
     my @classes = @_;
 
@@ -60,14 +76,14 @@ sub get_compatible_class {
 
     my $compatible = shift @classes;
     for my $class ( @classes ) {
-        if ( $class->is_subclass_of( $compatible ) ) {
+        if ( is_subclass_of( $class, $compatible ) ) {
             # replace the class with a subclass of itself
             $compatible = $class;
         }
-        elsif ( $compatible->is_subclass_of( $class  ) ) {
+        elsif ( is_subclass_of( $compatible, $class ) ) {
             # it's already okay
         }
-        elsif ( $class->equals( $compatible ) ) {
+        elsif ( equals( $class, $compatible ) ) {
             # it's already okay
         }
         else {
