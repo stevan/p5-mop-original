@@ -122,7 +122,7 @@ sub method_parser {
     $self->shadow( sub (&) {
         my $body = shift;
         $::CLASS->add_method(
-            $::Method->new(
+            $::CLASS->method_class->new(
                 name => $name,
                 body => Sub::Name::subname( $name, $body )
             )
@@ -154,7 +154,7 @@ sub attribute_parser {
     $self->shadow(sub ($) : lvalue {
         my $initial_value;
         $::CLASS->add_attribute(
-            $::Attribute->new(
+            $::CLASS->attribute_class->new(
                 name          => $name,
                 initial_value => \$initial_value
             )
