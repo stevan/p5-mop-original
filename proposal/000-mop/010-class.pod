@@ -44,6 +44,20 @@ This returns the class authority as a string.
 This is simply a predicate to determine if a given C<$class> is
 in the MRO of this class.
 
+=item C<equals( $other )>
+
+This will compare the internal UUID of class with another one to
+determine equality.
+
+=item C<id>
+
+This returns the internal UUID of the class.
+
+=item C<class>
+
+This returns the class of the invocant. For most classes this
+returns Class (even for Class since we are meta-circular).
+
 =item C<clone( %params )>
 
 Clone this object and override any internal elements using
