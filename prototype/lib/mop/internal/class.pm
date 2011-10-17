@@ -59,7 +59,7 @@ sub is_subclass_of {
 
     my @mro = @{ get_mro($class) };
     shift @mro;
-    return scalar grep { mop::internal::instance::get_uuid($super) eq mop::internal::instance::get_uuid($_) } @mro;
+    return scalar grep { equals( $super, $_ ) } @mro;
 }
 
 sub equals {
