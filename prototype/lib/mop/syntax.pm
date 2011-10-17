@@ -217,8 +217,8 @@ sub attribute_parser {
         if ( substr( $linestr, $self->offset, 1 ) eq '=' ) {
             $self->inc_offset( 1 );
             $self->skipspace;
-            if ( substr( $linestr, $self->offset, 1 ) eq '{' ) {
-                substr( $linestr, $self->offset, 0 ) = 'sub';
+            if ( substr( $linestr, $self->offset, 2 ) eq 'do' ) {
+                substr( $linestr, $self->offset, 2 ) = 'sub';
             }
         }
 

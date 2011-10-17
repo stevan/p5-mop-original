@@ -14,9 +14,9 @@ my $Foo = $::Class->new;
 
     my $counter = 0;
 
-    has $bar = { $counter++; [ map { $_ + $counter } 0 .. 5 ] };
+    has $bar = do { $counter++; [ map { $_ + $counter } 0 .. 5 ] };
 
-    has $baz = +{ one => 1 };
+    has $baz = { one => 1 };
 }
 
 {
