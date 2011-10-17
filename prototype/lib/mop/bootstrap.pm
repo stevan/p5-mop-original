@@ -151,6 +151,8 @@ sub init {
     $::Class->add_method( $::Method->new( name => 'get_superclasses', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$superclasses' ) } ) );
     $::Class->add_method( $::Method->new( name => 'get_methods',      body => sub { mop::internal::instance::get_slot_at( $::SELF, '$methods' )      } ) );
     $::Class->add_method( $::Method->new( name => 'get_attributes',   body => sub { mop::internal::instance::get_slot_at( $::SELF, '$attributes' )   } ) );
+    $::Class->add_method( $::Method->new( name => 'get_destructor',   body => sub { mop::internal::instance::get_slot_at( $::SELF, '$destructor' )   } ) );
+    $::Class->add_method( $::Method->new( name => 'get_constructor',  body => sub { mop::internal::class::get_constructor( $::SELF ) } ) );
     $::Class->add_method( $::Method->new( name => 'get_mro',          body => sub { mop::internal::class::get_mro( $::SELF ) } ) );
     $::Class->add_method( $::Method->new( name => 'attribute_class',  body => sub { $::Attribute } ) );
     $::Class->add_method( $::Method->new( name => 'method_class',     body => sub { $::Method } ) );
@@ -164,6 +166,11 @@ sub init {
     $::Class->add_method( $::Method->new( name => 'set_constructor', body => sub {
         my $constructor = shift;
         mop::internal::instance::set_slot_at( $::SELF, '$constructor', \$constructor );
+    }));
+
+    $::Class->add_method( $::Method->new( name => 'set_destructor', body => sub {
+        my $destructor = shift;
+        mop::internal::instance::set_slot_at( $::SELF, '$destructor', \$destructor );
     }));
 
     $::Class->add_method( $::Method->new( name => 'add_superclass', body => sub {
