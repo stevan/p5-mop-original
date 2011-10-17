@@ -16,6 +16,9 @@ class Test::BuilderX::Output {
         $error_output->fdopen( fileno( STDERR ), "w" );
     }
 
+    # XXX - should we add a DEMOLISH
+    # here to close the file handles?
+
     method write ( $message ) {
         $message =~ s/\n(?!#)/\n# /g;
         $output->print( $message, "\n" );
