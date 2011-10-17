@@ -19,7 +19,7 @@ sub setup_for {
         no strict 'refs';
         *{ $pkg . '::class'  } = sub (&@) {};
         *{ $pkg . '::method' } = sub (&)  {};
-        *{ $pkg . '::has'    } = sub ($)  {};
+        *{ $pkg . '::has'    } = sub ($@) {};
         *{ $pkg . '::BUILD'  } = sub (&)  {
             my $body = shift;
             $::CLASS->set_constructor(
@@ -143,20 +143,38 @@ sub attribute_parser {
     my $name;
 
     my $linestr = $self->get_linestr;
-    my $next    = substr( $linestr, $self->offset, 1 );
-    if ( $next eq '$' ) { # || $next eq '@' || $next eq '%' ) {
+    if ( substr( $linestr, $self->offset, 1 ) eq '$' ) {
         my $length = Devel::Declare::toke_scan_ident( $self->offset );
-        $name = substr( $linestr, $self->offset, $length  );
-        substr( $linestr, $self->offset, $length ) = '(\(my ' . $name . '))';
+        $name = substr( $linestr, $self->offset, $length );
+
+        my $full_length = $length;
+        my $old_offset  = $self->offset;
+
+        $self->inc_offset( $length );
+        $self->skipspace;
+
+        my $proto;
+        if ( substr( $linestr, $self->offset, 1 ) eq '(' ) {
+            my $length = Devel::Declare::toke_scan_str( $self->offset );
+            $proto = Devel::Declare::get_lex_stuff();
+            $full_length += $length;
+            Devel::Declare::clear_lex_stuff();
+        }
+
+        substr( $linestr, $old_offset, $full_length ) = '(\(my ' . $name . ')' . ( $proto ? (', (' . $proto) : '') . ')';
+
         $self->set_linestr( $linestr );
     }
 
-    $self->shadow(sub ($) : lvalue {
+    $self->shadow(sub ($@) : lvalue {
+        shift;
+        my %metadata = @_;
         my $initial_value;
         $::CLASS->add_attribute(
             $::CLASS->attribute_class->new(
                 name          => $name,
-                initial_value => \$initial_value
+                initial_value => \$initial_value,
+                %metadata
             )
         );
         $initial_value

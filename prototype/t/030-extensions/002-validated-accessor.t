@@ -10,23 +10,21 @@ use Test::Moose;
 use mop;
 
 BEGIN {
-    my ($self, $class);
 
-    class 'ValidatedAttribute' => (extends => $::Attribute) => sub {
-        has( my $validator ) = sub { 1 };
+    class ValidatedAttribute (extends => $::Attribute) {
+        has $validator = sub { 1 };
 
-        method get_validator => sub { $validator };
-    };
+        method get_validator { $validator }
+    }
 }
 
 BEGIN {
-    my ($self, $class);
 
-    class 'ValidatedAccessorMeta' => (extends => $::Class) => sub {
+    class ValidatedAccessorMeta (extends => $::Class) {
 
-        method attribute_class => sub { ValidatedAttribute };
+        method attribute_class { ValidatedAttribute }
 
-        method 'FINALIZE' => sub {
+        method FINALIZE {
 
             foreach my $attribute ( values %{ $self->get_attributes } ) {
                 my $name = $attribute->get_name;
@@ -52,18 +50,17 @@ BEGIN {
             }
 
             $self->NEXTMETHOD('FINALIZE');
-        };
-    };
+        }
+    }
 
 }
 
 BEGIN {
-
-    class 'Foo' => (metaclass => ValidatedAccessorMeta) => sub {
-        has( my $bar );
-        has( my $baz );
-        has( my $age, validator => sub { $_[0] =~ /^\d+$/ } );
-    };
+    class Foo (metaclass => ValidatedAccessorMeta) {
+        has $bar;
+        has $baz;
+        has $age (validator => sub { $_[0] =~ /^\d+$/ });
+    }
 }
 
 is Foo->class, ValidatedAccessorMeta, '... Foo has the right metaclass';
