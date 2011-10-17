@@ -80,11 +80,12 @@ sub init {
                 body => sub {
                     my %args = @_;
                     my $self = $::SELF->CREATE( \%args );
-                    foreach my $class ( reverse @{ mop::internal::class::get_mro( $::SELF ) } ) {
-                        if ( my $constructor = mop::internal::class::get_constructor( $class ) ) {
-                            mop::internal::method::execute( $constructor, $self, \%args );
-                        }
-                    }
+                    mop::internal::dispatcher::SUBDISPATCH(
+                        sub { mop::internal::class::get_constructor( $_[0] ) },
+                        1,
+                        $self,
+                        \%args,
+                    );
                     $self;
                 }
             ),

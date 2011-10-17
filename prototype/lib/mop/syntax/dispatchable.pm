@@ -19,11 +19,11 @@ sub AUTOLOAD {
 
 sub DESTROY {
     my $invocant = shift;
-    foreach my $class ( @{ mop::internal::class::get_mro( mop::internal::instance::get_class( $invocant ) ) } ) {
-        if ( my $destructor = mop::internal::class::get_destructor( $class ) ) {
-            mop::internal::method::execute( $destructor, $invocant );
-        }
-    }
+    mop::internal::dispatcher::SUBDISPATCH(
+        sub { mop::internal::class::get_destructor( $_[0] ) },
+        0,
+        $invocant,
+    );
 }
 
 1;
