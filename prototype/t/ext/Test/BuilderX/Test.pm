@@ -1,8 +1,9 @@
-package Test::Builder::Test;
+package Test::BuilderX::Test;
 use strict;
 use warnings;
+use mop;
 
-use Params::Validate;
+use Params::Validate qw(:all);
 
 sub new {
     shift;
@@ -18,27 +19,27 @@ sub new {
     );
     my ($number, $passed, $skip, $todo, $reason, $description) = @_;
 
-    return Test::Builder::Test::TODO->new(
+    return TODO->new(
         description => $description,
         passed      => $passed,
         reason      => $reason,
         number      => $number,
     ) if $todo;
 
-    return Test::Builder::Test::Skip->new(
+    return Skip->new(
         description => $description,
         passed      => 1,
         reason      => $reason,
         number      => $number,
     ) if $skip;
 
-    return ::Test::Builder::Test::Pass->new(
+    return Pass->new(
         description => $description,
         passed      => 1,
         number      => $number,
     ) if $passed;
 
-    return ::Test::Builder::Test::Fail->new(
+    return Fail->new(
         description => $description,
         passed      => 0,
         number      => $number,
@@ -67,7 +68,7 @@ BEGIN {
         }
 
         method report {
-            my $ok = $.passed ? 'ok ' : 'not ok ';
+            my $ok = $passed ? 'ok ' : 'not ok ';
             $ok .= $number;
             $ok .= " - $description" if $description;
             return $ok;

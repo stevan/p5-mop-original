@@ -14,7 +14,8 @@ http://svn.openfoundry.org/pugs/ext/Test-Builder
 use lib 't/ext';
 
 BEGIN {
-    use_ok( 'Test::Builder' );
+    use_ok( 'Test::BuilderX' );
+    use_ok( 'Test::BuilderX::Tester' );
 }
 
 done_testing;

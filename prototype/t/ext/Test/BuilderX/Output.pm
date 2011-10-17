@@ -4,16 +4,16 @@ use mop;
 
 use IO::Handle;
 
-class Test::Builder::Output {
+class Test::BuilderX::Output {
     has $output;
     has $error_output;
 
     BUILD {
         $output = IO::Handle->new;
-        $output->fdopen( fileno( STDOUT ),"w" );
+        $output->fdopen( fileno( STDOUT ), "w" );
 
         $error_output = IO::Handle->new;
-        $error_output->fdopen( fileno( STDERR ),"w" );
+        $error_output->fdopen( fileno( STDERR ), "w" );
     }
 
     method write ( $message ) {

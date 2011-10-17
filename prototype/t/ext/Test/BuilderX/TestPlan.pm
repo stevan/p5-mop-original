@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use mop;
 
-class Test::Builder::TestPlan {
+class Test::BuilderX::TestPlan {
     has $expect;
 
     BUILD {
@@ -17,7 +17,7 @@ class Test::Builder::TestPlan {
     }
 }
 
-class Test::Builder::NullPlan {
+class Test::BuilderX::NullPlan {
     method header { '' }
     method footer ( $run ) { "1..$run" }
 }
