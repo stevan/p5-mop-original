@@ -151,7 +151,7 @@ sub init {
     $::Class->add_method( $::Method->new( name => 'get_superclasses', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$superclasses' ) } ) );
     $::Class->add_method( $::Method->new( name => 'get_methods',      body => sub { mop::internal::instance::get_slot_at( $::SELF, '$methods' )      } ) );
     $::Class->add_method( $::Method->new( name => 'get_attributes',   body => sub { mop::internal::instance::get_slot_at( $::SELF, '$attributes' )   } ) );
-    $::Class->add_method( $::Method->new( name => 'get_destructor',   body => sub { mop::internal::instance::get_slot_at( $::SELF, '$destructor' )   } ) );
+    $::Class->add_method( $::Method->new( name => 'get_destructor',   body => sub { mop::internal::class::get_destructor( $::SELF ) } ) );
     $::Class->add_method( $::Method->new( name => 'get_constructor',  body => sub { mop::internal::class::get_constructor( $::SELF ) } ) );
     $::Class->add_method( $::Method->new( name => 'get_mro',          body => sub { mop::internal::class::get_mro( $::SELF ) } ) );
     $::Class->add_method( $::Method->new( name => 'attribute_class',  body => sub { $::Attribute } ) );
