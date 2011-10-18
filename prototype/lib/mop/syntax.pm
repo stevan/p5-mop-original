@@ -3,8 +3,6 @@ package mop::syntax;
 use strict;
 use warnings;
 
-use mop::syntax::dispatchable;
-
 use base 'Devel::Declare::Context::Simple';
 
 use Sub::Name      ();

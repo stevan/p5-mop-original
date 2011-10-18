@@ -7,6 +7,25 @@ use mop::internal::class;
 use mop::internal::instance;
 use mop::internal::attribute;
 use mop::internal::method;
+use mop::internal::dispatcher;
+
+
+{
+    my %STASHES;
+
+    sub get_stash_for {
+        my $class = shift;
+        my $uuid  = mop::internal::instance::get_uuid( $class );
+        return $STASHES{ $uuid } if exists $STASHES{ $uuid };
+        return;
+    }
+
+    sub generate_stash_for {
+        my $class = shift;
+        my $uuid  = mop::internal::instance::get_uuid( $class );
+        $STASHES{ $uuid } = mop::internal::dispatcher::GENSTASH( $class );
+    }
+}
 
 sub init {
 
@@ -29,6 +48,19 @@ sub init {
                     mop::internal::instance::get_slot_at( $::SELF, '$methods' )->{
                         mop::internal::instance::get_slot_at( $method, '$name' )
                     } = $method;
+
+                    if ( my $stash = get_stash_for( $::SELF ) ) {
+                        # NOTE:
+                        # we won't always have a stash
+                        # because it is created at FINALIZE
+                        # and not when the class itself is
+                        # created.
+                        # - SL
+                        $stash->add_method(
+                            mop::internal::instance::get_slot_at( $method, '$name' ),
+                            sub { mop::internal::method::execute( $method, @_ ) }
+                        );
+                    }
                 }
             ),
             'CREATE'   => mop::internal::method::create(
@@ -58,9 +90,8 @@ sub init {
                         }
                     }
 
-                    bless(
-                        mop::internal::instance::create( \$::SELF, $data ),
-                        'mop::syntax::dispatchable'
+                    (get_stash_for( $::SELF ) || die "Could not find stash for class(" . $::SELF->get_name . ")")->bless(
+                        mop::internal::instance::create( \$::SELF, $data )
                     );
                 }
             )
@@ -124,21 +155,24 @@ sub init {
 
     mop::internal::instance::get_slot_at( $::Class, '$superclasses' )->[0] = $::Object;
 
-    bless( $::Object,    'mop::syntax::dispatchable' );
-    bless( $::Class,     'mop::syntax::dispatchable' );
-    bless( $::Method,    'mop::syntax::dispatchable' );
-    bless( $::Attribute, 'mop::syntax::dispatchable' );
+    generate_stash_for( $::Object    );
+    generate_stash_for( $::Class     );
+    generate_stash_for( $::Method    );
+    generate_stash_for( $::Attribute );
 
-    bless( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'add_method'}, 'mop::syntax::dispatchable' );
-    bless( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'CREATE'},     'mop::syntax::dispatchable' );
+    get_stash_for( $::Class )->bless( $::Object    );
+    get_stash_for( $::Class )->bless( $::Class,    );
+    get_stash_for( $::Class )->bless( $::Method,   );
+    get_stash_for( $::Class )->bless( $::Attribute );
 
-    bless( mop::internal::instance::get_slot_at( $::Object, '$methods' )->{'new'},      'mop::syntax::dispatchable' );
+    get_stash_for( $::Method )->bless( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'add_method'} );
+    get_stash_for( $::Method )->bless( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'CREATE'}     );
+    get_stash_for( $::Method )->bless( mop::internal::instance::get_slot_at( $::Object, '$methods' )->{'new'}       );
 
-    bless( mop::internal::instance::get_slot_at( $::Method, '$attributes' )->{'$name'}, 'mop::syntax::dispatchable' );
-    bless( mop::internal::instance::get_slot_at( $::Method, '$attributes' )->{'$body'}, 'mop::syntax::dispatchable' );
-
-    bless( mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$name'},          'mop::syntax::dispatchable' );
-    bless( mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$initial_value'}, 'mop::syntax::dispatchable' );
+    get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Method, '$attributes' )->{'$name'}             );
+    get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Method, '$attributes' )->{'$body'}             );
+    get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$name'}          );
+    get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$initial_value'} );
 
     ## --------------------------------
     ## $::Class
@@ -193,6 +227,9 @@ sub init {
     $::Class->add_method( $::Method->new( name => 'FINALIZE', body => sub {
         $::SELF->add_superclass( $::Object )
             unless scalar @{ $::SELF->get_superclasses };
+
+        # pre-compute the vtable
+        generate_stash_for( $::SELF );
     }));
 
     ## add in the attributes
@@ -251,6 +288,32 @@ sub init {
             }
         }
     } ) );
+
+    ## --------------------------------
+    ## make sure Class, Method and
+    ## Attribute has the Object
+    ## methods in the stash too
+    ## --------------------------------
+
+    {
+        my $methods = mop::internal::instance::get_slot_at( $::Object, '$methods' );
+        foreach my $method_name ( keys %$methods ) {
+            my $method = $methods->{ $method_name };
+            get_stash_for( $::Class )->add_method(
+                mop::internal::instance::get_slot_at( $method, '$name' ),
+                sub { mop::internal::method::execute( $method, @_ ) }
+            );
+            get_stash_for( $::Method )->add_method(
+                mop::internal::instance::get_slot_at( $method, '$name' ),
+                sub { mop::internal::method::execute( $method, @_ ) }
+            );
+            get_stash_for( $::Attribute )->add_method(
+                mop::internal::instance::get_slot_at( $method, '$name' ),
+                sub { mop::internal::method::execute( $method, @_ ) }
+            );
+        }
+    }
+
 
     ## --------------------------------
     ## END BOOTSTRAP
