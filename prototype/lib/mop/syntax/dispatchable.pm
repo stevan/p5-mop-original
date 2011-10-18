@@ -5,20 +5,29 @@ use warnings;
 
 use mop::internal::dispatcher;
 
+use MRO::Magic
+    metamethod => sub {
+        my $invocant = shift;
+        my ($method_name, $args) = @_;
+        mop::internal::dispatcher::DISPATCH( $method_name, $invocant, @$args );
+    },
+    passthru => [
+        # methods we define here
+        'NEXTMETHOD', 'DESTROY',
+        # class methods we can't control if they will be called
+        'import',
+        # for some reason, MRO::Magic breaks keywords used in this package
+        'shift', 'caller',
+    ];
+
 sub NEXTMETHOD {
-    my $invocant    = shift;
+    my $invocant    = shift();
     my $method_name = (split '::' => ((caller(1))[3]))[-1];
     mop::internal::dispatcher::NEXTMETHOD( $method_name, $invocant, @_ );
 }
 
-sub AUTOLOAD {
-    my @autoload    = (split '::', our $AUTOLOAD);
-    my $method_name = $autoload[-1];
-    mop::internal::dispatcher::DISPATCH( $method_name, @_ );
-}
-
 sub DESTROY {
-    my $invocant = shift;
+    my $invocant = shift();
     mop::internal::dispatcher::SUBDISPATCH(
         sub { mop::internal::class::get_destructor( $_[0] ) },
         0,
