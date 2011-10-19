@@ -78,15 +78,6 @@ sub init {
                     } = $method;
                 }
             ),
-            'add_attribute' => mop::internal::method::create(
-                name => 'add_attribute',
-                body => sub {
-                    my $attr = shift;
-                    mop::internal::instance::get_slot_at( $::SELF, '$attributes' )->{
-                        mop::internal::instance::get_slot_at( $attr, '$name' )
-                    } = $attr;
-                },
-            ),
         },
     );
 
@@ -160,7 +151,6 @@ sub init {
     bless( $::Attribute, 'mop::syntax::dispatchable' );
 
     bless( mop::internal::instance::get_slot_at( $::Role, '$methods' )->{'add_method'}, 'mop::syntax::dispatchable' );
-    bless( mop::internal::instance::get_slot_at( $::Role, '$methods' )->{'add_attribute'}, 'mop::syntax::dispatchable' );
 
     bless( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'CREATE'},     'mop::syntax::dispatchable' );
 
@@ -211,6 +201,10 @@ sub init {
     $::Class->add_method( $::Method->new( name => 'add_superclass', body => sub {
         my $superclass = shift;
         push @{ $::SELF->get_superclasses } => $superclass;
+    }));
+    $::Role->add_method( $::Method->new( name => 'add_attribute', body => sub {
+        my $attr = shift;
+        $::SELF->get_attributes->{ mop::internal::instance::get_slot_at( $attr, '$name' ) } = $attr;
     }));
 
     ## predicate methods ...
