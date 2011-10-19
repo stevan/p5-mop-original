@@ -15,42 +15,13 @@ sub init {
     ## Create our classes
     ## --------------------------------
 
-    $::Role = mop::internal::role::create(
-        class        => \$::Role,
-        name         => 'Role',
-        version      => '0.01',
-        authority    => 'cpan:STEVAN',
-        superclasses => [],
-        roles        => [],
-        attributes   => {},
-        methods      => {
-            'add_method' => mop::internal::method::create(
-                name => 'add_method',
-                body => sub {
-                    my $method = shift;
-                    mop::internal::instance::get_slot_at( $::SELF, '$methods' )->{
-                        mop::internal::instance::get_slot_at( $method, '$name' )
-                    } = $method;
-                }
-            ),
-            'apply' => mop::internal::method::create(
-                name => 'apply',
-                body => sub {
-                    my @roles = shift;
-                    mop::internal::role::apply( $::SELF, @roles );
-                    push @{ mop::internal::instance::get_slot_at( $::SELF, '$roles' ) }, @roles;
-                },
-            ),
-        },
-    );
-
     $::Class = mop::internal::class::create(
         class        => \$::Class,
         name         => 'Class',
         version      => '0.01',
         authority    => 'cpan:STEVAN',
         superclasses => [],
-        roles        => [ $::Role ],
+        roles        => [],
         attributes   => {},
         methods      => {
             'CREATE'   => mop::internal::method::create(
@@ -87,6 +58,35 @@ sub init {
                 }
             )
         }
+    );
+
+    $::Role = mop::internal::class::create(
+        class        => \$::Class,
+        name         => 'Role',
+        version      => '0.01',
+        authority    => 'cpan:STEVAN',
+        superclasses => [],
+        roles        => [],
+        attributes   => {},
+        methods      => {
+            'add_method' => mop::internal::method::create(
+                name => 'add_method',
+                body => sub {
+                    my $method = shift;
+                    mop::internal::instance::get_slot_at( $::SELF, '$methods' )->{
+                        mop::internal::instance::get_slot_at( $method, '$name' )
+                    } = $method;
+                }
+            ),
+            'apply' => mop::internal::method::create(
+                name => 'apply',
+                body => sub {
+                    my @roles = shift;
+                    mop::internal::role::apply( $::SELF, @roles );
+                    push @{ mop::internal::instance::get_slot_at( $::SELF, '$roles' ) }, @roles;
+                },
+            ),
+        },
     );
 
     $::Object = mop::internal::class::create(
@@ -149,6 +149,8 @@ sub init {
 
     mop::internal::instance::get_slot_at( $::Class, '$superclasses' )->[0] = $::Object;
     mop::internal::instance::get_slot_at( $::Role, '$superclasses' )->[0] = $::Object;
+    mop::internal::role::apply( $::Class, $::Role );
+    mop::internal::instance::get_slot_at( $::Class, '$roles' )->[0] = $::Role;
     mop::internal::instance::get_slot_at( $::Role, '$roles' )->[0] = $::Role;
 
     bless( $::Object,    'mop::syntax::dispatchable' );
@@ -217,8 +219,8 @@ sub init {
 
     ## predicate methods ...
 
-    $::Role->add_method( $::Method->new( name => 'is_subclass_of', body => sub { mop::internal::class::is_subclass_of( $::SELF, $_[0] ) } ) );
-    $::Role->add_method( $::Method->new( name => 'equals', body => sub { mop::internal::class::equals( $::SELF, $_[0] ) } ) );
+    $::Class->add_method( $::Method->new( name => 'is_subclass_of', body => sub { mop::internal::class::is_subclass_of( $::SELF, $_[0] ) } ) );
+    $::Class->add_method( $::Method->new( name => 'equals', body => sub { mop::internal::class::equals( $::SELF, $_[0] ) } ) );
 
     ## class protocol
 
