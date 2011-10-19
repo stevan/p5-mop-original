@@ -140,7 +140,6 @@ sub init {
     ## --------------------------------
 
     mop::internal::instance::get_slot_at( $::Class, '$superclasses' )->[0] = $::Object;
-    mop::internal::instance::get_slot_at( $::Role, '$superclasses' )->[0] = $::Object;
     mop::internal::instance::get_slot_at( $::Class, '$roles' )->[0] = $::Role;
     mop::internal::instance::get_slot_at( $::Role, '$roles' )->[0] = $::Role;
 
