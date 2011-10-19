@@ -75,6 +75,29 @@ foreach my $attribute ( values %{ $::Class->get_attributes } ) {
     ok $attribute->is_a( $::Attribute ), '... attribute (' . $attribute->get_name . ') of class Class is an Attribute object';
 }
 
+is $::Role->get_name, 'Role', '... got the right name';
+is $::Role->get_version, '0.01', '... got the right version';
+is $::Role->get_authority, 'cpan:STEVAN', '... got the right authority';
+is_deeply $::Role->get_superclasses, [ $::Object ], '... got the right superclasses';
+is_deeply $::Role->get_mro, [ $::Role, $::Object ], '... got the right mro';
+
+{
+    my @mro = @{ $::Role->get_mro };
+    is((shift @mro), $::Role, '... we are the first entry in our mro');
+    foreach my $super ( @mro ) {
+        ok $::Role->is_subclass_of( $super ), '... we are a subclass of class (' . $super->get_name . ')';
+    }
+}
+
+foreach my $method ( values %{ $::Role->get_methods } ) {
+    ok $method->is_a( $::Method ), '... method (' . $method->get_name . ') of class Role is a Method object';
+    is $::Role->find_method( $method->get_name ), $method, '... found the method too';
+}
+
+foreach my $attribute ( values %{ $::Role->get_attributes } ) {
+    ok $attribute->is_a( $::Attribute ), '... attribute (' . $attribute->get_name . ') of class Role is an Attribute object';
+}
+
 is $::Object->get_name, 'Object', '... got the right name';
 is $::Object->get_version, '0.01', '... got the right version';
 is $::Object->get_authority, 'cpan:STEVAN', '... got the right authority';
