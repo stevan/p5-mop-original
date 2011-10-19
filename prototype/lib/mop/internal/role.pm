@@ -9,7 +9,7 @@ use mop::internal::instance;
 sub does {
     my $self = shift;
     my ($role) = @_;
-    scalar grep { mop::internal::class::equals( $_, $role ) }
+    scalar grep { mop::internal::class::equals( $_, $role ) || does( $_, $role ) }
                 @{ mop::internal::instance::get_slot_at( $self, '$roles' ) };
 }
 
