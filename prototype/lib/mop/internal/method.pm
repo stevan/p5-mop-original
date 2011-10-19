@@ -35,10 +35,11 @@ sub execute {
         '$self'  => \$invocant,
         '$class' => \$class
     });
+
     my $g = guard {
         PadWalker::set_closed_over( $body, {
             (map { $_ => \undef } keys %$instance),
-            '$self' => \undef,
+            '$self'  => \undef,
             '$class' => \undef,
         });
     };

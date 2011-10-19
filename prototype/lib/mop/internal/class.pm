@@ -8,27 +8,27 @@ use mop::internal::instance;
 sub create {
     my %params = @_;
 
-    my $class        = $params{'class'}        || die "A class must have a (meta) class";
-    my $name         = $params{'name'}         || die "A class must have a name";
-    my $version      = $params{'version'}      || undef;
-    my $authority    = $params{'authority'}    || '';
-    my $superclasses = $params{'superclasses'} || [];
-    my $attributes   = $params{'attributes'}   || {};
-    my $methods      = $params{'methods'}      || {};
-    my $constructor  = $params{'constructor'}  || undef;
-    my $destructor   = $params{'destructor'}   || undef;
+    my $class       = $params{'class'}       || die "A class must have a (meta) class";
+    my $name        = $params{'name'}        || die "A class must have a name";
+    my $version     = $params{'version'}     || undef;
+    my $authority   = $params{'authority'}   || '';
+    my $superclass  = $params{'superclass'}  || undef;
+    my $attributes  = $params{'attributes'}  || {};
+    my $methods     = $params{'methods'}     || {};
+    my $constructor = $params{'constructor'} || undef;
+    my $destructor  = $params{'destructor'}  || undef;
 
     mop::internal::instance::create(
         $class,
         {
-            '$name'         => \$name,
-            '$version'      => \$version,
-            '$authority'    => \$authority,
-            '$superclasses' => \$superclasses,
-            '$attributes'   => \$attributes,
-            '$methods'      => \$methods,
-            '$constructor'  => \$constructor,
-            '$destructor'   => \$destructor
+            '$name'        => \$name,
+            '$version'     => \$version,
+            '$authority'   => \$authority,
+            '$superclass'  => \$superclass,
+            '$attributes'  => \$attributes,
+            '$methods'     => \$methods,
+            '$constructor' => \$constructor,
+            '$destructor'  => \$destructor
         }
     );
 }
@@ -37,12 +37,10 @@ sub create {
 
 sub get_mro {
     my $class = shift;
+    return [] unless $class;
     return [
         $class,
-        map {
-            @{ get_mro( $_ ) }
-        } @{ mop::internal::instance::get_slot_at( $class, '$superclasses' ) || [] }
-                # NOTE: the C<|| []> stuff fixes an issue during global destruction
+        @{ get_mro( mop::internal::instance::get_slot_at( $class, '$superclass' ) ) }
     ]
 }
 
@@ -78,26 +76,23 @@ sub equals {
 }
 
 sub get_compatible_class {
-    my @classes = @_;
+    my ($compatible, $class) = @_;
 
-    return unless @classes;
+    return unless $compatible && $class;
 
-    my $compatible = shift @classes;
-    for my $class ( @classes ) {
-        if ( is_subclass_of( $class, $compatible ) ) {
-            # replace the class with a subclass of itself
-            $compatible = $class;
-        }
-        elsif ( is_subclass_of( $compatible, $class ) ) {
-            # it's already okay
-        }
-        elsif ( equals( $class, $compatible ) ) {
-            # it's already okay
-        }
-        else {
-            # reconciling this group of metaclasses isn't possible
-            return;
-        }
+    if ( is_subclass_of( $class, $compatible ) ) {
+        # replace the class with a subclass of itself
+        $compatible = $class;
+    }
+    elsif ( is_subclass_of( $compatible, $class ) ) {
+        # it's already okay
+    }
+    elsif ( equals( $class, $compatible ) ) {
+        # it's already okay
+    }
+    else {
+        # reconciling this group of metaclasses isn't possible
+        return;
     }
 
     return $compatible;
