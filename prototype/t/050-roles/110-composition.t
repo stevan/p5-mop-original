@@ -39,4 +39,44 @@ BEGIN {
     is($foo->foo_role, 6);
 }
 
+BEGIN {
+    role BarRole {
+        has $one = 1;
+        method one { $one }
+    }
+    role BarOtherRole (with => [ BarRole() ]) {
+        has $two = 2;
+        method two { $two }
+    }
+    role BazRole {
+        has $three = 3;
+        method three { $three }
+    }
+    class Bar (with => [ BarOtherRole(), BazRole() ]) {
+        has $four = 4;
+        method four { $four }
+    }
+}
+
+{
+    ok(Bar->does_role(BarRole), '... Bar does BarRole');
+    ok(Bar->does_role(BazRole), '... Bar does BazRole');
+    ok(Bar->does_role(BarOtherRole), '... Bar does BarOtherRole');
+    ok(BarOtherRole->does_role(BarRole), '... BarOtherRole does BarRole');
+
+    is_deeply(Bar->get_mro, [Bar, BarOtherRole, BarRole, BazRole, $::Object],
+              '... got the correct mro');
+
+    my $bar = Bar->new;
+
+    ok($bar->does(BarRole), '... instance of Bar does BarRole');
+    ok($bar->does(BazRole), '... instance of Bar does BazRole');
+    ok($bar->does(BarOtherRole), '... instance of Bar does BarOtherRole');
+
+    is($bar->one, 1, '... accessor from BarRole works');
+    is($bar->two, 2, '... accessor from BarOtherRole works');
+    is($bar->three, 3, '... accessor from BazRole works');
+    is($bar->four, 4, '... accessor from Bar works');
+}
+
 done_testing;
