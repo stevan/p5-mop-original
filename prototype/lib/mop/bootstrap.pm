@@ -267,6 +267,10 @@ sub init {
         mop::internal::attribute::get_initial_value_for_instance( $::SELF )
     }));
 
+    $::Role->add_method( $::Method->new( name => 'FINALIZE', body => sub {
+        # XXX: role conflict checking here?
+    }));
+
     ## --------------------------------
     ## enable metaclass compatibility checks
     ## --------------------------------
