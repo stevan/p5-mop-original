@@ -18,6 +18,7 @@ sub setup_for {
     {
         no strict 'refs';
         *{ $pkg . '::class'    } = sub (&@) {};
+        *{ $pkg . '::role'     } = sub (&@) {};
         *{ $pkg . '::method'   } = sub (&)  {};
         *{ $pkg . '::has'      } = sub ($@) {};
         *{ $pkg . '::BUILD'    } = sub (&)  {};
@@ -29,6 +30,7 @@ sub setup_for {
         $pkg,
         {
             'class'    => { const => sub { $context->class_parser( @_ )     } },
+            'role'     => { const => sub { $context->role_parser( @_ )      } },
             'method'   => { const => sub { $context->method_parser( @_ )    } },
             'has'      => { const => sub { $context->attribute_parser( @_ ) } },
             'BUILD'    => { const => sub { $context->BUILD_parser( @_ )     } },
@@ -91,6 +93,10 @@ sub build_class {
         $class_Class = delete $metadata{ 'metaclass' };
     }
 
+    if ( exists $metadata{ 'with' } ) {
+        $metadata{ 'roles' } = [ @{ delete $metadata{ 'with' } } ];
+    }
+
     if ( exists $metadata{ 'extends' } ) {
         $metadata{ 'superclasses' } = [ delete $metadata{ 'extends' } ];
     }
@@ -104,6 +110,70 @@ sub build_class {
         );
         $class_Class = $compatible
             if defined $compatible;
+    }
+
+    $class_Class->new(
+        name => ($caller eq 'main' ? $name : "${caller}::${name}"),
+        %metadata
+    );
+}
+
+sub role_parser {
+    my $self = shift;
+
+    $self->init( @_ );
+
+    $self->skip_declarator;
+
+    my $name   = $self->strip_name;
+    my $proto  = $self->strip_proto;
+    my $caller = $self->get_curstash_name;
+
+    my $inject = $self->scope_injector_call
+               . 'my $d = shift;'
+               . '$d->{"role"} = ' . __PACKAGE__ . '->build_role('
+                    . 'name   => "' . $name . '", '
+                    . 'caller => "' . $caller . '"'
+                    . ($proto ? (', ' . $proto) : '')
+               . ');'
+               . 'local $::CLASS = $d->{"role"};'
+               . 'my ($self, $class);';
+    $self->inject_if_block( $inject );
+
+    $self->shadow(sub (&@) {
+        my $body = shift;
+        my $data = {};
+
+        $body->( $data );
+
+        my $role = $data->{'role'};
+        $role->FINALIZE;
+
+        {
+            no strict 'refs';
+            *{"${caller}::${name}"} = Sub::Name::subname( $name, sub () { $role } );
+        }
+
+        return;
+    });
+
+    return;
+}
+
+sub build_role {
+    shift;
+    my %metadata = @_;
+
+    my $name   = delete $metadata{ 'name' };
+    my $caller = delete $metadata{ 'caller' };
+
+    my $class_Class = $::Role;
+    if ( exists $metadata{ 'metaclass' } ) {
+        $class_Class = delete $metadata{ 'metaclass' };
+    }
+
+    if ( exists $metadata{ 'with' } ) {
+        $metadata{ 'roles' } = [ @{ delete $metadata{ 'with' } } ];
     }
 
     $class_Class->new(
