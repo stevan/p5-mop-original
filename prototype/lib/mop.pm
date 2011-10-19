@@ -16,7 +16,7 @@ BEGIN {
     # These are global variable that will (post-bootstrap)
     # represent the class Class, class Role, and class Object
     # respectively. These are populated in the bootstrap
-    # process, but are # referenced in the syntax modules.
+    # process, but are referenced in the syntax modules.
     $::Class  = undef;
     $::Role   = undef;
     $::Object = undef;
