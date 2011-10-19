@@ -7,6 +7,7 @@ use Test::More;
 
 use mop;
 
+ok $::Role,      '... we have the role Role';
 ok $::Class,     '... we have the class Class';
 ok $::Object,    '... we have the class Object';
 ok $::Method,    '... we have the class Method';
@@ -14,14 +15,20 @@ ok $::Attribute, '... we have the class Attribute';
 
 # check the simple bootstrapped knot tie-ing
 
+is $::Role->class, $::Role, '... the class of Role is Role';
 is $::Object->class, $::Class, '... the class of Object is Class';
 is $::Class->class, $::Class, '... the class of Class is Class';
+
+ok $::Role->is_a( $::Role ), '... role Role is-a Class';
+ok $::Role->does( $::Role ), '... role Role does Role';
 
 ok $::Class->is_subclass_of( $::Object ), '... class Class is a subclass of Object';
 ok !$::Class->is_subclass_of( $::Class ), '... class Class is not a subclass of Class';
 
 ok $::Class->is_a( $::Object ), '... class Class is-a Object';
 ok $::Class->is_a( $::Class ), '... class Class is-a Class';
+
+ok $::Class->does( $::Role ), '... class Class does Role';
 
 ok !$::Object->is_subclass_of( $::Object ), '... class Object is not a subclass of Object';
 ok !$::Object->is_subclass_of( $::Class ), '... class Object is not a subclass of Class';

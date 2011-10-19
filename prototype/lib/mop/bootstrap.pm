@@ -167,6 +167,10 @@ sub init {
 
     ## accessors
 
+    $::Role->add_method( $::Method->new( name => 'does', body => sub { mop::internal::role::does( $::SELF, $_[0] ) } ) );
+    # XXX: until we have role application
+    $::Class->add_method( $::Method->new( name => 'does', body => sub { mop::internal::role::does( $::SELF, $_[0] ) } ) );
+
     $::Class->add_method( $::Method->new( name => 'get_name',         body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' )         } ) );
     $::Class->add_method( $::Method->new( name => 'get_version',      body => sub { mop::internal::instance::get_slot_at( $::SELF, '$version' )      } ) );
     $::Class->add_method( $::Method->new( name => 'get_authority',    body => sub { mop::internal::instance::get_slot_at( $::SELF, '$authority' )    } ) );
@@ -206,6 +210,9 @@ sub init {
 
     ## predicate methods ...
 
+    $::Role->add_method( $::Method->new( name => 'is_subclass_of', body => sub { mop::internal::class::is_subclass_of( $::SELF, $_[0] ) } ) );
+    $::Role->add_method( $::Method->new( name => 'equals', body => sub { mop::internal::class::equals( $::SELF, $_[0] ) } ) );
+    # XXX: for now, until role application is implemented
     $::Class->add_method( $::Method->new( name => 'is_subclass_of', body => sub { mop::internal::class::is_subclass_of( $::SELF, $_[0] ) } ) );
     $::Class->add_method( $::Method->new( name => 'equals', body => sub { mop::internal::class::equals( $::SELF, $_[0] ) } ) );
 
