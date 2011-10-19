@@ -7,7 +7,7 @@ use Test::More;
 
 use mop;
 
-ok $::Role,      '... we have the role Role';
+ok $::Role,      '... we have the class Role';
 ok $::Class,     '... we have the class Class';
 ok $::Object,    '... we have the class Object';
 ok $::Method,    '... we have the class Method';
@@ -19,9 +19,9 @@ is $::Role->class, $::Class, '... the class of Role is Role';
 is $::Object->class, $::Class, '... the class of Object is Class';
 is $::Class->class, $::Class, '... the class of Class is Class';
 
-ok $::Role->does_role( $::Role ), '... role Role does Role';
+ok $::Role->does_role( $::Role ), '... class Role does Role';
 
-ok $::Role->is_a( $::Class ), '... role Role is-a Class';
+ok $::Role->is_a( $::Class ), '... class Role is-a Class';
 ok $::Role->does( $::Role ), '... the role metaclass does Role';
 
 ok $::Class->is_subclass_of( $::Object ), '... class Class is a subclass of Object';
