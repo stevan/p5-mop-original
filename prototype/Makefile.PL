@@ -6,6 +6,10 @@ name 'p5-mop';
 all_from 'lib/mop.pm';
 license 'perl';
 
+# github ( https://github.com/doy/package-anon.git )
+requires 'Package::Anon' => 0;
+
+# cpan
 requires 'Sub::Name'            => 0;
 requires 'Devel::Declare'       => 0;
 requires 'B::Hooks::EndOfScope' => 0;

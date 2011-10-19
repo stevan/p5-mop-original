@@ -3,8 +3,6 @@ package mop::syntax;
 use strict;
 use warnings;
 
-use mop::syntax::dispatchable;
-
 use base 'Devel::Declare::Context::Simple';
 
 use Sub::Name      ();
@@ -98,15 +96,15 @@ sub build_class {
     }
 
     if ( exists $metadata{ 'extends' } ) {
-        $metadata{ 'superclasses' } = [ delete $metadata{ 'extends' } ];
+        $metadata{ 'superclass' } = delete $metadata{ 'extends' };
     }
 
-    my @superclasses = @{ $metadata{ 'superclasses' } || [] };
+    my $superclass = $metadata{ 'superclass' };
 
-    if ( @superclasses ) {
+    if ( $superclass ) {
         my $compatible = mop::internal::class::get_compatible_class(
             $class_Class,
-            map { mop::internal::instance::get_class( $_ ) } @superclasses
+            mop::internal::instance::get_class( $superclass )
         );
         $class_Class = $compatible
             if defined $compatible;

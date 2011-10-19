@@ -33,6 +33,11 @@ my $baz_method = $Foo->find_method('baz');
 ok( $baz_method, '... found the baz method' );
 ok( $baz_method->is_a( $::Method ), '... it is a proper method');
 
+# We need to call this so that
+# Foo gets set up properly and
+# is given a v-table, etc, etc.
+$Foo->FINALIZE;
+
 my $foo = $Foo->new;
 is( $foo->foo( 10, 20 ), '10, 20', '... got the right value from ->foo' );
 is( $foo->bar, 'BAR', '... got the right value from ->bar' );

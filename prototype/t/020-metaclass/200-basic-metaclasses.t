@@ -54,7 +54,7 @@ ok $foo->is_a( $::Object ), '... foo is an Object';
 ok !$foo->is_a( $::Class ), '... foo is not a Class';
 ok !$foo->is_a( FooMeta ), '... foo is not a FooMeta';
 
-like exception { $foo->static_method }, qr/^Could not find method \'static_method\'/, '... got an expection here';
+like exception { $foo->static_method }, qr/^Can\'t locate object method \"static_method\" via package/, '... got an expection here';
 
 is $foo->hello_from_class, 'STATIC', '... got the class method via the instance however';
 is $foo->class->static_method, 'STATIC', '... got access to the class method via the ->class instance method';

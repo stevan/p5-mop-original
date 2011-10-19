@@ -7,6 +7,8 @@ use mop::internal::class;
 use mop::internal::instance;
 use mop::internal::method;
 
+use Package::Anon;
+
 =pod
 
 This module should be able to give you an
@@ -83,6 +85,42 @@ sub CALLMETHOD {
     my $method   = shift;
     my $invocant = shift;
     mop::internal::method::execute( $method, $invocant, @_ );
+}
+
+sub GENSTASH {
+    my $class = shift;
+
+    my $stash = Package::Anon->new( mop::internal::instance::get_slot_at( $class, '$name' ) );
+
+    WALKCLASS(
+        $class,
+        sub {
+            my $c = shift;
+            my $methods = mop::internal::instance::get_slot_at( $c, '$methods' );
+            foreach my $name ( keys %$methods ) {
+                my $method = $methods->{ $name };
+                $stash->add_method( $name, sub { CALLMETHOD( $method, @_ ) } )
+                    unless exists $stash->{ $name };
+            }
+        },
+    );
+
+    $stash->add_method('NEXTMETHOD' => sub {
+        my $invocant    = shift;
+        my $method_name = (split '::' => ((caller(1))[3]))[-1];
+        mop::internal::dispatcher::NEXTMETHOD( $method_name, $invocant, @_ );
+    });
+
+    $stash->add_method('DESTROY' => sub {
+        my $invocant = shift;
+        mop::internal::dispatcher::SUBDISPATCH(
+            sub { mop::internal::class::get_destructor( $_[0] ) },
+            0,
+            $invocant,
+        );
+    });
+
+    return $stash;
 }
 
 1;

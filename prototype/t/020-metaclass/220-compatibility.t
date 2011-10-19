@@ -63,7 +63,7 @@ BEGIN {
 }
 
 like exception { class BarSub (extends => Foo, metaclass => BarMeta) { } },
-     qr/While creating class BarSub: Metaclass BarMeta is not compatible with the metaclass of its superclasses: FooMeta/,
+     qr/While creating class BarSub: Metaclass BarMeta is not compatible with the metaclass of its superclass: FooMeta/,
      '... incompatible metaclasses die';
 
 done_testing;

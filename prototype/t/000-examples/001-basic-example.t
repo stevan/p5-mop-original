@@ -50,12 +50,12 @@ like Point->id, qr/[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}/
 is Point->class, $::Class, '... got the class we expected';
 ok Point->is_a( $::Object ), '... class Point is a Object';
 ok Point->is_subclass_of( $::Object ), '... class Point is a subclass of Object';
-is_deeply Point->get_superclasses, [ $::Object ], '... got the superclasses we expected';
+is Point->get_superclass, $::Object, '... got the superclass we expected';
 is_deeply Point->get_mro, [ Point, $::Object ], '... got the mro we expected';
 is_deeply
     [ sort { $a cmp $b } map { $_->get_name } values %{ Point->get_attributes } ],
     [ '$x', '$y' ],
-    '... got the superclasses we expected';
+    '... got the attribute list we expected';
 
 ## Test an instance
 
@@ -101,12 +101,12 @@ is Point3D->class, $::Class, '... got the class we expected';
 ok Point3D->is_a( $::Object ), '... class Point3D is a Object';
 ok Point3D->is_subclass_of( Point ), '... class Point3D is a subclass of Point';
 ok Point3D->is_subclass_of( $::Object ), '... class Point3D is a subclass of Object';
-is_deeply Point3D->get_superclasses, [ Point ], '... got the superclasses we expected';
+is Point3D->get_superclass, Point, '... got the superclass we expected';
 is_deeply Point3D->get_mro, [ Point3D, Point, $::Object ], '... got the mro we expected';
 is_deeply
     [ map { $_->get_name } values %{ Point3D->get_attributes } ],
     [ '$z' ],
-    '... got the superclasses we expected';
+    '... got the attributes we expected';
 
 
 ## Test the instance

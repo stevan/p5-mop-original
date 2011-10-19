@@ -12,6 +12,6 @@ BEGIN {
 }
 
 is( Foo->get_name, 'Foo', '... got the name we expected' );
-is_deeply( Foo->get_superclasses, [ $::Object ], '... got the superclasses we expected' );
+is( Foo->get_superclass, $::Object, '... got the superclass we expected' );
 
 done_testing;

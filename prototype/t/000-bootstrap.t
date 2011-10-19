@@ -58,7 +58,7 @@ ok $::Attribute->is_a( $::Class ), '... class Attribute is-a of Class';
 is $::Class->get_name, 'Class', '... got the right name';
 is $::Class->get_version, '0.01', '... got the right version';
 is $::Class->get_authority, 'cpan:STEVAN', '... got the right authority';
-is_deeply $::Class->get_superclasses, [ $::Object ], '... got the right superclasses';
+is $::Class->get_superclass, $::Object, '... got the right superclass';
 is_deeply $::Class->get_mro, [ $::Class, $::Role, $::Object ], '... got the right mro';
 
 {
@@ -86,7 +86,7 @@ foreach my $attribute ( values %{ $::Class->get_attributes } ) {
 is $::Role->get_name, 'Role', '... got the right name';
 is $::Role->get_version, '0.01', '... got the right version';
 is $::Role->get_authority, 'cpan:STEVAN', '... got the right authority';
-is_deeply $::Role->get_superclasses, [ $::Object ], '... got the right superclasses';
+is $::Role->get_superclass, $::Object, '... got the right superclass';
 is_deeply $::Role->get_mro, [ $::Role, $::Object ], '... got the right mro';
 
 {
@@ -114,7 +114,7 @@ foreach my $attribute ( values %{ $::Role->get_attributes } ) {
 is $::Object->get_name, 'Object', '... got the right name';
 is $::Object->get_version, '0.01', '... got the right version';
 is $::Object->get_authority, 'cpan:STEVAN', '... got the right authority';
-is_deeply $::Object->get_superclasses, [], '... got the right superclasses';
+is $::Object->get_superclass, undef, '... got the right superclass';
 is_deeply $::Object->get_mro, [ $::Object ], '... got the right mro';
 
 {
@@ -137,7 +137,7 @@ foreach my $attribute ( values %{ $::Object->get_attributes } ) {
 is $::Method->get_name, 'Method', '... got the right name';
 is $::Method->get_version, '0.01', '... got the right version';
 is $::Method->get_authority, 'cpan:STEVAN', '... got the right authority';
-is_deeply $::Method->get_superclasses, [ $::Object ], '... got the right superclasses';
+is $::Method->get_superclass, $::Object, '... got the right superclass';
 is_deeply $::Method->get_mro, [ $::Method, $::Object ], '... got the right mro';
 
 {
@@ -160,7 +160,7 @@ foreach my $attribute ( values %{ $::Method->get_attributes } ) {
 is $::Attribute->get_name, 'Attribute', '... got the right name';
 is $::Attribute->get_version, '0.01', '... got the right version';
 is $::Attribute->get_authority, 'cpan:STEVAN', '... got the right authority';
-is_deeply $::Attribute->get_superclasses, [ $::Object ], '... got the right superclasses';
+is $::Attribute->get_superclass, $::Object, '... got the right superclass';
 is_deeply $::Attribute->get_mro, [ $::Attribute, $::Object ], '... got the right mro';
 
 {

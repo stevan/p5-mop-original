@@ -23,6 +23,7 @@ my $foo = Foo->new;
 ok( $foo->is_a( Foo ), '... the object is from class Foo' );
 ok( $foo->is_a( $::Object ), '... the object is derived from class Object' );
 is( $foo->class, Foo, '... the class of this object is Foo' );
+like( "$foo", qr/^Foo/, '... object stringification includes the class name' );
 
 {
     my $foo2 = Foo->new;
