@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use mop::internal::instance;
+use mop::internal::role;
 
 sub create {
     my %params = @_;
@@ -19,17 +20,7 @@ sub create {
     my $constructor  = $params{'constructor'}  || undef;
     my $destructor   = $params{'destructor'}   || undef;
 
-    $methods = {
-        (map { %{ mop::internal::instance::get_slot_at( $_, '$methods' ) } } @$roles),
-        %$methods,
-    };
-
-    $attributes = {
-        (map { %{ mop::internal::instance::get_slot_at( $_, '$attributes' ) } } @$roles),
-        %$attributes,
-    };
-
-    mop::internal::instance::create(
+    my $self = mop::internal::instance::create(
         $class,
         {
             '$name'         => \$name,
@@ -43,6 +34,10 @@ sub create {
             '$destructor'   => \$destructor
         }
     );
+
+    mop::internal::role::apply( $self, @$roles ) if @$roles;
+
+    $self;
 }
 
 # These two functions are needed by the internal::dispatchers

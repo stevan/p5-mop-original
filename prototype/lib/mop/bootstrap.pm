@@ -33,6 +33,14 @@ sub init {
                     } = $method;
                 }
             ),
+            'apply' => mop::internal::method::create(
+                name => 'apply',
+                body => sub {
+                    my @roles = shift;
+                    mop::internal::role::apply( $::SELF, @roles );
+                    push @{ mop::internal::instance::get_slot_at( $::SELF, '$roles' ) }, @roles;
+                },
+            ),
         },
     );
 
@@ -150,6 +158,7 @@ sub init {
     bless( $::Attribute, 'mop::syntax::dispatchable' );
 
     bless( mop::internal::instance::get_slot_at( $::Role, '$methods' )->{'add_method'}, 'mop::syntax::dispatchable' );
+    bless( mop::internal::instance::get_slot_at( $::Role, '$methods' )->{'apply'}, 'mop::syntax::dispatchable' );
 
     bless( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'CREATE'},     'mop::syntax::dispatchable' );
 
@@ -168,8 +177,6 @@ sub init {
     ## accessors
 
     $::Role->add_method( $::Method->new( name => 'does', body => sub { mop::internal::role::does( $::SELF, $_[0] ) } ) );
-    # XXX: until we have role application
-    $::Class->add_method( $::Method->new( name => 'does', body => sub { mop::internal::role::does( $::SELF, $_[0] ) } ) );
 
     $::Class->add_method( $::Method->new( name => 'get_name',         body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' )         } ) );
     $::Class->add_method( $::Method->new( name => 'get_version',      body => sub { mop::internal::instance::get_slot_at( $::SELF, '$version' )      } ) );
@@ -212,9 +219,6 @@ sub init {
 
     $::Role->add_method( $::Method->new( name => 'is_subclass_of', body => sub { mop::internal::class::is_subclass_of( $::SELF, $_[0] ) } ) );
     $::Role->add_method( $::Method->new( name => 'equals', body => sub { mop::internal::class::equals( $::SELF, $_[0] ) } ) );
-    # XXX: for now, until role application is implemented
-    $::Class->add_method( $::Method->new( name => 'is_subclass_of', body => sub { mop::internal::class::is_subclass_of( $::SELF, $_[0] ) } ) );
-    $::Class->add_method( $::Method->new( name => 'equals', body => sub { mop::internal::class::equals( $::SELF, $_[0] ) } ) );
 
     ## class protocol
 
@@ -262,6 +266,11 @@ sub init {
     $::Attribute->add_method( $::Method->new( name => 'get_initial_value_for_instance', body => sub {
         mop::internal::attribute::get_initial_value_for_instance( $::SELF )
     }));
+
+    ## --------------------------------
+    ## Class does Role
+    ## --------------------------------
+    $::Class->apply( $::Role );
 
     ## --------------------------------
     ## enable metaclass compatibility checks
