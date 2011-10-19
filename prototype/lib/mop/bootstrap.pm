@@ -232,6 +232,7 @@ sub init {
     $::Role->add_attribute( $::Attribute->new( name => '$authority',    initial_value => \(my $class_authority) ) );
     $::Role->add_attribute( $::Attribute->new( name => '$attributes',   initial_value => \({}) ) );
     $::Role->add_attribute( $::Attribute->new( name => '$methods',      initial_value => \({}) ) );
+    $::Role->add_attribute( $::Attribute->new( name => '$roles',        initial_value => \([]) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$superclasses', initial_value => \([]) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$constructor',  initial_value => \(my $constructor) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$destructor',   initial_value => \(my $destructor) ) );
