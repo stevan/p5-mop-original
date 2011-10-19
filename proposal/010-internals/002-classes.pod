@@ -37,7 +37,7 @@ XXX - meta-circularity should provide that same level of
 
 =item B<$authority>
 
-=item B<@superclasses>
+=item B<$superclass>
 
 =item B<%attributes>
 

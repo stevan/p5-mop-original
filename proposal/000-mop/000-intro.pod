@@ -153,14 +153,14 @@ And now onto the code:
   class Class ( extends => Object ) {
       has $name;
 
-      has $superclasses = [];
-      has $attributes   = {};
-      has $methods      = {};
+      has $superclass;
+      has $attributes = {};
+      has $methods    = {};
   }
 
 As with all classes in our system, we are derived from the
 universal base class Object. Then we model Class to have
-a C<$name> attribute, a C<$superclasses> attribute, an
+a C<$name> attribute, a C<$superclass> attribute, an
 C<$attributes> attribute and a C<$methods> attribute. If
 you stop and think for a moment, this is the base elements
 which make up a class (somewhat simplified of course).

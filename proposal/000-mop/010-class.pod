@@ -86,22 +86,20 @@ either the intial value, or a value from the C<%params>.
 
 =back
 
-=head3 Superclasses
+=head3 Superclass
 
-These methods provide access to the superclass list, as
-well as the compiled method resolution order of a class.
+These methods provide access to the superclass, as well as the
+compiled method resolution order of a class.
 
 =over 4
 
-=item C<get_superclasses>
+=item C<get_superclass>
 
-This returns an array reference which contains the superclasses
-for this given class.
+This returns the superclass for this given class.
 
-=item C<add_superclasses( \@superclasses )>
+=item C<set_superclass( $superclass )>
 
-This accepts an array reference of class objects which will be
-pushed onto the end of the superclass list.
+This sets the superclass for this given class.
 
 =item C<get_mro>
 

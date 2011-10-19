@@ -76,20 +76,13 @@ that means as determined by your metaclass).
 The are two special conditions here, which need to be
 discussed.
 
-First, if you pass in the key C<extends> and either a
-single class or an array-ref of classes, these should
-set the superclass(es) accordingly. So for example,
-the following two lines are equivalent:
+First, if you pass in the key C<extends> and a single
+class, this will set the superclass accordingly. So
+for example, the following two lines are equivalent:
 
   class Foo ( extends => Bar ) {}
 
-  *Foo = Class->new( ..., superclasses => [ Bar ] );
-
-as are these following two lines:
-
-  class Foo ( extends => [ Bar, Baz ] ) {}
-
-  *Foo = Class->new( ..., superclasses => [ Bar, Baz ] );
+  *Foo = Class->new( ..., superclass => Bar );
 
 Second, if you pass in the key C<metaclass> then the value
 of this will be used as the metaclass to construct this
