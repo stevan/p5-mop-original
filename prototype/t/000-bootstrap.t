@@ -15,7 +15,7 @@ ok $::Attribute, '... we have the class Attribute';
 
 # check the simple bootstrapped knot tie-ing
 
-is $::Role->class, $::Class, '... the class of Role is Role';
+is $::Role->class, $::Class, '... the class of Role is Class';
 is $::Object->class, $::Class, '... the class of Object is Class';
 is $::Class->class, $::Class, '... the class of Class is Class';
 
