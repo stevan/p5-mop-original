@@ -188,7 +188,7 @@ sub init {
 
     ## accessors
 
-    $::Role->add_method( $::Method->new( name => 'does', body => sub { mop::internal::role::does( $::SELF, $_[0] ) } ) );
+    $::Role->add_method( $::Method->new( name => 'does_role', body => sub { mop::internal::role::does( $::SELF, $_[0] ) } ) );
     $::Role->add_method( $::Method->new( name => 'get_name',         body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' )         } ) );
     $::Role->add_method( $::Method->new( name => 'get_version',      body => sub { mop::internal::instance::get_slot_at( $::SELF, '$version' )      } ) );
     $::Role->add_method( $::Method->new( name => 'get_authority',    body => sub { mop::internal::instance::get_slot_at( $::SELF, '$authority' )    } ) );
@@ -253,6 +253,7 @@ sub init {
     $::Object->add_method( $::Method->new( name => 'id',    body => sub { mop::internal::instance::get_uuid( $::SELF )  } ) );
     $::Object->add_method( $::Method->new( name => 'class', body => sub { mop::internal::instance::get_class( $::SELF ) } ) );
     $::Object->add_method( $::Method->new( name => 'is_a',  body => sub { $::CLASS->equals( $_[0] ) || $::CLASS->is_subclass_of( $_[0] ) } ) );
+    $::Object->add_method( $::Method->new( name => 'does',  body => sub { $::CLASS->does_role( $_[0] ) } ) );
 
     ## --------------------------------
     ## $::Method

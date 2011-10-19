@@ -19,11 +19,14 @@ is $::Role->class, $::Class, '... the class of Role is Role';
 is $::Object->class, $::Class, '... the class of Object is Class';
 is $::Class->class, $::Class, '... the class of Class is Class';
 
+ok $::Role->does_role( $::Role ), '... role Role does Role';
+
 ok $::Role->is_a( $::Class ), '... role Role is-a Class';
-ok $::Role->does( $::Role ), '... role Role does Role';
+ok $::Role->does( $::Role ), '... the role metaclass does Role';
 
 ok $::Class->is_subclass_of( $::Object ), '... class Class is a subclass of Object';
 ok !$::Class->is_subclass_of( $::Class ), '... class Class is not a subclass of Class';
+ok $::Class->does_role( $::Role ), '... the class metaclass does Role';
 
 ok $::Class->is_a( $::Object ), '... class Class is-a Object';
 ok $::Class->is_a( $::Class ), '... class Class is-a Class';
