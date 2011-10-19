@@ -40,19 +40,25 @@ sub create {
 
 sub get_mro {
     my $class = shift;
-    return [
-        $class,
-        (map {
+
+    return [ $::Class, $::Role, $::Object ] if equals($class, $::Class);
+    return [ $::Role, $::Object ]           if equals($class, $::Role);
+
+    # NOTE: the C<|| []> stuff fixes an issue during global destruction
+    my $mro = [ $class ];
+    push $mro, map {
+        @{ get_mro( $_ ) }
+    } @{ mop::internal::instance::get_slot_at( $class, '$roles' ) || [] };
+
+    # roles don't have superclasses
+    my $meta = mop::internal::instance::get_class($class);
+    unless (equals($meta, $::Role) || is_subclass_of($meta, $::Role)) {
+        push $mro, map {
             @{ get_mro( $_ ) }
-        } grep {
-            # Role does Role
-            !equals( $_, $class )
-        } @{ mop::internal::instance::get_slot_at( $class, '$roles' ) || [] }),
-        (map {
-            @{ get_mro( $_ ) }
-        } @{ mop::internal::instance::get_slot_at( $class, '$superclasses' ) || [] }),
-                # NOTE: the C<|| []> stuff fixes an issue during global destruction
-    ]
+        } @{ mop::internal::instance::get_slot_at( $class, '$superclasses' ) || [] };
+    }
+
+    return $mro;
 }
 
 sub find_method {

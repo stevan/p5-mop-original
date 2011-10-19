@@ -86,8 +86,8 @@ foreach my $attribute ( values %{ $::Class->get_attributes } ) {
 is $::Role->get_name, 'Role', '... got the right name';
 is $::Role->get_version, '0.01', '... got the right version';
 is $::Role->get_authority, 'cpan:STEVAN', '... got the right authority';
-is_deeply $::Role->get_superclasses, [], '... got the right superclasses';
-is_deeply $::Role->get_mro, [ $::Role ], '... got the right mro';
+is_deeply $::Role->get_superclasses, [ $::Object ], '... got the right superclasses';
+is_deeply $::Role->get_mro, [ $::Role, $::Object ], '... got the right mro';
 
 {
     my @mro = @{ $::Role->get_mro };
