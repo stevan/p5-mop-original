@@ -78,6 +78,15 @@ sub init {
                     } = $method;
                 }
             ),
+            'add_attribute' => mop::internal::method::create(
+                name => 'add_attribute',
+                body => sub {
+                    my $attr = shift;
+                    mop::internal::instance::get_slot_at( $::SELF, '$attributes' )->{
+                        mop::internal::instance::get_slot_at( $attr, '$name' )
+                    } = $attr;
+                },
+            ),
             'apply' => mop::internal::method::create(
                 name => 'apply',
                 body => sub {
@@ -160,6 +169,7 @@ sub init {
     bless( $::Attribute, 'mop::syntax::dispatchable' );
 
     bless( mop::internal::instance::get_slot_at( $::Role, '$methods' )->{'add_method'}, 'mop::syntax::dispatchable' );
+    bless( mop::internal::instance::get_slot_at( $::Role, '$methods' )->{'add_attribute'}, 'mop::syntax::dispatchable' );
     bless( mop::internal::instance::get_slot_at( $::Role, '$methods' )->{'apply'}, 'mop::syntax::dispatchable' );
 
     bless( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'CREATE'},     'mop::syntax::dispatchable' );
@@ -179,22 +189,22 @@ sub init {
     ## accessors
 
     $::Role->add_method( $::Method->new( name => 'does', body => sub { mop::internal::role::does( $::SELF, $_[0] ) } ) );
-
-    $::Class->add_method( $::Method->new( name => 'get_name',         body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' )         } ) );
-    $::Class->add_method( $::Method->new( name => 'get_version',      body => sub { mop::internal::instance::get_slot_at( $::SELF, '$version' )      } ) );
-    $::Class->add_method( $::Method->new( name => 'get_authority',    body => sub { mop::internal::instance::get_slot_at( $::SELF, '$authority' )    } ) );
-    $::Class->add_method( $::Method->new( name => 'get_superclasses', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$superclasses' ) } ) );
-    $::Class->add_method( $::Method->new( name => 'get_methods',      body => sub { mop::internal::instance::get_slot_at( $::SELF, '$methods' )      } ) );
-    $::Class->add_method( $::Method->new( name => 'get_attributes',   body => sub { mop::internal::instance::get_slot_at( $::SELF, '$attributes' )   } ) );
-    $::Class->add_method( $::Method->new( name => 'get_destructor',   body => sub { mop::internal::class::get_destructor( $::SELF ) } ) );
-    $::Class->add_method( $::Method->new( name => 'get_constructor',  body => sub { mop::internal::class::get_constructor( $::SELF ) } ) );
-    $::Class->add_method( $::Method->new( name => 'get_mro',          body => sub { mop::internal::class::get_mro( $::SELF ) } ) );
-    $::Class->add_method( $::Method->new( name => 'attribute_class',  body => sub { $::Attribute } ) );
-    $::Class->add_method( $::Method->new( name => 'method_class',     body => sub { $::Method } ) );
-    $::Class->add_method( $::Method->new( name => 'find_method', body => sub {
+    $::Role->add_method( $::Method->new( name => 'get_name',         body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' )         } ) );
+    $::Role->add_method( $::Method->new( name => 'get_version',      body => sub { mop::internal::instance::get_slot_at( $::SELF, '$version' )      } ) );
+    $::Role->add_method( $::Method->new( name => 'get_authority',    body => sub { mop::internal::instance::get_slot_at( $::SELF, '$authority' )    } ) );
+    $::Role->add_method( $::Method->new( name => 'get_methods',      body => sub { mop::internal::instance::get_slot_at( $::SELF, '$methods' )      } ) );
+    $::Role->add_method( $::Method->new( name => 'get_attributes',   body => sub { mop::internal::instance::get_slot_at( $::SELF, '$attributes' )   } ) );
+    $::Role->add_method( $::Method->new( name => 'attribute_class',  body => sub { $::Attribute } ) );
+    $::Role->add_method( $::Method->new( name => 'method_class',     body => sub { $::Method } ) );
+    $::Role->add_method( $::Method->new( name => 'find_method', body => sub {
         my $method_name = shift;
         mop::internal::class::find_method( $::SELF, $method_name )
     }));
+
+    $::Class->add_method( $::Method->new( name => 'get_superclasses', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$superclasses' ) } ) );
+    $::Class->add_method( $::Method->new( name => 'get_destructor',   body => sub { mop::internal::class::get_destructor( $::SELF ) } ) );
+    $::Class->add_method( $::Method->new( name => 'get_constructor',  body => sub { mop::internal::class::get_constructor( $::SELF ) } ) );
+    $::Class->add_method( $::Method->new( name => 'get_mro',          body => sub { mop::internal::class::get_mro( $::SELF ) } ) );
 
     ## mutators
 
@@ -212,10 +222,6 @@ sub init {
         my $superclass = shift;
         push @{ $::SELF->get_superclasses } => $superclass;
     }));
-    $::Class->add_method( $::Method->new( name => 'add_attribute', body => sub {
-        my $attr = shift;
-        $::SELF->get_attributes->{ mop::internal::instance::get_slot_at( $attr, '$name' ) } = $attr;
-    }));
 
     ## predicate methods ...
 
@@ -231,12 +237,12 @@ sub init {
 
     ## add in the attributes
 
-    $::Class->add_attribute( $::Attribute->new( name => '$name',         initial_value => \(my $class_name) ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$version',      initial_value => \(my $class_version) ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$authority',    initial_value => \(my $class_authority) ) );
+    $::Role->add_attribute( $::Attribute->new( name => '$name',         initial_value => \(my $class_name) ) );
+    $::Role->add_attribute( $::Attribute->new( name => '$version',      initial_value => \(my $class_version) ) );
+    $::Role->add_attribute( $::Attribute->new( name => '$authority',    initial_value => \(my $class_authority) ) );
+    $::Role->add_attribute( $::Attribute->new( name => '$attributes',   initial_value => \({}) ) );
+    $::Role->add_attribute( $::Attribute->new( name => '$methods',      initial_value => \({}) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$superclasses', initial_value => \([]) ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$attributes',   initial_value => \({}) ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$methods',      initial_value => \({}) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$constructor',  initial_value => \(my $constructor) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$destructor',   initial_value => \(my $destructor) ) );
 
