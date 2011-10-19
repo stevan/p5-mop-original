@@ -42,10 +42,15 @@ sub get_mro {
     my $class = shift;
     return [
         $class,
-        @{ mop::internal::instance::get_slot_at( $class, '$roles' ) || [] },
-        map {
+        (map {
             @{ get_mro( $_ ) }
-        } @{ mop::internal::instance::get_slot_at( $class, '$superclasses' ) || [] }
+        } grep {
+            # Role does Role
+            !equals( $_, $class )
+        } @{ mop::internal::instance::get_slot_at( $class, '$roles' ) || [] }),
+        (map {
+            @{ get_mro( $_ ) }
+        } @{ mop::internal::instance::get_slot_at( $class, '$superclasses' ) || [] }),
                 # NOTE: the C<|| []> stuff fixes an issue during global destruction
     ]
 }
