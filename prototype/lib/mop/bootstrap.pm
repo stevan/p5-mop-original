@@ -282,7 +282,7 @@ sub init {
                 die "While creating class " . $::SELF->get_name . ": "
                   . "Metaclass " . $::CLASS->get_name . " is not compatible "
                   . "with the metaclass of its superclass: "
-                  . join(', ', mop::internal::instance::get_class( $superclass )->get_name );
+                  . mop::internal::instance::get_class( $superclass )->get_name;
             }
         }
     } ) );
