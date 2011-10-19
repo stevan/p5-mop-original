@@ -13,10 +13,21 @@ sub create {
     my $version      = $params{'version'}      || undef;
     my $authority    = $params{'authority'}    || '';
     my $superclasses = $params{'superclasses'} || [];
+    my $roles        = $params{'roles'}        || [];
     my $attributes   = $params{'attributes'}   || {};
     my $methods      = $params{'methods'}      || {};
     my $constructor  = $params{'constructor'}  || undef;
     my $destructor   = $params{'destructor'}   || undef;
+
+    $methods = {
+        (map { %{ mop::internal::instance::get_slot_at( $_, '$methods' ) } } @$roles),
+        %$methods,
+    };
+
+    $attributes = {
+        (map { %{ mop::internal::instance::get_slot_at( $_, '$attributes' ) } } @$roles),
+        %$attributes,
+    };
 
     mop::internal::instance::create(
         $class,
@@ -25,6 +36,7 @@ sub create {
             '$version'      => \$version,
             '$authority'    => \$authority,
             '$superclasses' => \$superclasses,
+            '$roles'        => \$roles,
             '$attributes'   => \$attributes,
             '$methods'      => \$methods,
             '$constructor'  => \$constructor,

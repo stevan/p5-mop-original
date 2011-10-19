@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use mop::internal::class;
+use mop::internal::role;
 use mop::internal::instance;
 use mop::internal::attribute;
 use mop::internal::method;
@@ -14,12 +15,13 @@ sub init {
     ## Create our classes
     ## --------------------------------
 
-    $::Class = mop::internal::class::create(
-        class        => \$::Class,
-        name         => 'Class',
+    $::Role = mop::internal::role::create(
+        class        => \$::Role,
+        name         => 'Role',
         version      => '0.01',
         authority    => 'cpan:STEVAN',
         superclasses => [],
+        roles        => [],
         attributes   => {},
         methods      => {
             'add_method' => mop::internal::method::create(
@@ -31,6 +33,18 @@ sub init {
                     } = $method;
                 }
             ),
+        },
+    );
+
+    $::Class = mop::internal::class::create(
+        class        => \$::Class,
+        name         => 'Class',
+        version      => '0.01',
+        authority    => 'cpan:STEVAN',
+        superclasses => [],
+        roles        => [ $::Role ],
+        attributes   => {},
+        methods      => {
             'CREATE'   => mop::internal::method::create(
                 name => 'CREATE',
                 body => sub {
@@ -73,6 +87,7 @@ sub init {
         version      => '0.01',
         authority    => 'cpan:STEVAN',
         superclasses => [],
+        roles        => [],
         attributes   => {},
         methods      => {
             'new'   => mop::internal::method::create(
@@ -98,6 +113,7 @@ sub init {
         version      => '0.01',
         authority    => 'cpan:STEVAN',
         superclasses => [ $::Object ],
+        roles        => [],
         methods      => {},
         attributes   => {
             '$name' => mop::internal::attribute::create( name => '$name', initial_value => \(my $method_name) ),
@@ -111,6 +127,7 @@ sub init {
         version      => '0.01',
         authority    => 'cpan:STEVAN',
         superclasses => [ $::Object ],
+        roles        => [],
         methods      => {},
         attributes   => {
             '$name'          => mop::internal::attribute::create( name => '$name',          initial_value => \(my $attribute_name) ),
@@ -123,13 +140,16 @@ sub init {
     ## --------------------------------
 
     mop::internal::instance::get_slot_at( $::Class, '$superclasses' )->[0] = $::Object;
+    mop::internal::instance::get_slot_at( $::Role, '$roles' )->[0] = $::Role;
 
     bless( $::Object,    'mop::syntax::dispatchable' );
     bless( $::Class,     'mop::syntax::dispatchable' );
+    bless( $::Role,      'mop::syntax::dispatchable' );
     bless( $::Method,    'mop::syntax::dispatchable' );
     bless( $::Attribute, 'mop::syntax::dispatchable' );
 
-    bless( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'add_method'}, 'mop::syntax::dispatchable' );
+    bless( mop::internal::instance::get_slot_at( $::Role, '$methods' )->{'add_method'}, 'mop::syntax::dispatchable' );
+
     bless( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'CREATE'},     'mop::syntax::dispatchable' );
 
     bless( mop::internal::instance::get_slot_at( $::Object, '$methods' )->{'new'},      'mop::syntax::dispatchable' );
