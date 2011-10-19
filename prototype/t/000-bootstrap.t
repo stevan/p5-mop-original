@@ -59,13 +59,18 @@ is $::Class->get_name, 'Class', '... got the right name';
 is $::Class->get_version, '0.01', '... got the right version';
 is $::Class->get_authority, 'cpan:STEVAN', '... got the right authority';
 is_deeply $::Class->get_superclasses, [ $::Object ], '... got the right superclasses';
-is_deeply $::Class->get_mro, [ $::Class, $::Object ], '... got the right mro';
+is_deeply $::Class->get_mro, [ $::Class, $::Role, $::Object ], '... got the right mro';
 
 {
     my @mro = @{ $::Class->get_mro };
     is((shift @mro), $::Class, '... we are the first entry in our mro');
     foreach my $super ( @mro ) {
-        ok $::Class->is_subclass_of( $super ), '... we are a subclass of class (' . $super->get_name . ')';
+        if ( $super->is_subclass_of( $::Role ) || $super->equals( $::Role ) ) {
+            ok $::Class->does_role( $super ), '... we consume role (' . $super->get_name . ')';
+        }
+        else {
+            ok $::Class->is_subclass_of( $super ), '... we are a subclass of class (' . $super->get_name . ')';
+        }
     }
 }
 
@@ -82,13 +87,18 @@ is $::Role->get_name, 'Role', '... got the right name';
 is $::Role->get_version, '0.01', '... got the right version';
 is $::Role->get_authority, 'cpan:STEVAN', '... got the right authority';
 is_deeply $::Role->get_superclasses, [ $::Object ], '... got the right superclasses';
-is_deeply $::Role->get_mro, [ $::Role, $::Object ], '... got the right mro';
+is_deeply $::Role->get_mro, [ $::Role, $::Role, $::Object ], '... got the right mro';
 
 {
     my @mro = @{ $::Role->get_mro };
     is((shift @mro), $::Role, '... we are the first entry in our mro');
     foreach my $super ( @mro ) {
-        ok $::Role->is_subclass_of( $super ), '... we are a subclass of class (' . $super->get_name . ')';
+        if ( $super->is_subclass_of( $::Role ) || $super->equals( $::Role ) ) {
+            ok $::Role->does_role( $super ), '... we consume role (' . $super->get_name . ')';
+        }
+        else {
+            ok $::Role->is_subclass_of( $super ), '... we are a subclass of class (' . $super->get_name . ')';
+        }
     }
 }
 

@@ -20,7 +20,7 @@ sub create {
     my $constructor  = $params{'constructor'}  || undef;
     my $destructor   = $params{'destructor'}   || undef;
 
-    my $self = mop::internal::instance::create(
+    mop::internal::instance::create(
         $class,
         {
             '$name'         => \$name,
@@ -34,10 +34,6 @@ sub create {
             '$destructor'   => \$destructor
         }
     );
-
-    mop::internal::role::apply( $self, @$roles ) if @$roles;
-
-    $self;
 }
 
 # These two functions are needed by the internal::dispatchers
@@ -46,6 +42,7 @@ sub get_mro {
     my $class = shift;
     return [
         $class,
+        @{ mop::internal::instance::get_slot_at( $class, '$roles' ) || [] },
         map {
             @{ get_mro( $_ ) }
         } @{ mop::internal::instance::get_slot_at( $class, '$superclasses' ) || [] }
@@ -72,8 +69,12 @@ sub is_subclass_of {
     my $class = shift;
     my ($super) = @_;
 
+    return 1 if equals( $super, $::Object ) && !equals( $class, $::Object );
+
     my @mro = @{ get_mro($class) };
     shift @mro;
+    # is_subclass_of should be false for roles
+    @mro = grep { !equals( $super, $::Role ) && !is_subclass_of( $super, $::Role ) } @mro;
     return scalar grep { equals( $super, $_ ) } @mro;
 }
 

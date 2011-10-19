@@ -87,14 +87,6 @@ sub init {
                     } = $attr;
                 },
             ),
-            'apply' => mop::internal::method::create(
-                name => 'apply',
-                body => sub {
-                    my @roles = shift;
-                    mop::internal::role::apply( $::SELF, @roles );
-                    push @{ mop::internal::instance::get_slot_at( $::SELF, '$roles' ) }, @roles;
-                },
-            ),
         },
     );
 
@@ -158,7 +150,6 @@ sub init {
 
     mop::internal::instance::get_slot_at( $::Class, '$superclasses' )->[0] = $::Object;
     mop::internal::instance::get_slot_at( $::Role, '$superclasses' )->[0] = $::Object;
-    mop::internal::role::apply( $::Class, $::Role );
     mop::internal::instance::get_slot_at( $::Class, '$roles' )->[0] = $::Role;
     mop::internal::instance::get_slot_at( $::Role, '$roles' )->[0] = $::Role;
 
@@ -170,7 +161,6 @@ sub init {
 
     bless( mop::internal::instance::get_slot_at( $::Role, '$methods' )->{'add_method'}, 'mop::syntax::dispatchable' );
     bless( mop::internal::instance::get_slot_at( $::Role, '$methods' )->{'add_attribute'}, 'mop::syntax::dispatchable' );
-    bless( mop::internal::instance::get_slot_at( $::Role, '$methods' )->{'apply'}, 'mop::syntax::dispatchable' );
 
     bless( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'CREATE'},     'mop::syntax::dispatchable' );
 
@@ -275,11 +265,6 @@ sub init {
     $::Attribute->add_method( $::Method->new( name => 'get_initial_value_for_instance', body => sub {
         mop::internal::attribute::get_initial_value_for_instance( $::SELF )
     }));
-
-    ## --------------------------------
-    ## Class does Role
-    ## --------------------------------
-    $::Class->apply( $::Role );
 
     ## --------------------------------
     ## enable metaclass compatibility checks
