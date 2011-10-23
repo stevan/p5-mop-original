@@ -342,18 +342,32 @@ sub init {
         generate_stash_for( $::SELF );
     }));
 
+    $::Class->add_method( $::Method->new(
+        name => 'get_compatible_class',
+        body => sub {
+            my $class = shift;
+            # replace the class with a subclass of itself
+            return $class  if $class->is_subclass_of( $::SELF );
+            # it's already okay
+            return $::SELF if $::SELF->is_subclass_of( $class ) || $class->equals( $::SELF );
+            # reconciling this group of metaclasses isn't possible
+            return;
+        }
+    ));
+
     ## check metaclass compat in Class->BUILD
     $::Class->set_constructor( $::Method->new(
         name => 'BUILD',
         body => sub {
-            my $superclass = mop::internal::instance::get_slot_at( $::SELF, '$superclass' );
+            my $superclass = $::SELF->get_superclass;
             if ( $superclass ) {
-                my $compatible = mop::internal::class::get_compatible_class( $::CLASS, mop::internal::instance::get_class( $superclass ) );
+                my $superclass_class = mop::internal::instance::get_class( $superclass );
+                my $compatible       = $::CLASS->get_compatible_class( $superclass_class );
                 if ( !defined( $compatible ) ) {
                     die "While creating class " . $::SELF->get_name . ": "
                       . "Metaclass " . $::CLASS->get_name . " is not compatible "
                       . "with the metaclass of its superclass: "
-                      . mop::internal::instance::get_class( $superclass )->get_name;
+                      . $superclass_class->get_name;
                 }
             }
         }

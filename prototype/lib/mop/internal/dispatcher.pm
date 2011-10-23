@@ -114,7 +114,7 @@ sub GENSTASH {
     $stash->add_method('DESTROY' => sub {
         my $invocant = shift;
         mop::internal::dispatcher::SUBDISPATCH(
-            sub { mop::internal::class::get_destructor( $_[0] ) },
+            sub { mop::internal::instance::get_slot_at( $_[0], '$destructor' ) },
             0,
             $invocant,
         );

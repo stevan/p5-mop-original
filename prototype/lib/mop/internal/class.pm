@@ -49,55 +49,6 @@ sub find_method {
     mop::internal::instance::get_slot_at( $class, '$methods' )->{ $method_name };
 }
 
-sub get_constructor {
-    my $class = shift;
-    mop::internal::instance::get_slot_at( $class, '$constructor' );
-}
-
-sub get_destructor {
-    my $class = shift;
-    mop::internal::instance::get_slot_at( $class, '$destructor' );
-}
-
-sub is_subclass_of {
-    my $class = shift;
-    my ($super) = @_;
-
-    my @mro = @{ get_mro($class) };
-    shift @mro;
-    return scalar grep { equals( $super, $_ ) } @mro;
-}
-
-sub equals {
-    my $class = shift;
-    my ($other) = @_;
-
-    return mop::internal::instance::get_uuid($class) eq mop::internal::instance::get_uuid($other);
-}
-
-sub get_compatible_class {
-    my ($compatible, $class) = @_;
-
-    return unless $compatible && $class;
-
-    if ( is_subclass_of( $class, $compatible ) ) {
-        # replace the class with a subclass of itself
-        $compatible = $class;
-    }
-    elsif ( is_subclass_of( $compatible, $class ) ) {
-        # it's already okay
-    }
-    elsif ( equals( $class, $compatible ) ) {
-        # it's already okay
-    }
-    else {
-        # reconciling this group of metaclasses isn't possible
-        return;
-    }
-
-    return $compatible;
-}
-
 1;
 
 __END__

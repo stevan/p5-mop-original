@@ -96,8 +96,7 @@ sub build_class {
     my $superclass = $metadata{ 'superclass' };
 
     if ( $superclass ) {
-        my $compatible = mop::internal::class::get_compatible_class(
-            $class_Class,
+        my $compatible = $class_Class->get_compatible_class(
             mop::internal::instance::get_class( $superclass )
         );
         $class_Class = $compatible
