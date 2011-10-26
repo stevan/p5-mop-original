@@ -5,7 +5,7 @@ use warnings;
 
 use Test::More;
 
-use mop;
+require mop; mop->import;
 
 ok $::Class,     '... we have the class Class';
 ok $::Object,    '... we have the class Object';
