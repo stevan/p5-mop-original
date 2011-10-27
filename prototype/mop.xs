@@ -122,7 +122,7 @@ static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 
     *flagsp |= CALLPARSER_STATEMENT;
 
-    pad_op = newOP(OP_PADSV, (OPpLVAL_INTRO<<8));
+    pad_op = newOP(OP_PADSV, (OPpLVAL_INTRO<<8)|OPf_PARENS|OPf_WANT_LIST);
     pad_op->op_targ = pad_add_my_scalar_sv(varname);
 
     SvREFCNT_inc(varname);
