@@ -16,7 +16,6 @@ requires 'B::Hooks::EndOfScope' => 0;
 requires 'PadWalker'            => 0;
 requires 'Scope::Guard'         => 0;
 requires 'Carp'                 => 0;
-requires 'Clone'                => 0;
 requires 'UUID::Tiny'           => 0;
 
 build_requires 'Test::More' => 0;

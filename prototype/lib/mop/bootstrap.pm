@@ -236,8 +236,8 @@ sub init {
     $::Class->add_attribute( $::Attribute->new( name => '$version',     initial_value => \(my $class_version) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$authority',   initial_value => \(my $class_authority) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$superclass',  initial_value => \(my $superclass) ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$attributes',  initial_value => \({}) ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$methods',     initial_value => \({}) ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$attributes',  initial_value => \sub { +{} } ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$methods',     initial_value => \sub { +{} } ) );
     $::Class->add_attribute( $::Attribute->new( name => '$constructor', initial_value => \(my $constructor) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$destructor',  initial_value => \(my $destructor) ) );
 

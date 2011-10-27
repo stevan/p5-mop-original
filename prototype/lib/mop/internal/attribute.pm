@@ -3,8 +3,6 @@ package mop::internal::attribute;
 use strict;
 use warnings;
 
-use Clone ();
-
 sub create {
     my %params = @_;
 
@@ -25,14 +23,11 @@ sub get_initial_value_for_instance {
     my $value = ${ mop::internal::instance::get_slot_at( $attr, '$initial_value' ) };
 
     if ( ref $value ) {
-        if ( ref $value eq 'ARRAY' || ref $value eq 'HASH' ) {
-            $value = Clone::clone( $value );
-        }
-        elsif ( ref $value eq 'CODE' ) {
+        if ( ref $value eq 'CODE' ) {
             $value = $value->();
         }
         else {
-            die "References of type(" . ref $value . ") are not supported";
+            die "References of type(" . ref($value) . ") are not supported";
         }
     }
 
