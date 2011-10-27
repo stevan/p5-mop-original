@@ -105,11 +105,21 @@ static SV *THX_parse_scalar_varname(pTHX)
 static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 {
     SV *varname;
-    OP *ret, *pad_op, *attr_default = NULL;
+    OP *ret, *pad_op, *metadata = NULL, *attr_default = NULL;
 
     lex_read_space(0);
     varname = parse_scalar_varname();
     lex_read_space(0);
+
+    if (lex_peek_unichar(0) == '(') {
+        lex_read_unichar(0);
+        metadata = parse_listexpr(0);
+        lex_read_space(0);
+        demand_unichar(')', 0);
+        lex_read_space(0);
+
+        metadata = newANONHASH(metadata);
+    }
 
     if (lex_peek_unichar(0) != ';') {
         I32 floor;
@@ -129,6 +139,13 @@ static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     ret = newLISTOP(OP_LIST, 0,
                     newSVOP(OP_CONST, 0, varname),
                     newUNOP(OP_REFGEN, 0, pad_op));
+
+    if (metadata) {
+        op_append_elem(OP_LIST, ret, metadata);
+    }
+    else {
+        op_append_elem(OP_LIST, ret, newOP(OP_UNDEF, 0));
+    }
 
     if (attr_default) {
         op_append_elem(OP_LIST, ret, attr_default);

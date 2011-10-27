@@ -35,13 +35,12 @@ sub setup_for {
 }
 
 sub has {
-    my ($name, $ref, $default) = @_;
+    my ($name, $ref, $metadata, $default) = @_;
     $::CLASS->add_attribute(
         $::CLASS->attribute_class->new(
             name          => $name,
             initial_value => \$default,
-            # XXX: need to parse metadata too
-            # %metadata
+            ($metadata ? %$metadata : ()),
         )
     );
 }
