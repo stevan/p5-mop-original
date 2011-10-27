@@ -12,7 +12,7 @@ use mop;
 BEGIN {
 
     class ValidatedAttribute (extends => $::Attribute) {
-        has $validator = do { sub { 1 } };
+        has $validator = sub { 1 };
 
         method get_validator { $validator }
     }
