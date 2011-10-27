@@ -17,7 +17,7 @@ sub setup_for {
         no strict 'refs';
         *{ $pkg . '::class'    } = sub (&@) {};
         *{ $pkg . '::method'   } = sub (&)  {};
-        *{ $pkg . '::has'      } = sub ($@) {};
+        *{ $pkg . '::has'      } = \&has;
         *{ $pkg . '::BUILD'    } = sub (&)  {};
         *{ $pkg . '::DEMOLISH' } = sub (&)  {};
     }
@@ -28,10 +28,21 @@ sub setup_for {
         {
             'class'    => { const => sub { $context->class_parser( @_ )     } },
             'method'   => { const => sub { $context->method_parser( @_ )    } },
-            'has'      => { const => sub { $context->attribute_parser( @_ ) } },
             'BUILD'    => { const => sub { $context->BUILD_parser( @_ )     } },
             'DEMOLISH' => { const => sub { $context->DEMOLISH_parser( @_ )  } },
         }
+    );
+}
+
+sub has {
+    my ($name, $ref, $default) = @_;
+    $::CLASS->add_attribute(
+        $::CLASS->attribute_class->new(
+            name          => $name,
+            initial_value => \$default,
+            # XXX: need to parse metadata too
+            # %metadata
+        )
     );
 }
 

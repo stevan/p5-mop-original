@@ -29,6 +29,11 @@ BEGIN {
 use mop::bootstrap;
 use mop::syntax;
 
+use Devel::CallParser;
+BEGIN {
+    XSLoader::load();
+}
+
 mop::bootstrap::init();
 
 sub import { mop::syntax->setup_for( caller ) }

@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use inc::Module::Install;
 
-name 'p5-mop';
+name 'mop';
 all_from 'lib/mop.pm';
 license 'perl';
 
