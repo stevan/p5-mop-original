@@ -102,6 +102,20 @@ static SV *THX_parse_scalar_varname(pTHX)
 
 /* end stolen from Scope::Escape::Sugar */
 
+#define parse_metadata() THX_parse_metadata(aTHX)
+static OP *THX_parse_metadata(pTHX)
+{
+    OP *metadata;
+
+    demand_unichar('(', DEMAND_IMMEDIATE);
+    metadata = parse_listexpr(0);
+    lex_read_space(0);
+    demand_unichar(')', 0);
+    lex_read_space(0);
+
+    return metadata;
+}
+
 static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 {
     SV *varname;
@@ -112,13 +126,7 @@ static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     lex_read_space(0);
 
     if (lex_peek_unichar(0) == '(') {
-        lex_read_unichar(0);
-        metadata = parse_listexpr(0);
-        lex_read_space(0);
-        demand_unichar(')', 0);
-        lex_read_space(0);
-
-        metadata = newANONHASH(metadata);
+        metadata = newANONHASH(parse_metadata());
     }
 
     if (lex_peek_unichar(0) != ';') {
