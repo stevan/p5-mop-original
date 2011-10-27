@@ -21,7 +21,7 @@ my $Foo = $::Class->new;
     ok( $attribute, '... found the attribute' );
     ok( $attribute->is_a( $::Attribute ), '... it is a proper attribute');
     is( $attribute->get_name, '$foo', '... got the right name');
-    is( ${ $attribute->get_initial_value }, 10, '... got the right initial value' );
+    is( ${ $attribute->get_initial_value }->(), 10, '... got the right initial value' );
 }
 
 {

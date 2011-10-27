@@ -22,7 +22,7 @@ my $bar = Foo->get_attributes->{'$bar'};
 ok($bar, '... got a bar');
 ok($bar->is_a( $::Attribute ), '... bar is a Attribute');
 is($bar->get_name, '$bar', '... got the right name for bar');
-is(${$bar->get_initial_value}, 100, '... got the right initial value for bar');
+is(${$bar->get_initial_value}->(), 100, '... got the right initial value for bar');
 
 {
     my $foo = Foo->new;
