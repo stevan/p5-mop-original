@@ -6,10 +6,7 @@ use warnings;
 use Scalar::Util ();
 use Clone        ();
 
-use mop::internal::class;
-use mop::internal::instance;
-use mop::internal::attribute;
-use mop::internal::method;
+use mop::internal;
 use mop::internal::dispatcher;
 
 
@@ -36,13 +33,13 @@ sub init {
     ## Phase 1 : Construct the base classes
     ## ------------------------------------------
 
-    $::Class = mop::internal::class::create(
+    $::Class = mop::internal::create_class(
         class      => \$::Class,
         name       => 'Class',
         version    => '0.01',
         authority  => 'cpan:STEVAN',
         methods    => {
-            'add_method' => mop::internal::method::create(
+            'add_method' => mop::internal::create_method(
                 name => 'add_method',
                 body => sub {
                     my $method = shift;
@@ -60,7 +57,7 @@ sub init {
                         # - SL
                         $stash->add_method(
                             mop::internal::instance::get_slot_at( $method, '$name' ),
-                            sub { mop::internal::method::execute( $method, @_ ) }
+                            sub { mop::internal::execute_method( $method, @_ ) }
                         );
                     }
                 }
@@ -68,14 +65,14 @@ sub init {
         }
     );
 
-    $::Object = mop::internal::class::create(
+    $::Object = mop::internal::create_class(
         class      => \$::Class,
         name       => 'Object',
         version    => '0.01',
         authority  => 'cpan:STEVAN',
     );
 
-    $::Method = mop::internal::class::create(
+    $::Method = mop::internal::create_class(
         class      => \$::Class,
         name       => 'Method',
         version    => '0.01',
@@ -83,7 +80,7 @@ sub init {
         superclass => $::Object,
     );
 
-    $::Attribute = mop::internal::class::create(
+    $::Attribute = mop::internal::create_class(
         class      => \$::Class,
         name       => 'Attribute',
         version    => '0.01',
@@ -117,13 +114,13 @@ sub init {
     ## ------------------------------------------
 
     # this method is needed for Class->get_mro
-    $::Class->add_method(mop::internal::method::create(
+    $::Class->add_method(mop::internal::create_method(
         name => 'get_superclass',
         body => sub { mop::internal::instance::get_slot_at( $::SELF, '$superclass' ) }
     ));
 
     # this method is needed for Class->CREATE
-    $::Class->add_method(mop::internal::method::create(
+    $::Class->add_method(mop::internal::create_method(
         name => 'get_mro',
         body => sub {
             my $super = $::SELF->get_superclass;
@@ -132,13 +129,13 @@ sub init {
     ));
 
     # this method is needed for Class->CREATE
-    $::Class->add_method(mop::internal::method::create(
+    $::Class->add_method(mop::internal::create_method(
         name => 'get_attributes',
         body => sub { mop::internal::instance::get_slot_at( $::SELF, '$attributes' ) }
     ));
 
     # this method is needed for Class->CREATE
-    $::Attribute->add_method(mop::internal::method::create(
+    $::Attribute->add_method(mop::internal::create_method(
         name => 'get_initial_value_for_instance',
         body => sub {
             my $value = ${ mop::internal::instance::get_slot_at( $::SELF, '$initial_value' ) };
@@ -158,7 +155,7 @@ sub init {
     ));
 
     # this method is needed for Object->new
-    $::Class->add_method(mop::internal::method::create(
+    $::Class->add_method(mop::internal::create_method(
         name => 'CREATE',
         body => sub {
             my $args = shift;
@@ -191,12 +188,12 @@ sub init {
     ));
 
     # this method is needed for Object->new
-    $::Class->add_method(mop::internal::method::create(
+    $::Class->add_method(mop::internal::create_method(
         name => 'get_constructor',
         body => sub { mop::internal::instance::get_slot_at( $::SELF, '$constructor' ) }
     ));
 
-    $::Object->add_method(mop::internal::method::create(
+    $::Object->add_method(mop::internal::create_method(
         name => 'new',
         body => sub {
             my %args = @_;
@@ -217,13 +214,13 @@ sub init {
     ## ------------------------------------------
 
     # this method is needed by Class->find_method
-    $::Class->add_method(mop::internal::method::create(
+    $::Class->add_method(mop::internal::create_method(
         name => 'get_methods',
         body => sub { mop::internal::instance::get_slot_at( $::SELF, '$methods' ) }
     ));
 
     # this method is needed to find Object->new (SEE BELOW)
-    $::Class->add_method(mop::internal::method::create( name => 'find_method', body => sub {
+    $::Class->add_method(mop::internal::create_method( name => 'find_method', body => sub {
         my $method_name = shift;
         $::SELF->get_methods->{ $method_name };
     }));
@@ -240,19 +237,19 @@ sub init {
         my $method = $::Object->find_method('new');
         get_stash_for( $::Class )->add_method(
             'new',
-            sub { mop::internal::method::execute( $method, @_ ) }
+            sub { mop::internal::execute_method( $method, @_ ) }
         );
     }
 
     # this method is needed by Class->add_attribute
-    $::Attribute->add_method(mop::internal::method::create(
+    $::Attribute->add_method(mop::internal::create_method(
         name => 'get_name',
         body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' ) }
     ));
 
     # this method is needed to add the attributes
     # to Attribute and Method (SEE BELOW)
-    $::Class->add_method(mop::internal::method::create( name => 'add_attribute', body => sub {
+    $::Class->add_method(mop::internal::create_method( name => 'add_attribute', body => sub {
         my $attr = shift;
         $::SELF->get_attributes->{ $attr->get_name } = $attr;
     }));
@@ -270,13 +267,13 @@ sub init {
 
     $::Attribute->add_attribute(
         get_stash_for( $::Attribute )->bless(
-            mop::internal::attribute::create( name => '$name', initial_value => \(my $attribute_name))
+            mop::internal::create_attribute( name => '$name', initial_value => \(my $attribute_name))
         )
     );
 
     $::Attribute->add_attribute(
         get_stash_for( $::Attribute )->bless(
-            mop::internal::attribute::create( name => '$initial_value', initial_value => \(my $initial_value))
+            mop::internal::create_attribute( name => '$initial_value', initial_value => \(my $initial_value))
         )
     );
 
@@ -399,7 +396,7 @@ sub init {
     $::Method->add_method( $::Method->new( name => 'get_body', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$body' ) }));
     $::Method->add_method( $::Method->new( name => 'execute', body => sub {
         my ($invocant, @args) = @_;
-        mop::internal::method::execute( $::SELF, $invocant, @args );
+        mop::internal::execute_method( $::SELF, $invocant, @args );
     }));
 
     ## --------------------------------
@@ -448,15 +445,15 @@ sub init {
             my $method = $methods->{ $method_name };
             $Class_stash->add_method(
                 $method_name,
-                sub { mop::internal::method::execute( $method, @_ ) }
+                sub { mop::internal::execute_method( $method, @_ ) }
             );
             $Method_stash->add_method(
                 $method_name,
-                sub { mop::internal::method::execute( $method, @_ ) }
+                sub { mop::internal::execute_method( $method, @_ ) }
             );
             $Attribute_stash->add_method(
                 $method_name,
-                sub { mop::internal::method::execute( $method, @_ ) }
+                sub { mop::internal::execute_method( $method, @_ ) }
             );
         }
     }

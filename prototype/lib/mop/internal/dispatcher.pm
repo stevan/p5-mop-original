@@ -3,9 +3,7 @@ package mop::internal::dispatcher;
 use strict;
 use warnings;
 
-use mop::internal::class;
 use mop::internal::instance;
-use mop::internal::method;
 
 use Package::Anon;
 
@@ -16,18 +14,32 @@ optimizer vtable for a given class.
 
 =cut
 
+sub get_mro {
+    my $class = shift;
+    return [] unless $class;
+    return [
+        $class,
+        @{ get_mro( mop::internal::instance::get_slot_at( $class, '$superclass' ) ) }
+    ]
+}
+
+sub find_method {
+    my ($class, $method_name) = @_;
+    mop::internal::instance::get_slot_at( $class, '$methods' )->{ $method_name };
+}
+
 sub WALKMETH {
     my ($class, $method_name, %opts) = @_;
     WALKCLASS(
         $class,
-        sub { mop::internal::class::find_method( $_[0], $method_name ) },
+        sub { find_method( $_[0], $method_name ) },
         %opts
     );
 }
 
 sub WALKCLASS {
     my ($class, $solver, %opts) = @_;
-    my @mro = @{ mop::internal::class::get_mro( $class ) };
+    my @mro = @{ get_mro( $class ) };
     shift @mro if exists $opts{'super'};
     @mro = reverse @mro if $opts{'reverse'};
     foreach my $_class ( @mro ) {
@@ -56,7 +68,7 @@ sub SUBDISPATCH {
     my @args        = @_;
     my $class       = mop::internal::instance::get_class( $invocant );
 
-    $find_method = sub { mop::internal::class::find_method( $_[0], $find_method ) }
+    $find_method = sub { find_method( $_[0], $find_method ) }
         if !ref($find_method);
 
     WALKCLASS(
@@ -84,7 +96,7 @@ sub NEXTMETHOD {
 sub CALLMETHOD {
     my $method   = shift;
     my $invocant = shift;
-    mop::internal::method::execute( $method, $invocant, @_ );
+    mop::internal::execute_method( $method, $invocant, @_ );
 }
 
 sub GENSTASH {
