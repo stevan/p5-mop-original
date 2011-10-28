@@ -473,11 +473,11 @@ __END__
 
 =head1 NAME
 
-mop::internal::boostrap
+mop::internal::bootstrap
 
 =head1 DESCRIPTION
 
-The boostratpping process is important, but a little ugly and
+The bootstrapping process is important, but a little ugly and
 manual. The main goal of the bootstrap is to define the class Class
 as well as the class Object, and to "tie the knot" such that the
 following things are true:
@@ -492,7 +492,7 @@ metacircularity.
 -head1 TODO
 
 These definitions should actually get stripped down to their bare
-minimums so that there is less to overwrite in the MOP boostrap
+minimums so that there is less to overwrite in the MOP bootstrap
 that we do later on.
 
 =head1 AUTHOR

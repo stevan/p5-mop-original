@@ -22,9 +22,10 @@ The HASH ref instance has served Perl well over the many years when it was
 considered the defacto instance structure. However, the HASH ref based
 instance has some very well known issues.
 
-One of the most common issues is that of typos on key names. The recent
-trend of Inside-Out objects aimed itself at trying to fix this by inverting
-the instance structure such that a typo would result in a compile-time
+One of the most common issues is that of typos on key names are not
+compile-time detected, if detected at all. The recent trend of
+Inside-Out objects aimed itself at trying to fix this by inverting the
+instance structure such that a typo would result in a compile-time
 syntax error.
 
 Another very common issue is the complete lack of privacy for not only
