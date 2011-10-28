@@ -20,6 +20,7 @@ sub create_class {
     my $methods     = $params{'methods'}     || {};
     my $constructor = $params{'constructor'} || undef;
     my $destructor  = $params{'destructor'}  || undef;
+    my $dispatcher  = $params{'dispatcher'}  || undef;
 
     mop::internal::instance::create(
         $class,
@@ -31,7 +32,8 @@ sub create_class {
             '$attributes'  => \$attributes,
             '$methods'     => \$methods,
             '$constructor' => \$constructor,
-            '$destructor'  => \$destructor
+            '$destructor'  => \$destructor,
+            '$dispatcher'  => \$dispatcher,
         }
     );
 }
@@ -62,6 +64,19 @@ sub create_method {
         {
             '$name' => \$name,
             '$body' => \$body,
+        }
+    );
+}
+
+sub create_dispatcher {
+    my %params = @_;
+
+    my $class = $params{'class'} || die "A dispatcher must have a class";
+
+    mop::internal::instance::create(
+        \$::Dispatcher,
+        {
+            '$class' => \$class,
         }
     );
 }

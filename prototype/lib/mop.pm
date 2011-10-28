@@ -22,8 +22,9 @@ BEGIN {
 
     # these are some of the classes that are also created
     # in the bootstrap and are part of the MOP
-    $::Method    = undef;
-    $::Attribute = undef;
+    $::Method     = undef;
+    $::Attribute  = undef;
+    $::Dispatcher = undef;
 }
 
 use mop::bootstrap;
