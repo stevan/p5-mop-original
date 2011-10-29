@@ -162,6 +162,81 @@ static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     return ret;
 }
 
+#define parse_method_prototype() THX_parse_method_prototype(aTHX)
+static OP *THX_parse_method_prototype(pTHX)
+{
+    OP *myvars, *get_args;
+
+    demand_unichar('(', DEMAND_IMMEDIATE);
+
+    if (lex_peek_unichar(0) == ')') {
+        lex_read_unichar(0);
+        return NULL;
+    }
+
+    myvars = newLISTOP(OP_LIST, 0, NULL, NULL);
+
+    for (;;) {
+        SV *varname;
+        OP *pad_op;
+        char next;
+
+        lex_read_space(0);
+        varname = parse_scalar_varname();
+
+        pad_op = newOP(OP_PADSV, (OPpLVAL_INTRO<<8));
+        pad_op->op_targ = pad_add_my_scalar_sv(varname);
+        op_append_elem(OP_LIST, myvars, pad_op);
+
+        lex_read_space(0);
+        next = lex_peek_unichar(0);
+        if (next == ',') {
+            lex_read_unichar(0);
+        }
+        else if (next == ')') {
+            lex_read_unichar(0);
+            break;
+        }
+        else {
+            croak("syntax error");
+        }
+    }
+
+    get_args = newUNOP(OP_RV2AV, 0, newGVOP(OP_GV, 0, gv_fetchpv("_", 0, SVt_PVAV)));
+
+    return newASSIGNOP(0, myvars, 0, get_args);
+}
+
+static OP *parse_block_method(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
+{
+    I32 floor;
+    OP *arg_assign = NULL, *block;
+
+    *flagsp |= CALLPARSER_STATEMENT;
+
+    floor = start_subparse(0, 0);
+
+    lex_read_space(0);
+
+    if (lex_peek_unichar(0) == '(') {
+        arg_assign = parse_method_prototype();
+    }
+
+    lex_read_space(0);
+
+    demand_unichar('{', DEMAND_IMMEDIATE | DEMAND_NOCONSUME);
+
+    block = parse_block(0);
+
+    if (arg_assign) {
+        block = op_prepend_elem(OP_LINESEQ,
+	                        newSTATEOP(0, NULL, arg_assign),
+	                        block);
+    }
+
+    return newANONSUB(floor, NULL, block);
+}
+
 MODULE = mop  PACKAGE = mop
 
 PROTOTYPES: DISABLE
@@ -169,4 +244,6 @@ PROTOTYPES: DISABLE
 BOOT:
 {
     cv_set_call_parser(get_cv("mop::syntax::has", 0), parse_has, &PL_sv_undef);
+    cv_set_call_parser(get_cv("mop::syntax::BUILD", 0), parse_block_method, &PL_sv_undef);
+    cv_set_call_parser(get_cv("mop::syntax::DEMOLISH", 0), parse_block_method, &PL_sv_undef);
 }

@@ -18,8 +18,8 @@ sub setup_for {
         *{ $pkg . '::class'    } = sub (&@) {};
         *{ $pkg . '::method'   } = sub (&)  {};
         *{ $pkg . '::has'      } = \&has;
-        *{ $pkg . '::BUILD'    } = sub (&)  {};
-        *{ $pkg . '::DEMOLISH' } = sub (&)  {};
+        *{ $pkg . '::BUILD'    } = \&BUILD;
+        *{ $pkg . '::DEMOLISH' } = \&DEMOLISH;
     }
 
     my $context = $class->new;
@@ -28,8 +28,6 @@ sub setup_for {
         {
             'class'    => { const => sub { $context->class_parser( @_ )     } },
             'method'   => { const => sub { $context->method_parser( @_ )    } },
-            'BUILD'    => { const => sub { $context->BUILD_parser( @_ )     } },
-            'DEMOLISH' => { const => sub { $context->DEMOLISH_parser( @_ )  } },
         }
     );
 }
@@ -43,6 +41,26 @@ sub has {
             ($metadata ? %$metadata : ()),
         )
     );
+}
+
+sub BUILD {
+    my ($body) = @_;
+    $::CLASS->set_constructor(
+        $::CLASS->method_class->new(
+            name => 'BUILD',
+            body => Sub::Name::subname( 'BUILD', $body )
+        )
+    )
+}
+
+sub DEMOLISH {
+    my ($body) = @_;
+    $::CLASS->set_destructor(
+        $::CLASS->method_class->new(
+            name => 'DEMOLISH',
+            body => Sub::Name::subname( 'DEMOLISH', $body )
+        )
+    )
 }
 
 sub class_parser {
