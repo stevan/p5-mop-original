@@ -16,7 +16,7 @@ sub setup_for {
     {
         no strict 'refs';
         *{ $pkg . '::class'    } = sub (&@) {};
-        *{ $pkg . '::method'   } = sub (&)  {};
+        *{ $pkg . '::method'   } = \&method;
         *{ $pkg . '::has'      } = \&has;
         *{ $pkg . '::BUILD'    } = \&BUILD;
         *{ $pkg . '::DEMOLISH' } = \&DEMOLISH;
@@ -26,8 +26,7 @@ sub setup_for {
     Devel::Declare->setup_for(
         $pkg,
         {
-            'class'    => { const => sub { $context->class_parser( @_ )     } },
-            'method'   => { const => sub { $context->method_parser( @_ )    } },
+            'class' => { const => sub { $context->class_parser( @_ )     } },
         }
     );
 }
@@ -41,6 +40,16 @@ sub has {
             ($metadata ? %$metadata : ()),
         )
     );
+}
+
+sub method {
+    my ($name, $body) = @_;
+    $::CLASS->add_method(
+        $::CLASS->method_class->new(
+            name => $name,
+            body => Sub::Name::subname( $name, $body )
+        )
+    )
 }
 
 sub BUILD {
