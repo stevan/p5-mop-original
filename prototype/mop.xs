@@ -127,6 +127,7 @@ static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 
     if (lex_peek_unichar(0) == '(') {
         metadata = newANONHASH(parse_metadata());
+        lex_read_space(0);
     }
 
     if (lex_peek_unichar(0) != ';') {
