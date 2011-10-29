@@ -116,6 +116,114 @@ static OP *THX_parse_metadata(pTHX)
     return metadata;
 }
 
+static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
+{
+    SV *class_name, *metadata, *class;
+    CV *metadata_cv;
+    OP *metadata_op, *local_class, *self_class_lexicals, *block;
+    int floor;
+
+    *flagsp |= CALLPARSER_STATEMENT;
+
+    /* parse class name */
+    lex_read_space(0);
+    class_name = parse_idword("");
+
+    /* parse metadata */
+    floor = start_subparse(0, 0);
+    lex_read_space(0);
+    if (lex_peek_unichar(0) == '(') {
+        metadata_op = newANONHASH(parse_metadata());
+    }
+    else {
+        metadata_op = newOP(OP_UNDEF, 0);
+    }
+
+    /* evaluate metadata at compile time */
+    ENTER;
+    {
+        dSP;
+        CV *metadata_cv;
+        metadata_cv = newATTRSUB(floor, NULL, NULL, NULL, metadata_op);
+        PUSHMARK(SP);
+        call_sv((SV*)metadata_cv, G_SCALAR|G_NOARGS);
+        SPAGAIN;
+        metadata = POPs;
+        PUTBACK;
+    }
+    LEAVE;
+
+    /* call mop::syntax::build_class with the name and metadata */
+    ENTER;
+    {
+        dSP;
+        PUSHMARK(SP);
+        XPUSHs(class_name);
+        XPUSHs(metadata);
+        PUTBACK;
+        call_pv("mop::syntax::build_class", G_SCALAR);
+        SPAGAIN;
+        class = POPs;
+        PUTBACK;
+    }
+    LEAVE;
+
+    /* localize $::CLASS to the class that we built */
+    floor = start_subparse(0, 0);
+    local_class = newASSIGNOP(0, op_lvalue(newUNOP(OP_RV2SV, 0, newGVOP(OP_GV, 0, gv_fetchpv("::CLASS", 0, SVt_PV))), OP_NULL), 0, newSVOP(OP_CONST, 0, newSVsv(class)));
+
+    /* create $self and $class lexicals */
+    {
+        OP *var_self, *var_class;
+
+        var_self = newOP(OP_PADSV, 0);
+        var_self->op_targ = pad_add_my_scalar_pvn("$self", 5);
+        var_class = newOP(OP_PADSV, 0);
+        var_class->op_targ = pad_add_my_scalar_pvn("$class", 6);
+        self_class_lexicals = newLISTOP(OP_LIST, 0, var_self, var_class);
+    }
+
+    /* parse the class block */
+    demand_unichar('{', DEMAND_NOCONSUME);
+    block = parse_block(0);
+
+    /* stick localization and the lexicals on the front of the block */
+    block = op_prepend_elem(OP_LINESEQ,
+                            newSTATEOP(0, NULL, self_class_lexicals),
+                            block);
+    block = op_prepend_elem(OP_LINESEQ,
+                            newSTATEOP(0, NULL, local_class),
+                            block);
+
+    /* evaluate the class block at compile time */
+    ENTER;
+    {
+        dSP;
+        CV *class_cv;
+        class_cv = newATTRSUB(floor, NULL, NULL, NULL, block);
+        PUSHMARK(SP);
+        call_sv((SV*)class_cv, G_VOID|G_NOARGS);
+        PUTBACK;
+    }
+    LEAVE;
+
+    /* finalize the class, still at compile time */
+    ENTER;
+    {
+        dSP;
+        PUSHMARK(SP);
+        XPUSHs(class_name);
+        XPUSHs(class);
+        PUTBACK;
+        call_pv("mop::syntax::finalize_class", G_VOID);
+        PUTBACK;
+    }
+    LEAVE;
+
+    /* the class keyword has no runtime component */
+    return newOP(OP_NULL, 0);
+}
+
 static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 {
     SV *varname;
@@ -260,6 +368,7 @@ PROTOTYPES: DISABLE
 
 BOOT:
 {
+    cv_set_call_parser(get_cv("mop::syntax::class", 0), parse_class, &PL_sv_undef);
     cv_set_call_parser(get_cv("mop::syntax::has", 0), parse_has, &PL_sv_undef);
     cv_set_call_parser(get_cv("mop::syntax::method", 0), parse_method, &PL_sv_yes);
     cv_set_call_parser(get_cv("mop::syntax::BUILD", 0), parse_method, &PL_sv_no);

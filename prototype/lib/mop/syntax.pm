@@ -3,33 +3,22 @@ package mop::syntax;
 use strict;
 use warnings;
 
-use base 'Devel::Declare::Context::Simple';
-
-use Sub::Name      ();
-use Devel::Declare ();
-use B::Hooks::EndOfScope;
-use Carp qw[ confess ];
+use Sub::Name ();
 
 sub setup_for {
     my $class = shift;
     my $pkg   = shift;
     {
         no strict 'refs';
-        *{ $pkg . '::class'    } = sub (&@) {};
+        *{ $pkg . '::class'    } = \&class;
         *{ $pkg . '::method'   } = \&method;
         *{ $pkg . '::has'      } = \&has;
         *{ $pkg . '::BUILD'    } = \&BUILD;
         *{ $pkg . '::DEMOLISH' } = \&DEMOLISH;
     }
-
-    my $context = $class->new;
-    Devel::Declare->setup_for(
-        $pkg,
-        {
-            'class' => { const => sub { $context->class_parser( @_ )     } },
-        }
-    );
 }
+
+sub class { }
 
 sub has {
     my ($name, $ref, $metadata, $default) = @_;
@@ -72,54 +61,11 @@ sub DEMOLISH {
     )
 }
 
-sub class_parser {
-    my $self = shift;
-
-    $self->init( @_ );
-
-    $self->skip_declarator;
-
-    my $name   = $self->strip_name;
-    my $proto  = $self->strip_proto;
-    my $caller = $self->get_curstash_name;
-
-    my $inject = $self->scope_injector_call
-               . 'my $d = shift;'
-               . '$d->{"class"} = ' . __PACKAGE__ . '->build_class('
-                    . 'name   => "' . $name . '", '
-                    . 'caller => "' . $caller . '"'
-                    . ($proto ? (', ' . $proto) : '')
-               . ');'
-               . 'local $::CLASS = $d->{"class"};'
-               . 'my ($self, $class);';
-    $self->inject_if_block( $inject );
-
-    $self->shadow(sub (&@) {
-        my $body = shift;
-        my $data = {};
-
-        $body->( $data );
-
-        my $class = $data->{'class'};
-        $class->FINALIZE;
-
-        {
-            no strict 'refs';
-            *{"${caller}::${name}"} = Sub::Name::subname( $name, sub () { $class } );
-        }
-
-        return;
-    });
-
-    return;
-}
-
 sub build_class {
-    shift;
-    my %metadata = @_;
+    my ($name, $metadata) = @_;
+    my %metadata = %{ $metadata || {} };
 
-    my $name   = delete $metadata{ 'name' };
-    my $caller = delete $metadata{ 'caller' };
+    my $caller = caller;
 
     my $class_Class = $::Class;
     if ( exists $metadata{ 'metaclass' } ) {
@@ -147,21 +93,17 @@ sub build_class {
     );
 }
 
-sub inject_scope {
-    my $class  = shift;
-    my $inject = shift || ';';
-    on_scope_end {
-        my $linestr = Devel::Declare::get_linestr;
-        return unless defined $linestr;
-        my $offset  = Devel::Declare::get_linestr_offset;
-        if ( $inject eq ';' ) {
-            substr( $linestr, $offset, 0 ) = $inject;
-        }
-        else {
-            substr( $linestr, $offset - 1, 0 ) = $inject;
-        }
-        Devel::Declare::set_linestr($linestr);
-    };
+sub finalize_class {
+    my ($name, $class) = @_;
+
+    my $caller = caller;
+
+    $class->FINALIZE;
+
+    {
+        no strict 'refs';
+        *{"${caller}::${name}"} = Sub::Name::subname( $name, sub () { $class } );
+    }
 }
 
 1;
