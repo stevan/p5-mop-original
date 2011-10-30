@@ -49,7 +49,7 @@ BEGIN {
                 );
             }
 
-            $self->NEXTMETHOD;
+            super;
         }
     }
 

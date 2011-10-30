@@ -373,18 +373,6 @@ sub init {
             }
         );
 
-        # NOTE:
-        # this is totally wrong
-        # - SL
-        $stash->add_method('NEXTMETHOD' => sub {
-            my $invocant    = shift;
-            my $method_name = (split '::' => ((caller(1))[3]))[-1];
-            my $class       = mop::internal::instance::get_class( $invocant );
-            my $dispatcher  = $class->get_dispatcher;
-            mop::WALKMETH( $dispatcher, $method_name ); # discard the first one ...
-            mop::internal::execute_method( mop::WALKMETH( $dispatcher, $method_name ), $invocant, @_ );
-        });
-
         $stash->add_method('DESTROY' => sub {
             my $invocant = shift;
             my $class    = mop::internal::instance::get_class( $invocant );

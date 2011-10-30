@@ -20,6 +20,7 @@ sub setup_for {
         *{ $pkg . '::has'      } = sub ($@) {};
         *{ $pkg . '::BUILD'    } = sub (&)  {};
         *{ $pkg . '::DEMOLISH' } = sub (&)  {};
+        *{ $pkg . '::super'    } = sub (@)  {};
     }
 
     my $context = $class->new;
@@ -31,6 +32,7 @@ sub setup_for {
             'has'      => { const => sub { $context->attribute_parser( @_ ) } },
             'BUILD'    => { const => sub { $context->BUILD_parser( @_ )     } },
             'DEMOLISH' => { const => sub { $context->DEMOLISH_parser( @_ )  } },
+            'super'    => { const => sub { $context->super_parser( @_ )     } },
         }
     );
 }
@@ -176,6 +178,26 @@ sub DEMOLISH_parser {
             )
         )
     } );
+
+    return;
+}
+
+sub super_parser {
+    my $self = shift;
+
+    $self->init( @_ );
+
+    $self->skip_declarator;
+    $self->shadow(sub (@) {
+        die "Cannot call super() outside of a method" unless defined $::SELF;
+        my $invocant    = $::SELF;
+        my $method_name = (split '::' => ((caller(1))[3]))[-1];
+        my $dispatcher  = $::CLASS->get_dispatcher;
+        mop::WALKMETH( $dispatcher, $method_name ); # discard the first one ...
+        my $method = mop::WALKMETH( $dispatcher, $method_name )
+                     || die "No super method found for '$method_name'";
+        mop::internal::execute_method( $method, $invocant, @_ );
+    });
 
     return;
 }

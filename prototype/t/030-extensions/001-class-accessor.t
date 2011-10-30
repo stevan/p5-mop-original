@@ -30,7 +30,7 @@ BEGIN {
                 );
             }
 
-            $self->NEXTMETHOD;
+            super;
         }
     }
 
