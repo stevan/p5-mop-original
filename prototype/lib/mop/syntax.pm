@@ -20,6 +20,16 @@ sub setup_for {
 
 sub class { }
 
+sub method {
+    my ($name, $body) = @_;
+    $::CLASS->add_method(
+        $::CLASS->method_class->new(
+            name => $name,
+            body => Sub::Name::subname( $name, $body )
+        )
+    )
+}
+
 sub has {
     my ($name, $ref, $metadata, $default) = @_;
     $::CLASS->add_attribute(
@@ -29,16 +39,6 @@ sub has {
             ($metadata ? %$metadata : ()),
         )
     );
-}
-
-sub method {
-    my ($name, $body) = @_;
-    $::CLASS->add_method(
-        $::CLASS->method_class->new(
-            name => $name,
-            body => Sub::Name::subname( $name, $body )
-        )
-    )
 }
 
 sub BUILD {

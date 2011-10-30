@@ -111,7 +111,6 @@ static OP *THX_parse_metadata(pTHX)
     metadata = parse_listexpr(0);
     lex_read_space(0);
     demand_unichar(')', 0);
-    lex_read_space(0);
 
     return metadata;
 }
@@ -229,15 +228,17 @@ static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     SV *varname;
     OP *ret, *pad_op, *metadata = NULL, *attr_default = NULL;
 
+    *flagsp |= CALLPARSER_STATEMENT;
+
     lex_read_space(0);
     varname = parse_scalar_varname();
-    lex_read_space(0);
 
+    lex_read_space(0);
     if (lex_peek_unichar(0) == '(') {
         metadata = newANONHASH(parse_metadata());
-        lex_read_space(0);
     }
 
+    lex_read_space(0);
     if (lex_peek_unichar(0) != ';') {
         I32 floor;
 
@@ -246,8 +247,6 @@ static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
         floor = start_subparse(0, 0);
         attr_default = newANONSUB(floor, NULL, parse_termexpr(0));
     }
-
-    *flagsp |= CALLPARSER_STATEMENT;
 
     pad_op = newOP(OP_PADSV, (OPpLVAL_INTRO<<8)|OPf_PARENS|OPf_WANT_LIST);
     pad_op->op_targ = pad_add_my_scalar_sv(varname);
@@ -278,6 +277,7 @@ static OP *THX_parse_method_prototype(pTHX)
 
     demand_unichar('(', DEMAND_IMMEDIATE);
 
+    lex_read_space(0);
     if (lex_peek_unichar(0) == ')') {
         lex_read_unichar(0);
         return NULL;
@@ -332,14 +332,11 @@ static OP *parse_method(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     }
 
     lex_read_space(0);
-
     if (lex_peek_unichar(0) == '(') {
         arg_assign = parse_method_prototype();
     }
 
-    lex_read_space(0);
-
-    demand_unichar('{', DEMAND_IMMEDIATE | DEMAND_NOCONSUME);
+    demand_unichar('{', DEMAND_NOCONSUME);
 
     block = parse_block(0);
 
