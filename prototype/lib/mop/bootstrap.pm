@@ -2,6 +2,7 @@ package mop::bootstrap;
 
 use strict;
 use warnings;
+use v5.10;
 
 use Scalar::Util ();
 use Clone        ();
@@ -161,25 +162,29 @@ sub init {
             my $args = shift;
             my $data = {};
 
-            foreach my $class ( @{ $::SELF->get_mro } ) {
-                my $attrs = $class->get_attributes;
-                foreach my $attr_name ( keys %$attrs ) {
-                    unless ( exists $data->{ $attr_name } ) {
-                        my $param_name = $attr_name;
-                        $param_name =~ s/^\$//;
-                        if ( exists $args->{ $param_name } ) {
-                            my $value = $args->{ $param_name };
-                            $data->{ $attr_name } = \$value;
-                        }
-                        else {
-                            $data->{ $attr_name } = $attrs->{$attr_name}->get_initial_value_for_instance(
-                                $attrs->{ $attr_name }
-                            );
-                        }
+            mop::WALKCLASS(
+                $::SELF->get_dispatcher,
+                sub {
+                    my $class = shift;
+                    my $attrs = $class->get_attributes;
+                    foreach my $attr_name ( keys %$attrs ) {
+                        unless ( exists $data->{ $attr_name } ) {
+                            my $param_name = $attr_name;
+                            $param_name =~ s/^\$//;
+                            if ( exists $args->{ $param_name } ) {
+                                my $value = $args->{ $param_name };
+                                $data->{ $attr_name } = \$value;
+                            }
+                            else {
+                                $data->{ $attr_name } = $attrs->{$attr_name}->get_initial_value_for_instance(
+                                    $attrs->{ $attr_name }
+                                );
+                            }
 
+                        }
                     }
                 }
-            }
+            );
 
             (get_stash_for( $::SELF ) || die "Could not find stash for class(" . $::SELF->get_name . ")")->bless(
                 mop::internal::instance::create( \$::SELF, $data )
@@ -197,61 +202,10 @@ sub init {
     $::Class->add_method(mop::internal::create_method(
         name => 'get_dispatcher',
         body => sub {
-            my $dispatcher = mop::internal::instance::get_slot_at( $::SELF, '$dispatcher' );
-            if ( !$dispatcher ) {
-                $dispatcher = get_stash_for( $::Dispatcher )->bless(
-                    mop::internal::create_dispatcher( class => $::SELF )
-                );
-                mop::internal::instance::get_slot_at( $::SELF, '$dispatcher', $dispatcher );
-            }
-            $dispatcher;
-        }
-    ));
-
-    # this method is needed for Dispatcher->WALKCLASS
-    $::Dispatcher->add_method(mop::internal::create_method(
-        name => 'get_class',
-        body => sub { mop::internal::instance::get_slot_at( $::SELF, '$class' ) }
-    ));
-
-    # this method is needed for Dispatcher->s
-    $::Dispatcher->add_method(mop::internal::create_method(
-        name => 'WALKCLASS',
-        body => sub {
-            my ($solver, %opts) = @_;
-            my @mro = @{ $::SELF->get_class->get_mro };
-            shift @mro if exists $opts{'super'};
-            @mro = reverse @mro if $opts{'reverse'};
-            foreach my $_class ( @mro ) {
-                if ( my $result = $solver->( $_class ) ) {
-                    return $result;
-                }
-            }
-            return;
-        }
-    ));
-
-    # this method is needed for Object->new
-    $::Dispatcher->add_method(mop::internal::create_method(
-        name => 'SUBDISPATCH',
-        body => sub {
-            my $find_method = shift;
-            my $reverse     = shift;
-            my $invocant    = shift;
-            my @args        = @_;
-            my $class       = mop::internal::instance::get_class( $invocant );
-
-            $find_method = sub { $_[0]->find_method( $find_method ) }
-                unless ref $find_method;
-
-            $::SELF->WALKCLASS(
-                sub {
-                    my $method = $find_method->( $_[0] );
-                    mop::internal::execute_method( $method, $invocant, @args ) if $method;
-                    return;
-                },
-                reverse => $reverse,
-            );
+            my $type  = shift;
+            my $class = $::SELF;
+            return sub { state $mro = $class->get_mro; shift @$mro } unless $type;
+            return sub { state $mro = $class->get_mro; pop   @$mro } if $type eq 'reverse';
         }
     ));
 
@@ -260,11 +214,14 @@ sub init {
         body => sub {
             my %args = @_;
             my $self = $::SELF->CREATE( \%args );
-            $::SELF->get_dispatcher->SUBDISPATCH(
-                sub { $_[0]->get_constructor },
-                1,
-                $self,
-                \%args,
+            mop::WALKCLASS(
+                $::SELF->get_dispatcher('reverse'),
+                sub {
+                    if ( my $constructor = $_[0]->get_constructor ) {
+                        mop::internal::execute_method( $constructor, $self, \%args )
+                    }
+                    return;
+                }
             );
             $self;
         }
@@ -392,33 +349,17 @@ sub init {
         }
     ));
 
-    # ....
+    ## FINALIZE protocol
+    $::Class->add_method( $::Method->new( name => 'FINALIZE', body => sub {
+        $::SELF->set_superclass( $::Object )
+            unless $::SELF->get_superclass;
 
-    # add method for Dispatcher->NEXTMETHOD
-    $::Dispatcher->add_method( $::Method->new( name => 'WALKMETH', body => sub {
-        my ($method_name, %opts) = @_;
-        $::SELF->WALKCLASS(
-            sub { $_[0]->find_method( $method_name ) },
-            %opts
-        );
-    }));
+        # pre-compute the vtable
+        my $stash      = get_stash_for( $::SELF );
+        my $dispatcher = $::SELF->get_dispatcher;
 
-    # add method for Dispatcher->GENSTASH
-    $::Dispatcher->add_method( $::Method->new( name => 'NEXTMETHOD', body => sub {
-        my $method_name = shift;
-        my $invocant    = shift;
-        my $method      = $::SELF->WALKMETH(
-            $method_name,
-            (super => 1)
-        ) || die "Could not find method '$method_name'";
-        mop::internal::execute_method( $method, $invocant, @_ );
-    }));
-
-    # add method for Class->FINALIZE
-    $::Dispatcher->add_method( $::Method->new( name => 'GENSTASH', body => sub {
-        my $stash = shift;
-
-        $::SELF->WALKCLASS(
+        mop::WALKCLASS(
+            $dispatcher,
             sub {
                 my $c = shift;
                 my $methods = $c->get_methods;
@@ -429,37 +370,38 @@ sub init {
                         sub { mop::internal::execute_method( $method, @_ ) }
                     ) unless exists $stash->{ $name };
                 }
-            },
+            }
         );
 
+        # NOTE:
+        # this is totally wrong
+        # - SL
         $stash->add_method('NEXTMETHOD' => sub {
             my $invocant    = shift;
             my $method_name = (split '::' => ((caller(1))[3]))[-1];
             my $class       = mop::internal::instance::get_class( $invocant );
-            $class->get_dispatcher->NEXTMETHOD( $method_name, $invocant, @_ );
+            my $dispatcher  = $class->get_dispatcher;
+            mop::WALKMETH( $dispatcher, $method_name ); # discard the first one ...
+            mop::internal::execute_method( mop::WALKMETH( $dispatcher, $method_name ), $invocant, @_ );
         });
 
         $stash->add_method('DESTROY' => sub {
             my $invocant = shift;
             my $class    = mop::internal::instance::get_class( $invocant );
             return unless $class; # likely in global destruction ...
-            $class->get_dispatcher->SUBDISPATCH(
-                sub { mop::internal::instance::get_slot_at( $_[0], '$destructor' ) },
-                0,
-                $invocant,
+            mop::WALKCLASS(
+                $class->get_dispatcher(),
+                sub {
+                    if ( my $destructor = $_[0]->get_destructor ) {
+                        mop::internal::execute_method( $destructor, $invocant )
+                    }
+                    return;
+                }
             );
         });
 
         return $stash;
-    }));
 
-    ## FINALIZE protocol
-    $::Class->add_method( $::Method->new( name => 'FINALIZE', body => sub {
-        $::SELF->set_superclass( $::Object )
-            unless $::SELF->get_superclass;
-
-        # pre-compute the vtable
-        $::SELF->get_dispatcher->GENSTASH( get_stash_for( $::SELF ) );
     }));
 
     # ...

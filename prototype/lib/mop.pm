@@ -33,6 +33,16 @@ mop::bootstrap::init();
 
 sub import { mop::syntax->setup_for( caller ) }
 
+sub WALKCLASS {
+    my ($dispatcher, $solver) = @_;
+    { $solver->( $dispatcher->() || return ); redo }
+}
+
+sub WALKMETH {
+    my ($dispatcher, $method_name) = @_;
+    { ( $dispatcher->() || return )->find_method( $method_name ) || redo }
+}
+
 1;
 
 __END__
