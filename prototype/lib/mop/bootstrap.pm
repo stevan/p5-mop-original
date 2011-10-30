@@ -82,14 +82,6 @@ sub init {
         superclass => $::Object,
     );
 
-    $::Dispatcher = mop::internal::create_class(
-        class      => \$::Class,
-        name       => 'Dispatcher',
-        version    => '0.01',
-        authority  => 'cpan:STEVAN',
-        superclass => $::Object,
-    );
-
     ## ------------------------------------------
     ## Phase 2 : Tie the knot
     ## ------------------------------------------
@@ -115,7 +107,6 @@ sub init {
     get_stash_for( $::Class )->bless( $::Class,     );
     get_stash_for( $::Class )->bless( $::Method,    );
     get_stash_for( $::Class )->bless( $::Attribute  );
-    get_stash_for( $::Class )->bless( $::Dispatcher );
 
     ## ------------------------------------------
     ## Phase 4 : Minimum code needed for object
