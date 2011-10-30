@@ -24,7 +24,6 @@ BEGIN {
     # in the bootstrap and are part of the MOP
     $::Method     = undef;
     $::Attribute  = undef;
-    $::Dispatcher = undef;
 }
 
 use mop::bootstrap;
