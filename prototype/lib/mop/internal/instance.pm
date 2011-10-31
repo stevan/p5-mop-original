@@ -16,7 +16,7 @@ sub create {
 
 sub get_uuid  { (shift)->{'uuid'}     }
 sub get_class { ${(shift)->{'class'}} }
-sub get_slot  { (shift)->{'slots'}    }
+sub get_slots { (shift)->{'slots'}    }
 
 sub get_slot_at {
     my ($instance, $name) = @_;

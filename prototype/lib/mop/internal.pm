@@ -84,7 +84,7 @@ sub execute_method {
     my $method   = shift;
     my $invocant = shift;
     my $class    = mop::internal::instance::get_class( $invocant );
-    my $instance = mop::internal::instance::get_slot( $invocant );
+    my $instance = mop::internal::instance::get_slots( $invocant );
     my $body     = mop::internal::instance::get_slot_at( $method, '$body' );
 
     PadWalker::set_closed_over( $body, {
