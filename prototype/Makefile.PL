@@ -11,8 +11,6 @@ requires 'Package::Anon' => 0;
 
 # cpan
 requires 'Sub::Name'            => 0;
-requires 'Devel::Declare'       => 0;
-requires 'B::Hooks::EndOfScope' => 0;
 requires 'PadWalker'            => 0;
 requires 'Scope::Guard'         => 0;
 requires 'Carp'                 => 0;
