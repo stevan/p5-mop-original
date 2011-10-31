@@ -158,6 +158,9 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 
     /* parse metadata */
     floor = start_subparse(0, 0);
+    /* apparently __PACKAGE__ looks at PL_curstash, but ->SUPER:: looks at
+     * CopSTASH(PL_curcop) - no idea why they would be different here */
+    CopSTASH_set(PL_curcop, PL_curstash);
     lex_read_space(0);
     if (lex_peek_unichar(0) == '(') {
         metadata_op = newANONHASH(parse_metadata());

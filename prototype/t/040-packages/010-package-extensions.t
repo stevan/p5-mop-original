@@ -64,7 +64,7 @@ BEGIN {
     use warnings;
     use mop;
 
-    our @ISA = ('Foo');
+    BEGIN { our @ISA = ('Foo') };
 
     # NOTE:
     # make sure to inherit from the
