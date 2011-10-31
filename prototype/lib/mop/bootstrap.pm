@@ -25,7 +25,7 @@ use mop::internal;
 sub init {
 
     ## ------------------------------------------
-    ## Phase 1 : Construct the base classes
+    ## Phase 1 : Construct the core classes
     ## ------------------------------------------
 
     $::Class = mop::internal::create_class(
@@ -69,6 +69,18 @@ sub init {
         version    => '0.01',
         authority  => 'cpan:STEVAN',
         superclass => $::Object,
+        methods    => {
+            # We need to define the execute method
+            # of the Method object very early on
+            # so that *most* of our method calls
+            # can use this, and any that won't
+            # use it will eventually get fixed up
+            # by the end of the bootstrapping.
+            'execute' => mop::internal::create_method(
+                name => 'execute',
+                body => sub { mop::internal::execute_method( $::SELF, @_ ) }
+            )
+        }
     );
 
     $::Attribute = mop::internal::create_class(
@@ -89,6 +101,11 @@ sub init {
     ## Phase 3 : Setup stashes
     ## ------------------------------------------
 
+    get_stash_for( $::Class )->bless( $::Object     );
+    get_stash_for( $::Class )->bless( $::Class,     );
+    get_stash_for( $::Class )->bless( $::Method,    );
+    get_stash_for( $::Class )->bless( $::Attribute  );
+
     # make sure to manually add the
     # add_method method to the Class
     # stash. This still uses the
@@ -103,27 +120,15 @@ sub init {
         );
     }
 
-    get_stash_for( $::Class )->bless( $::Object     );
-    get_stash_for( $::Class )->bless( $::Class,     );
-    get_stash_for( $::Class )->bless( $::Method,    );
-    get_stash_for( $::Class )->bless( $::Attribute  );
-
-    # We need to define this very early
-    # so that most of our method calls
-    # will use this, any that won't will
-    # eventually get fixed up by the end
-    # of the bootstrapping. We have to
-    # to do this manually so as to avoid
-    # meta-circularity issues inside
-    # Class->add_method.
+    # We add this to the stash manually so
+    # as to avoid meta-circularity issues
+    # inside Class->add_method.
     {
-        my $stash  = get_stash_for( $::Method );
-        my $method = $stash->bless( mop::internal::create_method(
-            name => 'execute',
-            body => sub { mop::internal::execute_method( $::SELF, @_ ) }
-        ));
-        mop::internal::instance::get_slot_at( $::Method, '$methods' )->{ 'execute' } = $method;
-        $stash->add_method( 'execute', sub { mop::internal::execute_method( $method, @_ ) } );
+        my $method = mop::internal::instance::get_slot_at( $::Method, '$methods' )->{ 'execute' };
+        get_stash_for( $::Method )->add_method(
+            'execute',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
     }
 
     ## ------------------------------------------
