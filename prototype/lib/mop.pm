@@ -13,6 +13,10 @@ BEGIN {
     $::SELF  = undef;
     $::CLASS = undef;
 
+    # this is the current method being executed it is mostly
+    # needed for finding the super-method
+    $::CALLER = undef;
+
     # These are global variable that will (post-bootstrap)
     # represent the class Class and class Object respectively.
     # These are populated in the bootstrap process, but are

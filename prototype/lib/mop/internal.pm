@@ -101,10 +101,11 @@ sub execute_method {
         });
     };
 
-    # localize the global invocant
-    # and class variables here
-    local $::SELF  = $invocant;
-    local $::CLASS = $class;
+    # localize the global invocant,
+    # caller and class variables here
+    local $::SELF   = $invocant;
+    local $::CLASS  = $class;
+    local $::CALLER = $method;
 
     $body->( @_ );
 }

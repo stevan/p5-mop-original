@@ -193,9 +193,14 @@ sub super_parser {
         my $invocant    = $::SELF;
         my $method_name = (split '::' => ((caller(1))[3]))[-1];
         my $dispatcher  = $::CLASS->get_dispatcher;
-        mop::WALKMETH( $dispatcher, $method_name ); # discard the first one ...
-        my $method = mop::WALKMETH( $dispatcher, $method_name )
-                     || die "No super method found for '$method_name'";
+        # find the method currently being called
+        my $method = mop::WALKMETH( $dispatcher, $method_name );
+        while ( $method != $::CALLER ) {
+            $method = mop::WALKMETH( $dispatcher, $method_name );
+        }
+        # and advance past it  by one
+        $method = mop::WALKMETH( $dispatcher, $method_name )
+                  || die "No super method ($method_name) found";
         $method->execute( $invocant, @_ );
     });
 
