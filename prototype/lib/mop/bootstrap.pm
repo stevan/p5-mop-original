@@ -177,6 +177,16 @@ sub init {
         }
     ));
 
+    # this method is needed for Class->CREATE
+    $::Attribute->add_method(mop::internal::create_method(
+        name => 'get_param_name',
+        body => sub {
+            my $name = mop::internal::instance::get_slot_at( $::SELF, '$name' );
+            $name =~ s/^\$//;
+            $name;
+        }
+    ));
+
     # this method is needed for Object->new
     $::Class->add_method(mop::internal::create_method(
         name => 'CREATE',
@@ -191,8 +201,7 @@ sub init {
                     my $attrs = $class->get_attributes;
                     foreach my $attr_name ( keys %$attrs ) {
                         unless ( exists $data->{ $attr_name } ) {
-                            my $param_name = $attr_name;
-                            $param_name =~ s/^\$//;
+                            my $param_name = $attrs->{ $attr_name }->get_param_name;
                             if ( exists $args->{ $param_name } ) {
                                 my $value = $args->{ $param_name };
                                 $data->{ $attr_name } = \$value;
