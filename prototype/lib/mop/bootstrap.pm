@@ -47,16 +47,9 @@ sub init {
                     # created.
                     # - SL
                     if ( my $stash = get_stash_for( $::SELF ) ) {
-                        # gotta go this otherwise we fall into
-                        # deep recursion, which is not good
-                        if ( $name eq 'execute' && $::SELF == $::Method ) {
-                            $stash->add_method( $name, sub { mop::internal::execute_method( $method, @_ ) } );
-                        }
-                        else {
-                            get_stash_for( $::Method )->bless( $method )
-                                unless Scalar::Util::blessed( $method );
-                            $stash->add_method( $name, sub { $method->execute( @_ ) } );
-                        }
+                        get_stash_for( $::Method )->bless( $method )
+                            unless Scalar::Util::blessed( $method );
+                        $stash->add_method( $name, sub { $method->execute( @_ ) } );
                     }
                 }
             )
@@ -119,11 +112,19 @@ sub init {
     # so that most of our method calls
     # will use this, any that won't will
     # eventually get fixed up by the end
-    # of the bootstrapping.
-    $::Method->add_method(mop::internal::create_method(
-        name => 'execute',
-        body => sub { mop::internal::execute_method( $::SELF, @_ ) }
-    ));
+    # of the bootstrapping. We have to
+    # to do this manually so as to avoid
+    # meta-circularity issues inside
+    # Class->add_method.
+    {
+        my $stash  = get_stash_for( $::Method );
+        my $method = $stash->bless( mop::internal::create_method(
+            name => 'execute',
+            body => sub { mop::internal::execute_method( $::SELF, @_ ) }
+        ));
+        mop::internal::instance::get_slot_at( $::Method, '$methods' )->{ 'execute' } = $method;
+        $stash->add_method( 'execute', sub { mop::internal::execute_method( $method, @_ ) } );
+    }
 
     ## ------------------------------------------
     ## Phase 4 : Minimum code needed for object
