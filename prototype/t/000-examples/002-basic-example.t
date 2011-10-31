@@ -49,8 +49,8 @@ ok CheckingAccount->is_subclass_of( BankAccount ), '... CheckingAccount is a sub
 ok CheckingAccount->is_subclass_of( $::Object ), '... CheckingAccount is a subclass of Object';
 
 my $savings = BankAccount->new( balance => 250 );
-is $savings->class, BankAccount, '... got the class we expected';
-ok $savings->is_a( BankAccount ), '... savings is an instance of BankAccount';
+is mop::class_of( $savings ), BankAccount, '... got the class we expected';
+ok $savings->isa( BankAccount ), '... savings is an instance of BankAccount';
 
 is $savings->balance, 250, '... got the savings balance we expected';
 
@@ -63,9 +63,9 @@ is $savings->balance, 350, '... got the savings balance we expected';
 my $checking = CheckingAccount->new(
     overdraft_account => $savings,
 );
-is $checking->class, CheckingAccount, '... got the class we expected';
-ok $checking->is_a( CheckingAccount ), '... checking is an instance of BankAccount';
-ok $checking->is_a( BankAccount ), '... checking is an instance of BankAccount';
+is mop::class_of( $checking ), CheckingAccount, '... got the class we expected';
+ok $checking->isa( CheckingAccount ), '... checking is an instance of BankAccount';
+ok $checking->isa( BankAccount ), '... checking is an instance of BankAccount';
 
 is $checking->balance, 0, '... got the checking balance we expected';
 

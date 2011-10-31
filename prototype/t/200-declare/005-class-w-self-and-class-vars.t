@@ -20,7 +20,7 @@ is( Foo->get_name, 'Foo', '... got the name we expected' );
 is(Foo->get_superclass, $::Object, '... got the superclass we expected');
 
 my $foo = Foo->new;
-ok($foo->is_a( Foo ), '... got the right instance');
+ok($foo->isa( Foo ), '... got the right instance');
 is($foo->baz, 'BAR', '... the $self worked correctly');
 is($foo->foobar, 'Foo', '... the $class worked correctly');
 

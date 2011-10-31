@@ -20,19 +20,19 @@ BEGIN {
 }
 
 my $foo = Foo->new;
-ok( $foo->is_a( Foo ), '... the object is from class Foo' );
-ok( $foo->is_a( $::Object ), '... the object is derived from class Object' );
-is( $foo->class, Foo, '... the class of this object is Foo' );
+ok( $foo->isa( Foo ), '... the object is from class Foo' );
+ok( $foo->isa( $::Object ), '... the object is derived from class Object' );
+is( mop::class_of( $foo ), Foo, '... the class of this object is Foo' );
 like( "$foo", qr/^Foo/, '... object stringification includes the class name' );
 
 {
     my $foo2 = Foo->new;
-    ok( $foo2->is_a( Foo ), '... the object is from class Foo' );
-    ok( $foo2->is_a( $::Object ), '... the object is derived from class Object' );
-    is( $foo2->class, Foo, '... the class of this object is Foo' );
+    ok( $foo2->isa( Foo ), '... the object is from class Foo' );
+    ok( $foo2->isa( $::Object ), '... the object is derived from class Object' );
+    is( mop::class_of( $foo2 ), Foo, '... the class of this object is Foo' );
 
     isnt( $foo, $foo2, '... these are not the same objects' );
-    is( $foo->class, $foo2->class, '... these two objects share the same class' );
+    is( mop::class_of($foo), mop::class_of($foo2), '... these two objects share the same class' );
 }
 
 done_testing;

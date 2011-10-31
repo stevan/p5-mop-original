@@ -43,6 +43,9 @@ sub WALKMETH {
     { ( $dispatcher->() || return )->find_method( $method_name ) || redo }
 }
 
+sub class_of ($) { mop::internal::instance::get_class( shift ) }
+sub uuid_of  ($) { mop::internal::instance::get_uuid( shift )  }
+
 1;
 
 __END__

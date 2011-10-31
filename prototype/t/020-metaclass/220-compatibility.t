@@ -48,15 +48,15 @@ BEGIN {
     class Foo (metaclass => FooMeta) { }
 }
 
-is Foo->class, FooMeta, '... got the class we expected';
-ok Foo->is_a( FooMeta ), '... Foo is a FooMeta';
+is mop::class_of( Foo ), FooMeta, '... got the class we expected';
+ok Foo->isa( FooMeta ), '... Foo is a FooMeta';
 
 BEGIN {
     class FooSub (extends => Foo) { }
 }
 
-is FooSub->class, FooMeta, '... got the class we expected';
-ok FooSub->is_a( FooMeta ), '... FooSub is a FooMeta';
+is mop::class_of( FooSub ), FooMeta, '... got the class we expected';
+ok FooSub->isa( FooMeta ), '... FooSub is a FooMeta';
 
 BEGIN {
     class BarMeta (extends => $::Class) { }

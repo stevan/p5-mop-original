@@ -22,7 +22,7 @@ my $Foo = $::Class->new;
 {
     my $attribute = $Foo->get_attributes->{'$bar'};
     ok( $attribute, '... found the attribute' );
-    ok( $attribute->is_a( $::Attribute ), '... it is a proper attribute');
+    ok( $attribute->isa( $::Attribute ), '... it is a proper attribute');
     is( $attribute->get_name, '$bar', '... got the right name');
     is_deeply(
         ${ $attribute->get_initial_value_for_instance( $attribute ) },
@@ -44,7 +44,7 @@ my $Foo = $::Class->new;
 {
     my $attribute = $Foo->get_attributes->{'$baz'};
     ok( $attribute, '... found the attribute' );
-    ok( $attribute->is_a( $::Attribute ), '... it is a proper attribute');
+    ok( $attribute->isa( $::Attribute ), '... it is a proper attribute');
     is( $attribute->get_name, '$baz', '... got the right name');
     is_deeply(
         ${ $attribute->get_initial_value_for_instance( $attribute ) },
