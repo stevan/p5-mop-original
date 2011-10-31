@@ -175,11 +175,16 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
         dSP;
         CV *metadata_cv;
         metadata_cv = newATTRSUB(floor, NULL, NULL, NULL, metadata_op);
-        PUSHMARK(SP);
-        call_sv((SV*)metadata_cv, G_SCALAR|G_NOARGS);
-        SPAGAIN;
-        metadata = POPs;
-        PUTBACK;
+        if (CvROOT(metadata_cv)) {
+            PUSHMARK(SP);
+            call_sv((SV*)metadata_cv, G_SCALAR|G_NOARGS);
+            SPAGAIN;
+            metadata = POPs;
+            PUTBACK;
+        }
+        else {
+            croak_sv(ERRSV);
+        }
     }
     LEAVE;
 
