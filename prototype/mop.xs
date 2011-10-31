@@ -157,7 +157,7 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     }
 
     /* parse metadata */
-    floor = start_subparse(0, 0);
+    floor = start_subparse(0, CVf_ANON);
     /* apparently __PACKAGE__ looks at PL_curstash, but ->SUPER:: looks at
      * CopSTASH(PL_curcop) - no idea why they would be different here */
     CopSTASH_set(PL_curcop, PL_curstash);
@@ -289,7 +289,7 @@ static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 
         demand_unichar('=', 0);
         lex_read_space(0);
-        floor = start_subparse(0, 0);
+        floor = start_subparse(0, CVf_ANON);
         attr_default = newANONSUB(floor, NULL, parse_termexpr(0));
     }
 
@@ -369,7 +369,7 @@ static OP *parse_method(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 
     *flagsp |= CALLPARSER_STATEMENT;
 
-    floor = start_subparse(0, 0);
+    floor = start_subparse(0, CVf_ANON);
 
     if (SvTRUE(psobj)) {
         lex_read_space(0);
