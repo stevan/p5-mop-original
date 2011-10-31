@@ -7,13 +7,11 @@ use Test::More;
 
 use mop;
 
-BEGIN {
-    class Foo {
-        method bar { 'BAR' }
-        method baz { $self->bar }
+class Foo {
+    method bar { 'BAR' }
+    method baz { $self->bar }
 
-        method foobar { $class->get_name }
-    }
+    method foobar { $class->get_name }
 }
 
 is( Foo->get_name, 'Foo', '... got the name we expected' );

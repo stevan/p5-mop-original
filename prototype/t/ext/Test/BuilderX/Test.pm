@@ -46,79 +46,76 @@ sub new {
     );
 }
 
-BEGIN {
-    class Base {
+class Base {
 
-        has $passed;
-        has $number;
-        has $diagnostic;
-        has $description;
+    has $passed;
+    has $number;
+    has $diagnostic;
+    has $description;
 
-        BUILD {
-            $number     //= 0;
-            $diagnostic //= '???';
-        }
-
-        method passed      { $passed      }
-        method number      { $number      }
-        method description { $description }
-
-        method status {
-            return +{ passed => $passed, description => $description }
-        }
-
-        method report {
-            my $ok = $passed ? 'ok ' : 'not ok ';
-            $ok .= $number;
-            $ok .= " - $description" if $description;
-            return $ok;
-        }
+    BUILD {
+        $number     //= 0;
+        $diagnostic //= '???';
     }
 
-    class Pass ( extends => Base() ) {}
-    class Fail ( extends => Base() ) {}
+    method passed      { $passed      }
+    method number      { $number      }
+    method description { $description }
 
-    class WithReason ( extends => Base() ) {
-        has $reason;
-
-        method reason { $reason }
-
-        method status {
-            my $status = $self->NEXTMETHOD;
-            $status->{'reason'} = $reason;
-            $status;
-        }
+    method status {
+        return +{ passed => $passed, description => $description }
     }
 
-    class Skip ( extends => WithReason() ) {
+    method report {
+        my $ok = $passed ? 'ok ' : 'not ok ';
+        $ok .= $number;
+        $ok .= " - $description" if $description;
+        return $ok;
+    }
+}
 
-        method report {
-            return "not ok " . $self->number . " #skip " . $self->reason;
-        }
+class Pass ( extends => Base ) {}
+class Fail ( extends => Base ) {}
 
-        method status {
-            my $status = $self->NEXTMETHOD;
-            $status->{'skip'} = 1;
-            $status;
-        }
+class WithReason ( extends => Base ) {
+    has $reason;
+
+    method reason { $reason }
+
+    method status {
+        my $status = $self->NEXTMETHOD;
+        $status->{'reason'} = $reason;
+        $status;
+    }
+}
+
+class Skip ( extends => WithReason ) {
+
+    method report {
+        return "not ok " . $self->number . " #skip " . $self->reason;
     }
 
-    class TODO ( extends => WithReason() ) {
+    method status {
+        my $status = $self->NEXTMETHOD;
+        $status->{'skip'} = 1;
+        $status;
+    }
+}
 
-        method report {
-            my $ok          = $self->passed ? 'ok' : 'not ok';
-            my $description = "# TODO " . $self->description;
-            return join ' ' => ( $ok, $self->number, $description );
-        }
+class TODO ( extends => WithReason ) {
 
-        method status {
-            my $status = $self->NEXTMETHOD;
-            $status->{'TODO'}          = 1;
-            $status->{'passed'}        = 1;
-            $status->{'really_passed'} = $self->passed;
-            $status;
-        }
+    method report {
+        my $ok          = $self->passed ? 'ok' : 'not ok';
+        my $description = "# TODO " . $self->description;
+        return join ' ' => ( $ok, $self->number, $description );
+    }
 
+    method status {
+        my $status = $self->NEXTMETHOD;
+        $status->{'TODO'}          = 1;
+        $status->{'passed'}        = 1;
+        $status->{'really_passed'} = $self->passed;
+        $status;
     }
 
 }

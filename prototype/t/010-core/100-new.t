@@ -14,10 +14,7 @@ but it should link back to the same class data.
 
 =cut
 
-BEGIN {
-
-    class Foo {}
-}
+class Foo {}
 
 my $foo = Foo->new;
 ok( $foo->is_a( Foo ), '... the object is from class Foo' );

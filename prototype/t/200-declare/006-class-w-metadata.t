@@ -7,10 +7,8 @@ use Test::More;
 
 use mop;
 
-BEGIN {
-    class Foo {}
-    class Bar (extends => Foo()) {}
-}
+class Foo {}
+class Bar (extends => Foo) {}
 
 is( Foo->get_name, 'Foo', '... got the name we expected' );
 is(Foo->get_superclass, $::Object, '... got the superclass we expected');

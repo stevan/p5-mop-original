@@ -14,7 +14,7 @@ into your class namespace.
 
 =cut
 
-BEGIN {
+{
 
     package My::DB::FlatFile;
     use strict;

@@ -7,37 +7,33 @@ use Test::More;
 
 use mop;
 
-BEGIN {
+class Foo {
 
-    class Foo {
+    has $collector = [];
 
-        has $collector = [];
+    method collector { $collector };
 
-        method collector { $collector };
-
-        method collect ($stuff) {
-            push @{ $collector } => $stuff;
-        }
-
-        BUILD {
-            $self->collect( 'Foo' );
-        }
+    method collect ($stuff) {
+        push @{ $collector } => $stuff;
     }
 
-    class Bar (extends => Foo()) {
-
-        BUILD {
-            $self->collect( 'Bar' );
-        }
+    BUILD {
+        $self->collect( 'Foo' );
     }
+}
 
-    class Baz (extends => Bar()) {
+class Bar (extends => Foo) {
 
-        BUILD {
-            $self->collect( 'Baz' );
-        }
+    BUILD {
+        $self->collect( 'Bar' );
     }
+}
 
+class Baz (extends => Bar) {
+
+    BUILD {
+        $self->collect( 'Baz' );
+    }
 }
 
 my $foo = Foo->new;

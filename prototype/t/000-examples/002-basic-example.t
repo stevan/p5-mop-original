@@ -7,40 +7,36 @@ use Test::More;
 
 use mop;
 
-BEGIN {
+class BankAccount {
+    has $balance = 0;
 
-  class BankAccount {
-      has $balance = 0;
+    method balance { $balance }
 
-      method balance { $balance }
+    method deposit ($amount) { $balance += $amount }
 
-      method deposit ($amount) { $balance += $amount }
+    method withdraw ($amount) {
+        ($balance >= $amount)
+            || die "Account overdrawn";
+        $balance -= $amount;
+    }
+}
 
-      method withdraw ($amount) {
-          ($balance >= $amount)
-              || die "Account overdrawn";
-          $balance -= $amount;
-      }
-  }
+class CheckingAccount (extends => BankAccount) {
+    has $overdraft_account;
 
-  class CheckingAccount (extends => BankAccount()) {
-      has $overdraft_account;
+    method overdraft_account { $overdraft_account }
 
-      method overdraft_account { $overdraft_account }
+    method withdraw ($amount) {
 
-      method withdraw ($amount) {
+        my $overdraft_amount = $amount - $self->balance;
 
-          my $overdraft_amount = $amount - $self->balance;
+        if ( $overdraft_account && $overdraft_amount > 0 ) {
+            $overdraft_account->withdraw( $overdraft_amount );
+            $self->deposit( $overdraft_amount );
+        }
 
-          if ( $overdraft_account && $overdraft_amount > 0 ) {
-              $overdraft_account->withdraw( $overdraft_amount );
-              $self->deposit( $overdraft_amount );
-          }
-
-          $self->NEXTMETHOD( $amount );
-      }
-  }
-
+        $self->NEXTMETHOD( $amount );
+    }
 }
 
 ok BankAccount->is_subclass_of( $::Object ), '... BankAccount is a subclass of Object';

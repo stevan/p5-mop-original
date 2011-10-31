@@ -25,17 +25,14 @@ understandable to everyone else.
 
 use mop;
 
-BEGIN {
+class Foo {
+    has $bar = 10;
+    method bar { $bar }
+}
 
-    class Foo {
-        has $bar = 10;
-        method bar { $bar }
-    }
-
-    class FooBar ( extends => Foo() ) {
-        has $bar = 100;
-        method derived_bar { $bar }
-    }
+class FooBar ( extends => Foo ) {
+    has $bar = 100;
+    method derived_bar { $bar }
 }
 
 my $foobar = FooBar->new;

@@ -38,29 +38,21 @@ to just work.
 
 =cut
 
-BEGIN {
-    # create a meta-class (class to create classes with)
-    class FooMeta (extends => $::Class) { }
-}
+# create a meta-class (class to create classes with)
+class FooMeta (extends => $::Class) { }
 
-BEGIN {
-    # create a class (using our meta-class)
-    class Foo (metaclass => FooMeta) { }
-}
+# create a class (using our meta-class)
+class Foo (metaclass => FooMeta) { }
 
 is Foo->class, FooMeta, '... got the class we expected';
 ok Foo->is_a( FooMeta ), '... Foo is a FooMeta';
 
-BEGIN {
-    class FooSub (extends => Foo) { }
-}
+class FooSub (extends => Foo) { }
 
 is FooSub->class, FooMeta, '... got the class we expected';
 ok FooSub->is_a( FooMeta ), '... FooSub is a FooMeta';
 
-BEGIN {
-    class BarMeta (extends => $::Class) { }
-}
+class BarMeta (extends => $::Class) { }
 
 like exception { eval "class BarSub (extends => Foo, metaclass => BarMeta) { }; 1" || die $@ },
      qr/While creating class BarSub: Metaclass BarMeta is not compatible with the metaclass of its superclass: FooMeta/,

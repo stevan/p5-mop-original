@@ -8,17 +8,15 @@ use Test::Fatal;
 
 use mop;
 
-BEGIN {
-    # create a meta-class (class to create classes with)
-    class MetaWithData (extends => $::Class) {
+# create a meta-class (class to create classes with)
+class MetaWithData (extends => $::Class) {
 
-        has $data = [];
+    has $data = [];
 
-        method get_data { $data }
+    method get_data { $data }
 
-        method add_to_data ($value) {
-            push @$data => $value;
-        }
+    method add_to_data ($value) {
+        push @$data => $value;
     }
 }
 
@@ -28,20 +26,17 @@ ok MetaWithData->is_a( $::Class ), '... MetaWithData is a Class';
 ok MetaWithData->is_subclass_of( $::Object ), '... MetaWithData is a subclass of Object';
 ok MetaWithData->is_subclass_of( $::Class ), '... MetaWithData is a subclass of Class';
 
-BEGIN {
-
-    # create a class (using our meta-class)
-    class Foo (metaclass => MetaWithData) {
-        method get_meta_data {
-            $::CLASS->get_data
-        }
+# create a class (using our meta-class)
+class Foo (metaclass => MetaWithData) {
+    method get_meta_data {
+        $::CLASS->get_data
     }
+}
 
-    # create a class (using our meta-class and extra data)
-    class Bar (metaclass => MetaWithData, data => [ 1, 2, 3 ]) {
-        method get_meta_data {
-            $::CLASS->get_data
-        }
+# create a class (using our meta-class and extra data)
+class Bar (metaclass => MetaWithData, data => [ 1, 2, 3 ]) {
+    method get_meta_data {
+        $::CLASS->get_data
     }
 }
 

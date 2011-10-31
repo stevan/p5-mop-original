@@ -15,17 +15,12 @@ original data itself.
 
 =cut
 
-my $BAZ;
+my $BAZ = [];
 
-BEGIN {
-
-    $BAZ = [];
-
-    class Foo {
-        has $bar = { baz => $BAZ };
-        method bar { $bar }
-    };
-}
+class Foo {
+    has $bar = { baz => $BAZ };
+    method bar { $bar }
+};
 
 my $foo = Foo->new;
 is_deeply( $foo->bar, { baz => [] }, '... got the expected value' );

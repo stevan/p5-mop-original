@@ -7,32 +7,30 @@ use mop;
 use Test::BuilderX;
 use Test::BuilderX::Output;
 
-BEGIN {
-    class MockOutput {
-        has $output      = [];
-        has $diagnostics = [];
+class MockOutput {
+    has $output      = [];
+    has $diagnostics = [];
 
-        method write ( $message ) {
-            push @$output => $message;
-        }
+    method write ( $message ) {
+        push @$output => $message;
+    }
 
-        method diag ( $message ) {
-            push @$diagnostics => $message;
-        }
+    method diag ( $message ) {
+        push @$diagnostics => $message;
+    }
 
-        method output {
-            return '' unless @$output;
-            my $result = join "\n" => @$output;
-            $output = [];
-            return $result;
-        }
+    method output {
+        return '' unless @$output;
+        my $result = join "\n" => @$output;
+        $output = [];
+        return $result;
+    }
 
-        method diagnostics {
-            return '' unless @$diagnostics;
-            my $result = join "\n" => @$diagnostics;
-            $diagnostics = [];
-            return $result;
-        }
+    method diagnostics {
+        return '' unless @$diagnostics;
+        my $result = join "\n" => @$diagnostics;
+        $diagnostics = [];
+        return $result;
     }
 }
 

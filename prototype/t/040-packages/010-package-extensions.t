@@ -31,7 +31,7 @@ Baz class.
 
 =cut
 
-BEGIN {
+{
     package Foo;
 
     use strict;
@@ -57,14 +57,14 @@ BEGIN {
     is( $baz->gorch, 'Foo::Baz::gorch', '... go the value expected' );
 }
 
-BEGIN {
+{
     package Foo::Extended;
 
     use strict;
     use warnings;
     use mop;
 
-    BEGIN { our @ISA = ('Foo') };
+    use base 'Foo';
 
     # NOTE:
     # make sure to inherit from the

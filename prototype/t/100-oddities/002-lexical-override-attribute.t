@@ -20,17 +20,14 @@ it doesn't).
 
 =cut
 
-BEGIN {
+class Foo {
+    has $bar = 99;
 
-    class Foo {
-        has $bar = 99;
+    method bar { $bar }
 
-        method bar { $bar }
-
-        method test {
-            my $bar = 'bottles of beer';
-            join " " => ( $self->bar, $bar );
-        }
+    method test {
+        my $bar = 'bottles of beer';
+        join " " => ( $self->bar, $bar );
     }
 }
 

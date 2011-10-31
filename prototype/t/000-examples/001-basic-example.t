@@ -7,40 +7,37 @@ use Test::More;
 
 use mop;
 
-BEGIN {
+class Point {
+    has $x = 0;
+    has $y = 0;
 
-    class Point {
-        has $x = 0;
-        has $y = 0;
+    method x { $x }
+    method y { $y }
 
-        method x { $x }
-        method y { $y }
-
-        method set_x ($new_x) {
-            $x = $new_x;
-        }
-
-        method clear {
-            ($x, $y) = (0, 0);
-        }
-
-        method dump {
-            +{ x => $self->x, y => $self->y }
-        }
+    method set_x ($new_x) {
+        $x = $new_x;
     }
 
-    # ... subclass it ...
+    method clear {
+        ($x, $y) = (0, 0);
+    }
 
-    class Point3D (extends => Point()) {
-        has $z = 0;
+    method dump {
+        +{ x => $self->x, y => $self->y }
+    }
+}
 
-        method z { $z }
+# ... subclass it ...
 
-        method dump {
-            my $orig = $self->NEXTMETHOD;
-            $orig->{'z'} = $z;
-            $orig;
-        }
+class Point3D (extends => Point) {
+    has $z = 0;
+
+    method z { $z }
+
+    method dump {
+        my $orig = $self->NEXTMETHOD;
+        $orig->{'z'} = $z;
+        $orig;
     }
 }
 

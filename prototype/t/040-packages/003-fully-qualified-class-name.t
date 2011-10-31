@@ -18,9 +18,7 @@ for you automagically.
 
 =cut
 
-BEGIN {
-    class Foo::Bar {};
-}
+class Foo::Bar {}
 
 my $foo = Foo::Bar->new;
 ok( $foo->is_a( Foo::Bar ), '... the object is from class Foo' );

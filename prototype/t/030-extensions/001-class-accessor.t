@@ -9,40 +9,33 @@ use Test::Moose;
 
 use mop;
 
-BEGIN {
+class ClassAccessorMeta (extends => $::Class) {
+    method FINALIZE {
 
-    class ClassAccessorMeta (extends => $::Class) {
-        method FINALIZE {
+        foreach my $attribute ( values %{ $self->get_attributes } ) {
+            my $name = $attribute->get_name;
+            my $accessor_name = $name;
+            $accessor_name =~ s/^\$//;
 
-            foreach my $attribute ( values %{ $self->get_attributes } ) {
-                my $name = $attribute->get_name;
-                my $accessor_name = $name;
-                $accessor_name =~ s/^\$//;
-
-                $self->add_method(
-                    $::Method->new(
-                        name => $accessor_name,
-                        body => sub {
-                            mop::internal::instance::set_slot_at( $::SELF, $name, \(shift) ) if @_;
-                            mop::internal::instance::get_slot_at( $::SELF, $name )
-                        }
-                    )
-                );
-            }
-
-            $self->NEXTMETHOD;
+            $self->add_method(
+                $::Method->new(
+                    name => $accessor_name,
+                    body => sub {
+                        mop::internal::instance::set_slot_at( $::SELF, $name, \(shift) ) if @_;
+                        mop::internal::instance::get_slot_at( $::SELF, $name )
+                    }
+                )
+            );
         }
+
+        $self->NEXTMETHOD;
     }
-
 }
 
-BEGIN {
-
-    class Foo (metaclass => ClassAccessorMeta) {
-        has $bar;
-        has $baz;
-    };
-}
+class Foo (metaclass => ClassAccessorMeta) {
+    has $bar;
+    has $baz;
+};
 
 is Foo->class, ClassAccessorMeta, '... Foo has the right metaclass';
 ok Foo->is_subclass_of( $::Object ), '... Foo is a subtype of Object';

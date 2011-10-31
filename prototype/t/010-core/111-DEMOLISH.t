@@ -8,33 +8,30 @@ use Test::More;
 use mop;
 
 my $collector;
-BEGIN {
 
-    class Foo {
+class Foo {
 
-        method collect ($stuff) {
-            push @{ $collector } => $stuff;
-        }
-
-        DEMOLISH {
-            $self->collect( 'Foo' );
-        }
+    method collect ($stuff) {
+        push @{ $collector } => $stuff;
     }
 
-    class Bar (extends => Foo()) {
-
-        DEMOLISH {
-            $self->collect( 'Bar' );
-        }
+    DEMOLISH {
+        $self->collect( 'Foo' );
     }
+}
 
-    class Baz (extends => Bar()) {
+class Bar (extends => Foo) {
 
-        DEMOLISH {
-            $self->collect( 'Baz' );
-        }
+    DEMOLISH {
+        $self->collect( 'Bar' );
     }
+}
 
+class Baz (extends => Bar) {
+
+    DEMOLISH {
+        $self->collect( 'Baz' );
+    }
 }
 
 $collector = [];

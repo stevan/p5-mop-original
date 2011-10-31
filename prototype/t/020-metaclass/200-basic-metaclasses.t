@@ -16,11 +16,9 @@ methods.
 
 =cut
 
-BEGIN {
-    # create a meta-class (class to create classes with)
-    class FooMeta (extends => $::Class) {
-        method static_method { 'STATIC' }
-    }
+# create a meta-class (class to create classes with)
+class FooMeta (extends => $::Class) {
+    method static_method { 'STATIC' }
 }
 
 is FooMeta->class, $::Class, '... got the class we expected';
@@ -29,12 +27,10 @@ ok FooMeta->is_a( $::Class ), '... FooMeta is a Class';
 ok FooMeta->is_subclass_of( $::Object ), '... FooMeta is a subclass of Object';
 ok FooMeta->is_subclass_of( $::Class ), '... FooMeta is a subclass of Class';
 
-BEGIN {
-    # create a class (using our meta-class)
-    class Foo (metaclass => FooMeta) {
-        method hello            { 'FOO' }
-        method hello_from_class { $::CLASS->static_method }
-    }
+# create a class (using our meta-class)
+class Foo (metaclass => FooMeta) {
+    method hello            { 'FOO' }
+    method hello_from_class { $::CLASS->static_method }
 }
 
 is Foo->class, FooMeta, '... got the class we expected';

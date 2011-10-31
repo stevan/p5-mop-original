@@ -9,58 +9,49 @@ use Test::Moose;
 
 use mop;
 
-BEGIN {
+class ValidatedAttribute (extends => $::Attribute) {
+    has $validator = sub { 1 };
 
-    class ValidatedAttribute (extends => $::Attribute) {
-        has $validator = sub { 1 };
-
-        method get_validator { $validator }
-    }
+    method get_validator { $validator }
 }
 
-BEGIN {
+class ValidatedAccessorMeta (extends => $::Class) {
 
-    class ValidatedAccessorMeta (extends => $::Class) {
+    method attribute_class { ValidatedAttribute }
 
-        method attribute_class { ValidatedAttribute }
+    method FINALIZE {
 
-        method FINALIZE {
+        foreach my $attribute ( values %{ $self->get_attributes } ) {
+            my $name = $attribute->get_name;
+            my $validator = $attribute->get_validator;
 
-            foreach my $attribute ( values %{ $self->get_attributes } ) {
-                my $name = $attribute->get_name;
-                my $validator = $attribute->get_validator;
+            my $accessor_name = $name;
+            $accessor_name =~ s/^\$//;
 
-                my $accessor_name = $name;
-                $accessor_name =~ s/^\$//;
-
-                $self->add_method(
-                    $::Method->new(
-                        name => $accessor_name,
-                        body => sub {
-                            if (@_) {
-                                my $value = shift;
-                                die "invalid value '$value' for attribute '$name'"
-                                    unless $validator->($value);
-                                mop::internal::instance::set_slot_at( $::SELF, $name, \$value );
-                            }
-                            mop::internal::instance::get_slot_at( $::SELF, $name )
+            $self->add_method(
+                $::Method->new(
+                    name => $accessor_name,
+                    body => sub {
+                        if (@_) {
+                            my $value = shift;
+                            die "invalid value '$value' for attribute '$name'"
+                                unless $validator->($value);
+                            mop::internal::instance::set_slot_at( $::SELF, $name, \$value );
                         }
-                    )
-                );
-            }
-
-            $self->NEXTMETHOD;
+                        mop::internal::instance::get_slot_at( $::SELF, $name )
+                    }
+                )
+            );
         }
-    }
 
+        $self->NEXTMETHOD;
+    }
 }
 
-BEGIN {
-    class Foo (metaclass => ValidatedAccessorMeta) {
-        has $bar;
-        has $baz;
-        has $age (validator => sub { $_[0] =~ /^\d+$/ });
-    }
+class Foo (metaclass => ValidatedAccessorMeta) {
+    has $bar;
+    has $baz;
+    has $age (validator => sub { $_[0] =~ /^\d+$/ });
 }
 
 is Foo->class, ValidatedAccessorMeta, '... Foo has the right metaclass';

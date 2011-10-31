@@ -7,10 +7,8 @@ use Test::More;
 
 use mop;
 
-BEGIN {
-    class Foo {
-        method bar ( $baz ) { $baz }
-    }
+class Foo {
+    method bar ( $baz ) { $baz }
 }
 
 is(Foo->get_name, 'Foo', '... got the name we expected');

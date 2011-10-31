@@ -5,7 +5,7 @@ use warnings;
 
 use Test::More;
 
-BEGIN {
+{
 
     package Foo;
 
@@ -26,7 +26,7 @@ is( $foo->class->get_name, 'Foo::Bar', '... got the correct (fully qualified) na
 like( "$foo", qr/^Foo::Bar/, '... object stringification includes fully qualified class name' );
 
 
-BEGIN {
+{
     package Bar;
 
     use strict;

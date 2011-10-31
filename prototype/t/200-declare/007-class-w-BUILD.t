@@ -7,16 +7,14 @@ use Test::More;
 
 use mop;
 
-BEGIN {
-    class Foo {
-        has $bar;
+class Foo {
+    has $bar;
 
-        BUILD ( $params ) {
-            $bar .= $params->{'BAR'};
-        }
-
-        method bar { $bar }
+    BUILD ( $params ) {
+        $bar .= $params->{'BAR'};
     }
+
+    method bar { $bar }
 }
 
 is(Foo->get_name, 'Foo', '... got the name we expected');
