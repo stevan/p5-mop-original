@@ -62,7 +62,7 @@ BEGIN {
     class BarMeta (extends => $::Class) { }
 }
 
-like exception { class BarSub (extends => Foo, metaclass => BarMeta) { } },
+like exception { eval "class BarSub (extends => Foo, metaclass => BarMeta) { }; 1" || die $@ },
      qr/While creating class BarSub: Metaclass BarMeta is not compatible with the metaclass of its superclass: FooMeta/,
      '... incompatible metaclasses die';
 
