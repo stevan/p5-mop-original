@@ -19,7 +19,7 @@ my $Foo = $::Class->new;
 {
     my $attribute = $Foo->get_attributes->{'$foo'};
     ok( $attribute, '... found the attribute' );
-    ok( $attribute->is_a( $::Attribute ), '... it is a proper attribute');
+    ok( $attribute->isa( $::Attribute ), '... it is a proper attribute');
     is( $attribute->get_name, '$foo', '... got the right name');
     is( ${ $attribute->get_initial_value }->(), 10, '... got the right initial value' );
 }
@@ -27,7 +27,7 @@ my $Foo = $::Class->new;
 {
     my $attribute = $Foo->get_attributes->{'$bar'};
     ok( $attribute, '... found the attribute' );
-    ok( $attribute->is_a( $::Attribute ), '... it is a proper attribute');
+    ok( $attribute->isa( $::Attribute ), '... it is a proper attribute');
     is( $attribute->get_name, '$bar', '... got the right name');
     is( ${ $attribute->get_initial_value }, undef, '... got the right initial value' );
 }

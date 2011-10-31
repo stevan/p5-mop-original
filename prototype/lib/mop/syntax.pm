@@ -67,9 +67,14 @@ sub super {
     my $invocant    = $::SELF;
     my $method_name = (split '::' => ((caller(1))[3]))[-1];
     my $dispatcher  = $::CLASS->get_dispatcher;
-    mop::WALKMETH( $dispatcher, $method_name ); # discard the first one ...
-    my $method = mop::WALKMETH( $dispatcher, $method_name )
-                    || die "No super method found for '$method_name'";
+    # find the method currently being called
+    my $method = mop::WALKMETH( $dispatcher, $method_name );
+    while ( $method != $::CALLER ) {
+        $method = mop::WALKMETH( $dispatcher, $method_name );
+    }
+    # and advance past it  by one
+    $method = mop::WALKMETH( $dispatcher, $method_name )
+              || die "No super method ($method_name) found";
     $method->execute( $invocant, @_ );
 }
 
@@ -117,7 +122,11 @@ sub finalize_class {
 
 __END__
 
-# ABSTRACT: A Moosey solution to this problem
+=pod
+
+=head1 NAME
+
+mop::syntax - The syntax module for the p5-mop
 
 =head1 SYNOPSIS
 
@@ -125,3 +134,20 @@ __END__
 
 =head1 DESCRIPTION
 
+This module uses Devel::CallParser to provide the desired
+syntax for the p5-mop.
+
+=head1 AUTHOR
+
+Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2011 Infinity Interactive, Inc.
+
+L<http://www.iinteractive.com>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

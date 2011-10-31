@@ -17,6 +17,7 @@ class Test::BuilderX {
     }
 
     DEMOLISH {
+        return unless $testplan;
         my $footer = $testplan->footer( scalar @$results );
         $output->write( $footer ) if $footer;
     }

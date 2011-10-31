@@ -84,7 +84,7 @@ sub execute_method {
     my $method   = shift;
     my $invocant = shift;
     my $class    = mop::internal::instance::get_class( $invocant );
-    my $instance = mop::internal::instance::get_slot( $invocant );
+    my $instance = mop::internal::instance::get_slots( $invocant );
     my $body     = mop::internal::instance::get_slot_at( $method, '$body' );
 
     PadWalker::set_closed_over( $body, {
@@ -101,10 +101,11 @@ sub execute_method {
         });
     };
 
-    # localize the global invocant
-    # and class variables here
-    local $::SELF  = $invocant;
-    local $::CLASS = $class;
+    # localize the global invocant,
+    # caller and class variables here
+    local $::SELF   = $invocant;
+    local $::CLASS  = $class;
+    local $::CALLER = $method;
 
     $body->( @_ );
 }
@@ -117,9 +118,12 @@ __END__
 
 =head1 NAME
 
-mop::internal
+mop::internal - The internals of the p5-mop
 
 =head1 DESCRIPTION
+
+This module contains some internal functions that
+are mostly used in the bootstraping process.
 
 =head1 AUTHOR
 

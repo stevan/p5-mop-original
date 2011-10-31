@@ -49,11 +49,11 @@ Baz class.
 
 {
     my $bar = Foo::Bar->new;
-    ok( $bar->is_a( Foo::Bar ), '... the object is from class Foo::Bar' );
+    ok( $bar->isa( Foo::Bar ), '... the object is from class Foo::Bar' );
     is( $bar->baz, 'Foo::Bar::baz', '... go the value expected' );
 
     my $baz = Foo::Baz->new;
-    ok( $baz->is_a( Foo::Baz ), '... the object is from class Foo::Baz' );
+    ok( $baz->isa( Foo::Baz ), '... the object is from class Foo::Baz' );
     is( $baz->gorch, 'Foo::Baz::gorch', '... go the value expected' );
 }
 
@@ -84,17 +84,17 @@ Baz class.
 
 {
     my $bar = Foo::Extended->Bar->new;
-    ok( $bar->is_a( Foo::Bar ), '... the object is from class Foo::Bar' );
+    ok( $bar->isa( Foo::Bar ), '... the object is from class Foo::Bar' );
     is( $bar->baz, 'Foo::Bar::baz', '... go the value expected' );
 
     my $baz = Foo::Extended->Baz->new;
-    ok( $baz->is_a( Foo::Extended::Baz ), '... the object is from class Foo::Baz' );
-    ok( $baz->is_a( Foo::Baz ), '... the object is from class Foo::Baz' );
+    ok( $baz->isa( Foo::Extended::Baz ), '... the object is from class Foo::Baz' );
+    ok( $baz->isa( Foo::Baz ), '... the object is from class Foo::Baz' );
     is( $baz->gorch, 'Foo::Extended::Baz::gorch', '... go the value expected' );
 
     {
         my $bar = $baz->bar;
-        ok( $bar->is_a( Foo::Bar ), '... the object is from class Foo::Bar' );
+        ok( $bar->isa( Foo::Bar ), '... the object is from class Foo::Bar' );
         is( $bar->baz, 'Foo::Bar::baz', '... go the value expected' );
     }
 }

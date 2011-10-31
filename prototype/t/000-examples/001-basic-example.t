@@ -43,9 +43,9 @@ class Point3D (extends => Point) {
 
 ## Test the class
 
-like Point->id, qr/[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}/i, '... got the expected uuid format';
-is Point->class, $::Class, '... got the class we expected';
-ok Point->is_a( $::Object ), '... class Point is a Object';
+like mop::uuid_of( Point ), qr/[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}/i, '... got the expected uuid format';
+is mop::class_of( Point ), $::Class, '... got the class we expected';
+ok Point->isa( $::Object ), '... class Point is a Object';
 ok Point->is_subclass_of( $::Object ), '... class Point is a subclass of Object';
 is Point->get_superclass, $::Object, '... got the superclass we expected';
 is_deeply Point->get_mro, [ Point, $::Object ], '... got the mro we expected';
@@ -57,10 +57,10 @@ is_deeply
 ## Test an instance
 
 my $p = Point->new( x => 100, y => 320 );
-ok $p->is_a( Point ), '... p is a Point';
+ok $p->isa( Point ), '... p is a Point';
 
-like $p->id, qr/[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}/i, '... got the expected uuid format';
-is $p->class, Point, '... got the class we expected';
+like mop::uuid_of( $p ), qr/[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}/i, '... got the expected uuid format';
+is mop::class_of( $p ), Point, '... got the class we expected';
 
 is $p->x, 100, '... got the right value for x';
 is $p->y, 320, '... got the right value for y';
@@ -73,7 +73,7 @@ is_deeply $p->dump, { x => 10, y => 320 }, '... got the right value from dump';
 
 my $p2 = Point->new( x => 1, y => 30 );
 
-isnt $p->id, $p2->id, '... not the same instances';
+isnt mop::uuid_of( $p ), mop::uuid_of( $p2 ), '... not the same instances';
 
 is $p2->x, 1, '... got the right value for x';
 is $p2->y, 30, '... got the right value for y';
@@ -94,8 +94,8 @@ is_deeply $p->dump, { x => 0, y => 0 }, '... got the right value from dump';
 
 ## Test the subclass
 
-is Point3D->class, $::Class, '... got the class we expected';
-ok Point3D->is_a( $::Object ), '... class Point3D is a Object';
+is mop::class_of( Point3D ), $::Class, '... got the class we expected';
+ok Point3D->isa( $::Object ), '... class Point3D is a Object';
 ok Point3D->is_subclass_of( Point ), '... class Point3D is a subclass of Point';
 ok Point3D->is_subclass_of( $::Object ), '... class Point3D is a subclass of Object';
 is Point3D->get_superclass, Point, '... got the superclass we expected';
@@ -109,8 +109,8 @@ is_deeply
 ## Test the instance
 
 my $p3d = Point3D->new( x => 1, y => 2, z => 3 );
-ok $p3d->is_a( Point3D ), '... p3d is a Point3D';
-ok $p3d->is_a( Point ), '... p3d is a Point';
+ok $p3d->isa( Point3D ), '... p3d is a Point3D';
+ok $p3d->isa( Point ), '... p3d is a Point';
 
 is $p3d->x, 1, '... got the right value for x';
 is $p3d->y, 2, '... got the right value for y';

@@ -44,13 +44,13 @@ class FooMeta (extends => $::Class) { }
 # create a class (using our meta-class)
 class Foo (metaclass => FooMeta) { }
 
-is Foo->class, FooMeta, '... got the class we expected';
-ok Foo->is_a( FooMeta ), '... Foo is a FooMeta';
+is mop::class_of( Foo ), FooMeta, '... got the class we expected';
+ok Foo->isa( FooMeta ), '... Foo is a FooMeta';
 
 class FooSub (extends => Foo) { }
 
-is FooSub->class, FooMeta, '... got the class we expected';
-ok FooSub->is_a( FooMeta ), '... FooSub is a FooMeta';
+is mop::class_of( FooSub ), FooMeta, '... got the class we expected';
+ok FooSub->isa( FooMeta ), '... FooSub is a FooMeta';
 
 class BarMeta (extends => $::Class) { }
 

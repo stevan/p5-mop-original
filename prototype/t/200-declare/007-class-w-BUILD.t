@@ -22,12 +22,12 @@ is(Foo->get_superclass, $::Object, '... got the superclass we expected');
 
 my $foo_constructor = Foo->get_constructor();
 ok( $foo_constructor, '... found the BUILD method' );
-ok( $foo_constructor->is_a( $::Method ), '... it is a proper method');
+ok( $foo_constructor->isa( $::Method ), '... it is a proper method');
 is($foo_constructor->get_name, 'BUILD', '... got the right name for BUILD');
 
 my $foo = Foo->new( bar => "HELLO", BAR => ' World' );
-ok($foo->is_a( Foo ), '... this is a Foo');
-is($foo->class, Foo, '... this is a Foo');
+ok($foo->isa( Foo ), '... this is a Foo');
+is(mop::class_of( $foo ), Foo, '... this is a Foo');
 
 is($foo->bar, "HELLO World", '... returns what it is given');
 

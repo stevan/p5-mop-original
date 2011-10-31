@@ -38,8 +38,8 @@ into your class namespace.
 }
 
 my $data_file = My::DB::FlatFile::DataFile->new( path => __FILE__ );
-ok( $data_file->is_a( My::DB::FlatFile::DataFile ), '... the object is from class My::DB::FlatFile::DataFile' );
-ok( $data_file->is_a( $::Object ), '... the object is derived from class Object' );
+ok( $data_file->isa( My::DB::FlatFile::DataFile ), '... the object is from class My::DB::FlatFile::DataFile' );
+ok( $data_file->isa( $::Object ), '... the object is derived from class Object' );
 is( $data_file->data->[0], '#!/usr/bin/perl', '... got the first line of the data we expected' );
 
 done_testing;

@@ -16,7 +16,7 @@ sub create {
 
 sub get_uuid  { (shift)->{'uuid'}     }
 sub get_class { ${(shift)->{'class'}} }
-sub get_slot  { (shift)->{'slots'}    }
+sub get_slots { (shift)->{'slots'}    }
 
 sub get_slot_at {
     my ($instance, $name) = @_;
@@ -36,7 +36,11 @@ __END__
 
 =head1 NAME
 
-mop::internal::instance
+mop::internal::instance - The p5-mop instance internals
+
+=head1 DESCRIPTION
+
+This module implements an instance type for the p5-mop.
 
 =head1 AUTHOR
 
