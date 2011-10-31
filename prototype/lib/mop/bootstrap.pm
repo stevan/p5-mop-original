@@ -2,25 +2,12 @@ package mop::bootstrap;
 
 use strict;
 use warnings;
-use v5.10;
 
+use v5.10;
 use Scalar::Util ();
 use Clone        ();
-use Package::Anon;
 
 use mop::internal;
-
-
-{
-    my %STASHES;
-
-    sub get_stash_for {
-        my $class = shift;
-        my $uuid  = mop::internal::instance::get_uuid( $class );
-        $STASHES{ $uuid } //= Package::Anon->new( mop::internal::instance::get_slot_at( $class, '$name' ) );
-        return $STASHES{ $uuid };
-    }
-}
 
 sub init {
 
@@ -46,8 +33,8 @@ sub init {
                     # and not when the class itself is
                     # created.
                     # - SL
-                    if ( my $stash = get_stash_for( $::SELF ) ) {
-                        get_stash_for( $::Method )->bless( $method )
+                    if ( my $stash = mop::internal::get_stash_for( $::SELF ) ) {
+                        mop::internal::get_stash_for( $::Method )->bless( $method )
                             unless Scalar::Util::blessed( $method );
                         $stash->add_method( $name, sub { $method->execute( @_ ) } );
                     }
@@ -101,10 +88,10 @@ sub init {
     ## Phase 3 : Setup stashes
     ## ------------------------------------------
 
-    get_stash_for( $::Class )->bless( $::Object     );
-    get_stash_for( $::Class )->bless( $::Class,     );
-    get_stash_for( $::Class )->bless( $::Method,    );
-    get_stash_for( $::Class )->bless( $::Attribute  );
+    mop::internal::get_stash_for( $::Class )->bless( $::Object     );
+    mop::internal::get_stash_for( $::Class )->bless( $::Class,     );
+    mop::internal::get_stash_for( $::Class )->bless( $::Method,    );
+    mop::internal::get_stash_for( $::Class )->bless( $::Attribute  );
 
     # make sure to manually add the
     # add_method method to the Class
@@ -114,7 +101,7 @@ sub init {
     # phase of the bootstrap.
     {
         my $method = mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'add_method'};
-        get_stash_for( $::Class )->add_method(
+        mop::internal::get_stash_for( $::Class )->add_method(
             'add_method',
             sub { mop::internal::execute_method( $method, @_ ) }
         );
@@ -125,7 +112,7 @@ sub init {
     # inside Class->add_method.
     {
         my $method = mop::internal::instance::get_slot_at( $::Method, '$methods' )->{ 'execute' };
-        get_stash_for( $::Method )->add_method(
+        mop::internal::get_stash_for( $::Method )->add_method(
             'execute',
             sub { mop::internal::execute_method( $method, @_ ) }
         );
@@ -217,7 +204,7 @@ sub init {
                 }
             );
 
-            (get_stash_for( $::SELF ) || die "Could not find stash for class(" . $::SELF->get_name . ")")->bless(
+            (mop::internal::get_stash_for( $::SELF ) || die "Could not find stash for class(" . $::SELF->get_name . ")")->bless(
                 mop::internal::instance::create( \$::SELF, $data )
             );
         }
@@ -284,10 +271,10 @@ sub init {
         ## with it from now on.
         ## ------------------------------------------
 
-        my $method = get_stash_for( $::Method )->bless(
+        my $method = mop::internal::get_stash_for( $::Method )->bless(
             $::Object->find_method('new')
         );
-        get_stash_for( $::Class )->add_method(
+        mop::internal::get_stash_for( $::Class )->add_method(
             'new',
             sub { $method->execute( @_ ) }
         );
@@ -318,13 +305,13 @@ sub init {
     ## ------------------------------------------
 
     $::Attribute->add_attribute(
-        get_stash_for( $::Attribute )->bless(
+        mop::internal::get_stash_for( $::Attribute )->bless(
             mop::internal::create_attribute( name => '$name', initial_value => \(my $attribute_name))
         )
     );
 
     $::Attribute->add_attribute(
-        get_stash_for( $::Attribute )->bless(
+        mop::internal::get_stash_for( $::Attribute )->bless(
             mop::internal::create_attribute( name => '$initial_value', initial_value => \(my $initial_value))
         )
     );
@@ -388,7 +375,7 @@ sub init {
             unless $::SELF->get_superclass;
 
         # pre-compute the vtable
-        my $stash      = get_stash_for( $::SELF );
+        my $stash      = mop::internal::get_stash_for( $::SELF );
         my $dispatcher = $::SELF->get_dispatcher;
 
         mop::WALKCLASS(
@@ -494,9 +481,9 @@ sub init {
     ## --------------------------------
 
     # grab a few useful stashes here ...
-    my $Class_stash     = get_stash_for( $::Class );
-    my $Method_stash    = get_stash_for( $::Method );
-    my $Attribute_stash = get_stash_for( $::Attribute );
+    my $Class_stash     = mop::internal::get_stash_for( $::Class );
+    my $Method_stash    = mop::internal::get_stash_for( $::Method );
+    my $Attribute_stash = mop::internal::get_stash_for( $::Attribute );
 
     ## --------------------------------
     ## This is something we just need

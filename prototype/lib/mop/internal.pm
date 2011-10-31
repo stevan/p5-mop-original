@@ -7,6 +7,7 @@ use mop::internal::instance;
 
 use PadWalker ();
 use Scope::Guard 'guard';
+use Package::Anon;
 
 sub create_class {
     my %params = @_;
@@ -67,6 +68,17 @@ sub create_method {
 }
 
 ## ...
+
+{
+    my %VTABLES;
+
+    sub get_stash_for {
+        my $class = shift;
+        my $uuid  = mop::internal::instance::get_uuid( $class );
+        $VTABLES{ $uuid } //= Package::Anon->new( mop::internal::instance::get_slot_at( $class, '$name' ) );
+        return $VTABLES{ $uuid };
+    }
+}
 
 sub execute_method {
     my $method   = shift;
