@@ -3,48 +3,45 @@ use strict;
 use warnings;
 use mop;
 
-use Params::Validate qw(:all);
-
 sub new {
     shift;
-    validate(
-        @_, {
-            number      => { type => SCALAR  },
-            passed      => { type => BOOLEAN, default => 1  },
-            skip        => { type => SCALAR,  default => 0  },
-            todo        => { type => SCALAR,  default => 0  },
-            reason      => { type => SCALAR,  default => '' },
-            description => { type => SCALAR,  default => '' }
-        }
-    );
-    my ($number, $passed, $skip, $todo, $reason, $description) = @_;
+    my %params = @_;
+    my ($number, $passed, $skip, $todo, $reason, $description) = @params{qw[
+        number
+        passed
+        skip
+        todo
+        reason
+        description
+    ]};
 
-    return TODO->new(
+    return TODO()->new(
         description => $description,
         passed      => $passed,
         reason      => $reason,
         number      => $number,
     ) if $todo;
 
-    return Skip->new(
+    return Skip()->new(
         description => $description,
         passed      => 1,
         reason      => $reason,
         number      => $number,
     ) if $skip;
 
-    return Pass->new(
+    return Pass()->new(
         description => $description,
         passed      => 1,
         number      => $number,
     ) if $passed;
 
-    return Fail->new(
+    return Fail()->new(
         description => $description,
         passed      => 0,
         number      => $number,
     );
 }
+
 
 BEGIN {
     class Base {
@@ -118,9 +115,7 @@ BEGIN {
             $status->{'really_passed'} = $self->passed;
             $status;
         }
-
     }
-
 }
 
 1;
