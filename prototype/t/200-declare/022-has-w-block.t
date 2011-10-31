@@ -25,17 +25,17 @@ my $Foo = $::Class->new;
     ok( $attribute->is_a( $::Attribute ), '... it is a proper attribute');
     is( $attribute->get_name, '$bar', '... got the right name');
     is_deeply(
-        ${ mop::internal::attribute::get_initial_value_for_instance( $attribute ) },
+        ${ $attribute->get_initial_value_for_instance( $attribute ) },
         [ 1, 2, 3, 4, 5, 6 ],
         '... got the right initial value'
     );
     is_deeply(
-        ${ mop::internal::attribute::get_initial_value_for_instance( $attribute ) },
+        ${ $attribute->get_initial_value_for_instance( $attribute ) },
         [ 2, 3, 4, 5, 6, 7 ],
         '... got the right initial value'
     );
     is_deeply(
-        ${ mop::internal::attribute::get_initial_value_for_instance( $attribute ) },
+        ${ $attribute->get_initial_value_for_instance( $attribute ) },
         [ 3, 4, 5, 6, 7, 8 ],
         '... got the right initial value'
     );
@@ -47,7 +47,7 @@ my $Foo = $::Class->new;
     ok( $attribute->is_a( $::Attribute ), '... it is a proper attribute');
     is( $attribute->get_name, '$baz', '... got the right name');
     is_deeply(
-        ${ mop::internal::attribute::get_initial_value_for_instance( $attribute ) },
+        ${ $attribute->get_initial_value_for_instance( $attribute ) },
         { one => 1 },
         '... got the right initial value'
     );

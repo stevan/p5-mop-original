@@ -83,7 +83,7 @@ class WithReason ( extends => Base ) {
     method reason { $reason }
 
     method status {
-        my $status = $self->NEXTMETHOD;
+        my $status = super;
         $status->{'reason'} = $reason;
         $status;
     }
@@ -96,7 +96,7 @@ class Skip ( extends => WithReason ) {
     }
 
     method status {
-        my $status = $self->NEXTMETHOD;
+        my $status = super;
         $status->{'skip'} = 1;
         $status;
     }
@@ -111,7 +111,7 @@ class TODO ( extends => WithReason ) {
     }
 
     method status {
-        my $status = $self->NEXTMETHOD;
+        my $status = super;
         $status->{'TODO'}          = 1;
         $status->{'passed'}        = 1;
         $status->{'really_passed'} = $self->passed;

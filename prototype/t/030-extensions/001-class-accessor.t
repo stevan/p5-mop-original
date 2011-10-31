@@ -28,7 +28,7 @@ class ClassAccessorMeta (extends => $::Class) {
             );
         }
 
-        $self->NEXTMETHOD;
+        super;
     }
 }
 

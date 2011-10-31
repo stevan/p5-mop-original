@@ -44,7 +44,7 @@ class ValidatedAccessorMeta (extends => $::Class) {
             );
         }
 
-        $self->NEXTMETHOD;
+        super;
     }
 }
 

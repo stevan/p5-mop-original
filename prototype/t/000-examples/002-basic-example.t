@@ -35,7 +35,7 @@ class CheckingAccount (extends => BankAccount) {
             $self->deposit( $overdraft_amount );
         }
 
-        $self->NEXTMETHOD( $amount );
+        super( $amount );
     }
 }
 

@@ -22,8 +22,8 @@ BEGIN {
 
     # these are some of the classes that are also created
     # in the bootstrap and are part of the MOP
-    $::Method    = undef;
-    $::Attribute = undef;
+    $::Method     = undef;
+    $::Attribute  = undef;
 }
 
 use mop::bootstrap;
@@ -37,6 +37,16 @@ BEGIN {
 mop::bootstrap::init();
 
 sub import { mop::syntax->setup_for( caller ) }
+
+sub WALKCLASS {
+    my ($dispatcher, $solver) = @_;
+    { $solver->( $dispatcher->() || return ); redo }
+}
+
+sub WALKMETH {
+    my ($dispatcher, $method_name) = @_;
+    { ( $dispatcher->() || return )->find_method( $method_name ) || redo }
+}
 
 1;
 
