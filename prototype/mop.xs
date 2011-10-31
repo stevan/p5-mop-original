@@ -123,19 +123,38 @@ static OP *THX_parse_metadata(pTHX)
 
 static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 {
-    SV *caller, *class_name, *metadata, *class;
+    SV *caller = NULL, *class_name, *metadata, *class;
     CV *metadata_cv;
     OP *metadata_op, *local_class, *self_class_lexicals, *block;
     int floor;
 
     *flagsp |= CALLPARSER_STATEMENT;
 
-    /* get caller */
-    caller = caller_package();
-
-    /* parse class name */
+    /* parse class name and package */
     lex_read_space(0);
+    if (lex_peek_unichar(0) == ':') {
+        demand_unichar(':', DEMAND_IMMEDIATE);
+        demand_unichar(':', DEMAND_IMMEDIATE);
+        caller = sv_2mortal(newSVpvs("main"));
+    }
     class_name = parse_idword("");
+    while (lex_peek_unichar(0) == ':') {
+        demand_unichar(':', DEMAND_IMMEDIATE);
+        demand_unichar(':', DEMAND_IMMEDIATE);
+        if (caller) {
+            sv_catpvs(caller, "::");
+            sv_catsv(caller, class_name);
+        }
+        else {
+            caller = class_name;
+        }
+        class_name = parse_idword("");
+    }
+
+    /* get caller */
+    if (!caller) {
+        caller = caller_package();
+    }
 
     /* parse metadata */
     floor = start_subparse(0, 0);
