@@ -3,10 +3,7 @@ package mop::syntax;
 use strict;
 use warnings;
 
-use Devel::Declare ();
 use Sub::Name ();
-
-use base 'Devel::Declare::MethodInstaller::Simple';
 
 sub setup_for {
     my $class = shift;
@@ -18,16 +15,8 @@ sub setup_for {
         *{ $pkg . '::has'      } = \&has;
         *{ $pkg . '::BUILD'    } = \&BUILD;
         *{ $pkg . '::DEMOLISH' } = \&DEMOLISH;
-        *{ $pkg . '::super'    } = sub (@)  {};
+        *{ $pkg . '::super'    } = \&super;
     }
-
-    my $context = $class->new;
-    Devel::Declare->setup_for(
-        $pkg,
-        {
-            'super'    => { const => sub { $context->super_parser( @_ )     } },
-        }
-    );
 }
 
 sub class { }
@@ -73,6 +62,17 @@ sub DEMOLISH {
     )
 }
 
+sub super {
+    die "Cannot call super() outside of a method" unless defined $::SELF;
+    my $invocant    = $::SELF;
+    my $method_name = (split '::' => ((caller(1))[3]))[-1];
+    my $dispatcher  = $::CLASS->get_dispatcher;
+    mop::WALKMETH( $dispatcher, $method_name ); # discard the first one ...
+    my $method = mop::WALKMETH( $dispatcher, $method_name )
+                    || die "No super method found for '$method_name'";
+    $method->execute( $invocant, @_ );
+}
+
 sub build_class {
     my ($name, $metadata, $caller) = @_;
     my %metadata = %{ $metadata || {} };
@@ -111,26 +111,6 @@ sub finalize_class {
         no strict 'refs';
         *{"${caller}::${name}"} = Sub::Name::subname( $name, sub () { $class } );
     }
-}
-
-sub super_parser {
-    my $self = shift;
-
-    $self->init( @_ );
-
-    $self->skip_declarator;
-    $self->shadow(sub (@) {
-        die "Cannot call super() outside of a method" unless defined $::SELF;
-        my $invocant    = $::SELF;
-        my $method_name = (split '::' => ((caller(1))[3]))[-1];
-        my $dispatcher  = $::CLASS->get_dispatcher;
-        mop::WALKMETH( $dispatcher, $method_name ); # discard the first one ...
-        my $method = mop::WALKMETH( $dispatcher, $method_name )
-                     || die "No super method found for '$method_name'";
-        $method->execute( $invocant, @_ );
-    });
-
-    return;
 }
 
 1;
