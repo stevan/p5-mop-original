@@ -102,6 +102,12 @@ static SV *THX_parse_scalar_varname(pTHX)
 
 /* end stolen from Scope::Escape::Sugar */
 
+#define caller_package() THX_caller_package(aTHX)
+static SV *THX_caller_package(pTHX)
+{
+    return sv_2mortal(newSVpv(HvNAME(PL_curstash), 0));
+}
+
 #define parse_metadata() THX_parse_metadata(aTHX)
 static OP *THX_parse_metadata(pTHX)
 {
@@ -117,12 +123,15 @@ static OP *THX_parse_metadata(pTHX)
 
 static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 {
-    SV *class_name, *metadata, *class;
+    SV *caller, *class_name, *metadata, *class;
     CV *metadata_cv;
     OP *metadata_op, *local_class, *self_class_lexicals, *block;
     int floor;
 
     *flagsp |= CALLPARSER_STATEMENT;
+
+    /* get caller */
+    caller = caller_package();
 
     /* parse class name */
     lex_read_space(0);
@@ -157,8 +166,10 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     {
         dSP;
         PUSHMARK(SP);
-        XPUSHs(class_name);
-        XPUSHs(metadata);
+        EXTEND(SP, 3);
+        PUSHs(class_name);
+        PUSHs(metadata);
+        PUSHs(caller);
         PUTBACK;
         call_pv("mop::syntax::build_class", G_SCALAR);
         SPAGAIN;
@@ -211,8 +222,10 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     {
         dSP;
         PUSHMARK(SP);
-        XPUSHs(class_name);
-        XPUSHs(class);
+        EXTEND(SP, 3);
+        PUSHs(class_name);
+        PUSHs(class);
+        PUSHs(caller);
         PUTBACK;
         call_pv("mop::syntax::finalize_class", G_VOID);
         PUTBACK;

@@ -62,10 +62,8 @@ sub DEMOLISH {
 }
 
 sub build_class {
-    my ($name, $metadata) = @_;
+    my ($name, $metadata, $caller) = @_;
     my %metadata = %{ $metadata || {} };
-
-    my $caller = caller;
 
     my $class_Class = $::Class;
     if ( exists $metadata{ 'metaclass' } ) {
@@ -94,9 +92,7 @@ sub build_class {
 }
 
 sub finalize_class {
-    my ($name, $class) = @_;
-
-    my $caller = caller;
+    my ($name, $class, $caller) = @_;
 
     $class->FINALIZE;
 
