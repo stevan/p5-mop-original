@@ -117,9 +117,12 @@ __END__
 
 =head1 NAME
 
-mop::internal
+mop::internal - The internals of the p5-mop
 
 =head1 DESCRIPTION
+
+This module contains some internal functions that
+are mostly used in the bootstraping process.
 
 =head1 AUTHOR
 

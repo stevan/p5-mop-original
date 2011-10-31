@@ -36,7 +36,11 @@ __END__
 
 =head1 NAME
 
-mop::internal::instance
+mop::internal::instance - The p5-mop instance internals
+
+=head1 DESCRIPTION
+
+This module implements an instance type for the p5-mop.
 
 =head1 AUTHOR
 

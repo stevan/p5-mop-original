@@ -285,11 +285,35 @@ sub inject_scope {
 
 __END__
 
-# ABSTRACT: A Moosey solution to this problem
+=pod
+
+=head1 NAME
+
+mop::syntax - The syntax module for the p5-mop
 
 =head1 SYNOPSIS
 
   use mop::syntax;
 
 =head1 DESCRIPTION
+
+This module uses Devel::Declare to provide the desired
+syntax for the p5-mop.
+
+=head1 AUTHOR
+
+Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2011 Infinity Interactive, Inc.
+
+L<http://www.iinteractive.com>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
+
+
 

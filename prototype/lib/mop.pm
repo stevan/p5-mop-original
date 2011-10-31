@@ -54,7 +54,7 @@ __END__
 
 =head1 NAME
 
-mop
+mop - The p5-mop
 
 =head1 DESCRIPTION
 
