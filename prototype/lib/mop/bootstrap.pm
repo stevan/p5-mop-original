@@ -234,12 +234,7 @@ sub init {
             my $self = $::SELF->CREATE( \%args );
             mop::WALKCLASS(
                 $::SELF->get_dispatcher('reverse'),
-                sub {
-                    if ( my $constructor = $_[0]->get_constructor ) {
-                        $constructor->execute( $self, \%args )
-                    }
-                    return;
-                }
+                sub { ( $_[0]->get_constructor || return )->execute( $self, \%args ); return }
             );
             $self;
         }
@@ -399,12 +394,7 @@ sub init {
             return unless $class; # likely in global destruction ...
             mop::WALKCLASS(
                 $class->get_dispatcher(),
-                sub {
-                    if ( my $destructor = $_[0]->get_destructor ) {
-                        $destructor->execute( $invocant )
-                    }
-                    return;
-                }
+                sub { ( $_[0]->get_destructor || return )->execute( $invocant ); return }
             );
         });
 
