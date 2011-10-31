@@ -105,7 +105,9 @@ sub execute_method {
 
     my $g = guard {
         warn "Popping env off the stack ..." if $DEBUG;
-        my $env = pop @{ $STACKS->{ mop::uuid_of( $method ) } };
+        my $stack = $STACKS->{ mop::uuid_of( $method ) };
+        pop @$stack;
+        my $env = $stack->[-1];
         if ( $env ) {
             PadWalker::set_closed_over( $body, $env );
         }
