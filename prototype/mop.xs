@@ -233,9 +233,14 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
         dSP;
         CV *class_cv;
         class_cv = newATTRSUB(floor, NULL, NULL, NULL, block);
-        PUSHMARK(SP);
-        call_sv((SV*)class_cv, G_VOID|G_NOARGS);
-        PUTBACK;
+        if (CvROOT(class_cv)) {
+            PUSHMARK(SP);
+            call_sv((SV*)class_cv, G_VOID|G_NOARGS);
+            PUTBACK;
+        }
+        else {
+            croak_sv(ERRSV);
+        }
     }
     LEAVE;
 
