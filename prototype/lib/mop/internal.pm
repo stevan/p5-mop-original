@@ -5,9 +5,11 @@ use warnings;
 
 use mop::internal::instance;
 
+use v5.10;
 use PadWalker ();
 use Scope::Guard 'guard';
 use Package::Anon;
+use Scalar::Util 'refaddr';
 
 sub create_class {
     my %params = @_;
@@ -69,36 +71,51 @@ sub create_method {
 
 ## ...
 
-{
-    my %VTABLES;
 
-    sub get_stash_for {
-        my $class = shift;
-        my $uuid  = mop::internal::instance::get_uuid( $class );
-        $VTABLES{ $uuid } //= Package::Anon->new( mop::internal::instance::get_slot_at( $class, '$name' ) );
-        return $VTABLES{ $uuid };
-    }
+sub get_stash_for {
+    state $VTABLES = {};
+    my $class = shift;
+    my $uuid  = mop::internal::instance::get_uuid( $class );
+    $VTABLES->{ $uuid } //= Package::Anon->new( mop::internal::instance::get_slot_at( $class, '$name' ) );
+    return $VTABLES->{ $uuid };
 }
 
+our $DEBUG = 0;
+
 sub execute_method {
+    state $STACKS = {};
+
     my $method   = shift;
     my $invocant = shift;
     my $class    = mop::internal::instance::get_class( $invocant );
     my $instance = mop::internal::instance::get_slots( $invocant );
     my $body     = mop::internal::instance::get_slot_at( $method, '$body' );
-
-    PadWalker::set_closed_over( $body, {
+    my $env      = {
         %$instance,
         '$self'  => \$invocant,
         '$class' => \$class
-    });
+    };
+
+    $STACKS->{ mop::uuid_of( $method ) } = []
+        unless ref $STACKS->{ mop::uuid_of( $method ) };
+
+    warn "stashing env on the stack ..." if $DEBUG;
+    push @{ $STACKS->{ mop::uuid_of( $method ) } } => $env;
+    PadWalker::set_closed_over( $body, $env );
 
     my $g = guard {
-        PadWalker::set_closed_over( $body, {
-            (map { $_ => \undef } keys %$instance),
-            '$self'  => \undef,
-            '$class' => \undef,
-        });
+        warn "Popping env off the stack ..." if $DEBUG;
+        my $env = pop @{ $STACKS->{ mop::uuid_of( $method ) } };
+        if ( $env ) {
+            PadWalker::set_closed_over( $body, $env );
+        }
+        else {
+            PadWalker::set_closed_over( $body, {
+                (map { $_ => \undef } keys %$instance),
+                '$self'  => \undef,
+                '$class' => \undef,
+            });
+        }
     };
 
     # localize the global invocant,
