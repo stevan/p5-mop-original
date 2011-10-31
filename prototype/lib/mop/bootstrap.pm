@@ -38,22 +38,25 @@ sub init {
                 name => 'add_method',
                 body => sub {
                     my $method = shift;
-
-                    mop::internal::instance::get_slot_at( $::SELF, '$methods' )->{
-                        mop::internal::instance::get_slot_at( $method, '$name' )
-                    } = $method;
-
+                    my $name   = mop::internal::instance::get_slot_at( $method, '$name' );
+                    mop::internal::instance::get_slot_at( $::SELF, '$methods' )->{ $name } = $method;
+                    # NOTE:
+                    # we won't always have a stash
+                    # because it is created at FINALIZE
+                    # and not when the class itself is
+                    # created.
+                    # - SL
                     if ( my $stash = get_stash_for( $::SELF ) ) {
-                        # NOTE:
-                        # we won't always have a stash
-                        # because it is created at FINALIZE
-                        # and not when the class itself is
-                        # created.
-                        # - SL
-                        $stash->add_method(
-                            mop::internal::instance::get_slot_at( $method, '$name' ),
-                            sub { mop::internal::execute_method( $method, @_ ) }
-                        );
+                        # gotta go this otherwise we fall into
+                        # deep recursion, which is not good
+                        if ( $name eq 'execute' && $::SELF == $::Method ) {
+                            $stash->add_method( $name, sub { mop::internal::execute_method( $method, @_ ) } );
+                        }
+                        else {
+                            get_stash_for( $::Method )->bless( $method )
+                                unless Scalar::Util::blessed( $method );
+                            $stash->add_method( $name, sub { $method->execute( @_ ) } );
+                        }
                     }
                 }
             )
@@ -95,7 +98,10 @@ sub init {
 
     # make sure to manually add the
     # add_method method to the Class
-    # stash
+    # stash. This still uses the
+    # internal method execution, but
+    # we will fix that in the final
+    # phase of the bootstrap.
     {
         my $method = mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'add_method'};
         get_stash_for( $::Class )->add_method(
@@ -108,6 +114,16 @@ sub init {
     get_stash_for( $::Class )->bless( $::Class,     );
     get_stash_for( $::Class )->bless( $::Method,    );
     get_stash_for( $::Class )->bless( $::Attribute  );
+
+    # We need to define this very early
+    # so that most of our method calls
+    # will use this, any that won't will
+    # eventually get fixed up by the end
+    # of the bootstrapping.
+    $::Method->add_method(mop::internal::create_method(
+        name => 'execute',
+        body => sub { mop::internal::execute_method( $::SELF, @_ ) }
+    ));
 
     ## ------------------------------------------
     ## Phase 4 : Minimum code needed for object
@@ -218,7 +234,7 @@ sub init {
                 $::SELF->get_dispatcher('reverse'),
                 sub {
                     if ( my $constructor = $_[0]->get_constructor ) {
-                        mop::internal::execute_method( $constructor, $self, \%args )
+                        $constructor->execute( $self, \%args )
                     }
                     return;
                 }
@@ -253,10 +269,12 @@ sub init {
         ## with it from now on.
         ## ------------------------------------------
 
-        my $method = $::Object->find_method('new');
+        my $method = get_stash_for( $::Method )->bless(
+            $::Object->find_method('new')
+        );
         get_stash_for( $::Class )->add_method(
             'new',
-            sub { mop::internal::execute_method( $method, @_ ) }
+            sub { $method->execute( @_ ) }
         );
     }
 
@@ -367,7 +385,7 @@ sub init {
                     my $method = $methods->{ $name };
                     $stash->add_method(
                         $name,
-                        sub { mop::internal::execute_method( $method, @_ ) }
+                        sub { $method->execute( @_ ) }
                     ) unless exists $stash->{ $name };
                 }
             }
@@ -381,7 +399,7 @@ sub init {
                 $class->get_dispatcher(),
                 sub {
                     if ( my $destructor = $_[0]->get_destructor ) {
-                        mop::internal::execute_method( $destructor, $invocant )
+                        $destructor->execute( $invocant )
                     }
                     return;
                 }
@@ -449,10 +467,6 @@ sub init {
 
     $::Method->add_method( $::Method->new( name => 'get_name', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' ) }));
     $::Method->add_method( $::Method->new( name => 'get_body', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$body' ) }));
-    $::Method->add_method( $::Method->new( name => 'execute', body => sub {
-        my ($invocant, @args) = @_;
-        mop::internal::execute_method( $::SELF, $invocant, @args );
-    }));
 
     ## --------------------------------
     ## $::Attribute
@@ -468,6 +482,16 @@ sub init {
     my $Class_stash     = get_stash_for( $::Class );
     my $Method_stash    = get_stash_for( $::Method );
     my $Attribute_stash = get_stash_for( $::Attribute );
+
+    ## --------------------------------
+    ## This is something we just need
+    ## to do in order to finalize things
+    ## --------------------------------
+
+    {
+        my $method = $Method_stash->bless( $::Class->find_method( 'add_method' ) );
+        $Class_stash->add_method( 'add_method', sub { $method->execute( @_ ) } );
+    }
 
     ## --------------------------------
     ## go through all the classes and
@@ -500,15 +524,15 @@ sub init {
             my $method = $methods->{ $method_name };
             $Class_stash->add_method(
                 $method_name,
-                sub { mop::internal::execute_method( $method, @_ ) }
+                sub { $method->execute( @_ ) }
             );
             $Method_stash->add_method(
                 $method_name,
-                sub { mop::internal::execute_method( $method, @_ ) }
+                sub { $method->execute( @_ ) }
             );
             $Attribute_stash->add_method(
                 $method_name,
-                sub { mop::internal::execute_method( $method, @_ ) }
+                sub { $method->execute( @_ ) }
             );
         }
     }

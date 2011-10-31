@@ -196,7 +196,7 @@ sub super_parser {
         mop::WALKMETH( $dispatcher, $method_name ); # discard the first one ...
         my $method = mop::WALKMETH( $dispatcher, $method_name )
                      || die "No super method found for '$method_name'";
-        mop::internal::execute_method( $method, $invocant, @_ );
+        $method->execute( $invocant, @_ );
     });
 
     return;
