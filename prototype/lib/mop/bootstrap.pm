@@ -21,8 +21,8 @@ sub init {
     $::Class = mop::internal::create_class(
         class      => \$::Class,
         name       => 'Class',
-        version    => '0.01',
-        authority  => 'cpan:STEVAN',
+        version    => $VERSION,
+        authority  => $AUTHORITY,
         methods    => {
             'add_method' => mop::internal::create_method(
                 name => 'add_method',
@@ -49,15 +49,15 @@ sub init {
     $::Object = mop::internal::create_class(
         class      => \$::Class,
         name       => 'Object',
-        version    => '0.01',
-        authority  => 'cpan:STEVAN',
+        version    => $VERSION,
+        authority  => $AUTHORITY,
     );
 
     $::Method = mop::internal::create_class(
         class      => \$::Class,
         name       => 'Method',
-        version    => '0.01',
-        authority  => 'cpan:STEVAN',
+        version    => $VERSION,
+        authority  => $AUTHORITY,
         superclass => $::Object,
         methods    => {
             # We need to define the execute method
@@ -76,8 +76,8 @@ sub init {
     $::Attribute = mop::internal::create_class(
         class      => \$::Class,
         name       => 'Attribute',
-        version    => '0.01',
-        authority  => 'cpan:STEVAN',
+        version    => $VERSION,
+        authority  => $AUTHORITY,
         superclass => $::Object,
     );
 
