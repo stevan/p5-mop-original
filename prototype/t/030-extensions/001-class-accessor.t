@@ -35,7 +35,7 @@ class ClassAccessorMeta (extends => $::Class) {
 class Foo (metaclass => ClassAccessorMeta) {
     has $bar;
     has $baz;
-};
+}
 
 is mop::class_of( Foo ), ClassAccessorMeta, '... Foo has the right metaclass';
 ok Foo->is_subclass_of( $::Object ), '... Foo is a subtype of Object';
