@@ -7,6 +7,26 @@ use mop;
 use Test::BuilderX;
 use Test::BuilderX::Output;
 
+sub import {
+    my $to   = caller;
+    my $from = shift;
+    {
+        no strict 'refs';
+        map {
+            *{"${to}::${_}"} = \&{"${from}::${_}"};
+        } qw[
+            test_plan
+            test_pass
+            test_fail
+            test_out
+            test_err
+            test_diag
+            test_test
+        ];
+    }
+}
+
+
 class MockOutput {
     has $output      = [];
     has $diagnostics = [];
@@ -34,18 +54,6 @@ class MockOutput {
     }
 }
 
-use Sub::Exporter -setup => {
-    exports => [qw[
-        plan
-        test_pass
-        test_fail
-        test_out
-        test_err
-        test_diag
-        test_test
-    ]]
-};
-
 my @expect_out;
 my @expect_diag;
 
@@ -56,7 +64,7 @@ my $TB_Test        = Test::BuilderX->new( output => $TB_Test_Output );
 $TB_Test->plan( 'no_plan' );
 $TB_Test_Output->output; # flush this
 
-sub plan {
+sub test_plan {
     my ($tests) = @_;
     $Test->plan( tests => $tests );
 }

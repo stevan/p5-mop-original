@@ -1,14 +1,13 @@
 package mop;
 
+use 5.014;
 use strict;
 use warnings;
-use 5.014;
 
 BEGIN {
-    our $VERSION = '0.01'
-};
+    our $VERSION   = '0.01';
+    our $AUTHORITY = 'cpan:STEVAN';
 
-BEGIN {
     # These are global variables of the current invocant
     # and current class of the invocant, they are localized
     # within the body of the current method being executed.
@@ -39,9 +38,8 @@ use mop::bootstrap;
 use mop::syntax;
 
 use Devel::CallParser;
-BEGIN {
-    XSLoader::load(__PACKAGE__, our $VERSION);
-}
+
+BEGIN { XSLoader::load(__PACKAGE__, our $VERSION) }
 
 mop::bootstrap::init();
 

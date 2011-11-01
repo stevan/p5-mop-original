@@ -1,9 +1,13 @@
 package mop::internal::instance;
 
+use 5.014;
 use strict;
 use warnings;
 
-use UUID::Tiny qw/create_uuid_as_string UUID_V4/;
+our $VERSION   = '0.01';
+our $AUTHORITY = 'cpan:STEVAN';
+
+use UUID::Tiny qw[ create_uuid_as_string UUID_V4 ];
 
 sub create {
     my ($class, $slots) = @_;

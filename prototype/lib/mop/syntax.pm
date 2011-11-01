@@ -1,7 +1,11 @@
 package mop::syntax;
 
+use 5.014;
 use strict;
 use warnings;
+
+our $VERSION   = '0.01';
+our $AUTHORITY = 'cpan:STEVAN';
 
 use Sub::Name ();
 

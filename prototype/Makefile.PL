@@ -24,9 +24,11 @@ WriteMakefile(
         'Scope::Guard'  => 0,
         'Carp'          => 0,
         'UUID::Tiny'    => 0,
+        'Scalar::Util'  => 0,
     },
     BUILD_REQUIRES => {
         'Test::More'    => 0,
+        'Test::Fatal'   => 0,
     },
     test           => {
         TESTS => 't/*.t t/*/*.t t/*/*/*.t',
