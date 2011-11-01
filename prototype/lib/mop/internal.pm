@@ -99,12 +99,10 @@ sub execute_method {
     $STACKS->{ mop::uuid_of( $method ) } = []
         unless ref $STACKS->{ mop::uuid_of( $method ) };
 
-    warn "stashing env on the stack ..." if $DEBUG;
     push @{ $STACKS->{ mop::uuid_of( $method ) } } => $env;
     PadWalker::set_closed_over( $body, $env );
 
     my $g = guard {
-        warn "Popping env off the stack ..." if $DEBUG;
         my $stack = $STACKS->{ mop::uuid_of( $method ) };
         pop @$stack;
         my $env = $stack->[-1];
