@@ -20,7 +20,8 @@ requires 'Clone'                => 0;
 requires 'UUID::Tiny'           => 0;
 requires 'Scalar::Util'         => 0;
 
-build_requires 'Test::More' => 0;
+build_requires 'Test::More'  => 0;
+build_requires 'Test::Fatal' => 0;
 
 tests('t/*.t');
 
