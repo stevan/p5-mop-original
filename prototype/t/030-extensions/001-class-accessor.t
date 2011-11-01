@@ -41,7 +41,7 @@ BEGIN {
     class Foo (metaclass => ClassAccessorMeta) {
         has $bar;
         has $baz;
-    };
+    }
 }
 
 is mop::class_of( Foo ), ClassAccessorMeta, '... Foo has the right metaclass';
