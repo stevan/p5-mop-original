@@ -3,6 +3,8 @@ package mop;
 use strict;
 use warnings;
 
+our $VERSION = '0.01';
+
 BEGIN {
     # These are global variables of the current invocant
     # and current class of the invocant, they are localized
