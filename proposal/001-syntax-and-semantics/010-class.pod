@@ -180,10 +180,9 @@ just as it would be inside the package scope.
 
 =head2 How does C<strict> and C<warnings> affect classes?
 
-Within the body of a class, strictures should be on. I am of the
-opinion that warnings should also be enabled, but I know there is some
-debate as to the details of that (see L<common::sense>). So I believe
-that while strictures are for sure, warnings is up for debate.
+The same way C<strict> and C<warnings> affect subroutines, if
+statements, and other blocks of code: classes use the usual lexical
+scope mechanisms for strictures and warnings.
 
 =head2 Can I use C<my> or C<our> within a class?
 
