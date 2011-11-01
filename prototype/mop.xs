@@ -102,6 +102,22 @@ static SV *THX_parse_scalar_varname(pTHX)
 
 /* end stolen from Scope::Escape::Sugar */
 
+#define parse_array_varname() THX_parse_array_varname(aTHX)
+static SV *THX_parse_array_varname(pTHX)
+{
+	demand_unichar('@', DEMAND_IMMEDIATE);
+	lex_read_space(0);
+	return parse_idword("@");
+}
+
+#define parse_hash_varname() THX_parse_hash_varname(aTHX)
+static SV *THX_parse_hash_varname(pTHX)
+{
+	demand_unichar('%', DEMAND_IMMEDIATE);
+	lex_read_space(0);
+	return parse_idword("%");
+}
+
 #define caller_package() THX_caller_package(aTHX)
 static SV *THX_caller_package(pTHX)
 {
@@ -336,7 +352,19 @@ static OP *THX_parse_method_prototype(pTHX)
         char next;
 
         lex_read_space(0);
-        varname = parse_scalar_varname();
+        next = lex_peek_unichar(0);
+        if (next == '$') {
+            varname = parse_scalar_varname();
+        }
+        else if (next == '@') {
+            varname = parse_array_varname();
+        }
+        else if (next == '%') {
+            varname = parse_hash_varname();
+        }
+        else {
+            croak("syntax error");
+        }
 
         pad_op = newOP(OP_PADSV, (OPpLVAL_INTRO<<8));
         pad_op->op_targ = pad_add_my_scalar_sv(varname);

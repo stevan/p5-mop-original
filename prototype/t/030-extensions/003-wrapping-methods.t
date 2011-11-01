@@ -10,9 +10,9 @@ use mop;
 my @OUTPUT;
 
 class WrappedMethod ( extends => $::Method ) {
-    method execute {
+    method execute ( @args ) {
         push @OUTPUT => "calling " . $self->get_name;
-        super( @_ );
+        super( @args );
     }
 }
 
