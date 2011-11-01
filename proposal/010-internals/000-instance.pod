@@ -29,7 +29,9 @@ will likely be implemented in C and be what is used internally.
 Object identity is a very important thing, especially in the highly
 distributed and networked world we live in. Not only should an identity
 be thread-safe, but it should also be safe across process boundaries as
-well as machine boundaries.
+well as machine boundaries. These identities should also not be reused when
+an object is destroyed, avoiding the problem described in
+L<https://metacpan.org/module/Object::ID#Why-not-just-use-the-objects-reference->
 
 B<AUTHORS NOTE>
 
