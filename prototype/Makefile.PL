@@ -2,16 +2,16 @@ use strict;
 use warnings;
 use ExtUtils::MakeMaker;
 
-BEGIN { require 5.012 }
+BEGIN { require 5.014 }
 
 use Devel::CallParser ();
 
 {
-    open my $fh, '>', 'callparser0.h'
-        or die "Couldn't open callparser0.h for writing: $!";
-    $fh->print(Devel::CallParser::callparser0_h);
+    open my $fh, '>', 'callparser1.h'
+        or die "Couldn't open callparser1.h for writing: $!";
+    $fh->print(Devel::CallParser::callparser1_h);
     $fh->close
-        or die "Couldn't close callparser0.h: $!";
+        or die "Couldn't close callparser1.h: $!";
 }
 
 WriteMakefile(
@@ -32,7 +32,7 @@ WriteMakefile(
         TESTS => 't/*.t t/*/*.t t/*/*/*.t',
     },
     clean => {
-        FILES => 'callparser0.h',
+        FILES => 'callparser1.h',
     },
     # XXX: not sure if this is correct
     OBJECT => join(' ', Devel::CallParser::callparser_linkable),

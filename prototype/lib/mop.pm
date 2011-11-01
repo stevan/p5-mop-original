@@ -2,6 +2,7 @@ package mop;
 
 use strict;
 use warnings;
+use 5.014;
 
 BEGIN {
     our $VERSION = '0.01'
