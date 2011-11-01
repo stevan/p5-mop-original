@@ -213,9 +213,9 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     {
         OP *var_self, *var_class;
 
-        var_self = newOP(OP_PADSV, (OPpLVAL_INTRO << 8));
+        var_self = newOP(OP_PADSV, (OPpLVAL_INTRO << 8)|OPf_MOD);
         var_self->op_targ = pad_add_my_scalar_pvn("$self", 5);
-        var_class = newOP(OP_PADSV, (OPpLVAL_INTRO << 8));
+        var_class = newOP(OP_PADSV, (OPpLVAL_INTRO << 8)|OPf_MOD);
         var_class->op_targ = pad_add_my_scalar_pvn("$class", 6);
         self_class_lexicals = newLISTOP(OP_LIST, 0, var_self, var_class);
     }
