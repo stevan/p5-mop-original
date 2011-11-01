@@ -1,7 +1,11 @@
 package mop;
 
+use 5.010;
 use strict;
 use warnings;
+
+our $VERSION   = '0.01';
+our $AUTHORITY = 'cpan:STEVAN';
 
 BEGIN {
     # These are global variables of the current invocant

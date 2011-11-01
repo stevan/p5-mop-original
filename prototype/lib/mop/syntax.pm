@@ -1,14 +1,18 @@
 package mop::syntax;
 
+use 5.010;
 use strict;
 use warnings;
 
+our $VERSION   = '0.01';
+our $AUTHORITY = 'cpan:STEVAN';
+
 use base 'Devel::Declare::Context::Simple';
 
+use Carp           qw[ confess ];
 use Sub::Name      ();
 use Devel::Declare ();
 use B::Hooks::EndOfScope;
-use Carp qw[ confess ];
 
 sub setup_for {
     my $class = shift;

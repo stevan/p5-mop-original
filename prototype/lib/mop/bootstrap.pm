@@ -1,9 +1,12 @@
 package mop::bootstrap;
 
+use 5.010;
 use strict;
 use warnings;
 
-use v5.10;
+our $VERSION   = '0.01';
+our $AUTHORITY = 'cpan:STEVAN';
+
 use Scalar::Util ();
 use Clone        ();
 

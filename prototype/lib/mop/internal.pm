@@ -1,14 +1,17 @@
 package mop::internal;
 
+use 5.010;
 use strict;
 use warnings;
 
+our $VERSION   = '0.01';
+our $AUTHORITY = 'cpan:STEVAN';
+
 use mop::internal::instance;
 
-use v5.10;
+use Package::Anon;
 use PadWalker ();
 use Scope::Guard 'guard';
-use Package::Anon;
 use Scalar::Util 'refaddr';
 
 sub create_class {
