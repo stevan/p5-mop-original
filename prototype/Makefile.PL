@@ -18,6 +18,7 @@ requires 'Scope::Guard'         => 0;
 requires 'Carp'                 => 0;
 requires 'Clone'                => 0;
 requires 'UUID::Tiny'           => 0;
+requires 'Scalar::Util'         => 0;
 
 build_requires 'Test::More' => 0;
 
