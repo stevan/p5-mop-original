@@ -18,7 +18,7 @@ WriteMakefile(
     NAME         => 'mop',
     VERSION_FROM => 'lib/mop.pm',
     PREREQ_PM    => {
-        'Package::Anon' => 0,
+        'Package::Anon' => 0, # http://github.com/doy/package-anon
         'Sub::Name'     => 0,
         'PadWalker'     => 0,
         'Scope::Guard'  => 0,
