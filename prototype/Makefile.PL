@@ -22,6 +22,7 @@ requires 'Scalar::Util'         => 0;
 
 build_requires 'Test::More'  => 0;
 build_requires 'Test::Fatal' => 0;
+build_requires 'Path::Class' => 0;
 
 tests('t/*.t');
 
