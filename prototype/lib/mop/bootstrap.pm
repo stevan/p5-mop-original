@@ -416,9 +416,6 @@ sub init {
     $::Class->add_method( $::Method->new(
         name => 'FINALIZE',
         body => sub {
-            $::SELF->set_superclass( $::SELF->base_object_class )
-                unless $::SELF->get_superclass;
-
             $::SELF->publish_method_cache;
         },
     ) );
@@ -439,6 +436,8 @@ sub init {
     $::Class->set_constructor( $::Method->new(
         name => 'BUILD',
         body => sub {
+            $::SELF->set_superclass( $::SELF->base_object_class )
+                unless $::SELF->get_superclass;
             my $superclass = $::SELF->get_superclass;
             if ( $superclass ) {
                 my $superclass_class = mop::internal::instance::get_class( $superclass );
