@@ -536,7 +536,11 @@ sub init {
     ## --------------------------------
     ## ensure that for actual classes,
     ## nothing is added to the stash
-    ## until FINALIZE time
+    ## until FINALIZE time.
+    ## this also overrides add_method
+    ## in Class's stash with a version
+    ## that actually calls ->execute,
+    ## rather than execute_method.
     ## --------------------------------
 
     $::Class->add_method( $::Method->new( name => 'add_method', body => sub {
