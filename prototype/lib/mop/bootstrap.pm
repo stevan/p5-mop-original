@@ -378,7 +378,7 @@ sub init {
 
     ## FINALIZE protocol
     $::Class->add_method( $::Method->new(
-        name => 'publish_method_cache',
+        name => 'FINALIZE',
         body => sub {
             my $stash      = mop::internal::get_stash_for( $::SELF );
             my $dispatcher = $::SELF->get_dispatcher;
@@ -409,14 +409,6 @@ sub init {
                     sub { ( $_[0]->get_destructor || return )->execute( $invocant ); return }
                 );
             });
-
-            return;
-        },
-    ) );
-    $::Class->add_method( $::Method->new(
-        name => 'FINALIZE',
-        body => sub {
-            $::SELF->publish_method_cache;
         },
     ) );
 

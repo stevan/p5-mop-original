@@ -24,7 +24,7 @@ BEGIN {
             ::note "Looking up method $name";
             super($name);
         }
-        method publish_method_cache {
+        method FINALIZE {
             # there is no fallback dispatching if our method cache doesn't
             # exist, so we need to install one instead of just leaving it empty
             # this may change in the future
