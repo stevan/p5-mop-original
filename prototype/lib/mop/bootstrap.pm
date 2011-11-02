@@ -490,16 +490,6 @@ sub init {
     my $Attribute_stash = mop::internal::get_stash_for( $::Attribute );
 
     ## --------------------------------
-    ## This is something we just need
-    ## to do in order to finalize things
-    ## --------------------------------
-
-    {
-        my $method = $Method_stash->bless( $::Class->find_method( 'add_method' ) );
-        $Class_stash->add_method( 'add_method', sub { $method->execute( @_ ) } );
-    }
-
-    ## --------------------------------
     ## go through all the classes and
     ## bless the methods and attributes
     ## into the proper stashes as needed
