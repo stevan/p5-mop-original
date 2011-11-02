@@ -123,10 +123,25 @@ sub init {
     ##           construction
     ## ------------------------------------------
 
+    # helpers for creating some methods
+    my $reader = sub {
+        my ($slot) = @_;
+        sub {
+            mop::internal::instance::get_slot_at( $::SELF, $slot );
+        };
+    };
+    my $writer = sub {
+        my ($slot) = @_;
+        sub {
+            my $val = shift;
+            mop::internal::instance::set_slot_at( $::SELF, $slot, \$val );
+        };
+    };
+
     # this method is needed for Class->get_mro
     $::Class->add_method(mop::internal::create_method(
         name => 'get_superclass',
-        body => sub { mop::internal::instance::get_slot_at( $::SELF, '$superclass' ) }
+        body => $reader->( '$superclass' ),
     ));
 
     # this method is needed for Class->CREATE
@@ -141,7 +156,7 @@ sub init {
     # this method is needed for Class->CREATE
     $::Class->add_method(mop::internal::create_method(
         name => 'get_attributes',
-        body => sub { mop::internal::instance::get_slot_at( $::SELF, '$attributes' ) }
+        body => $reader->( '$attributes' ),
     ));
 
     # this method is needed for Class->CREATE
@@ -210,7 +225,7 @@ sub init {
     # this method is needed for Object->new
     $::Class->add_method(mop::internal::create_method(
         name => 'get_constructor',
-        body => sub { mop::internal::instance::get_slot_at( $::SELF, '$constructor' ) }
+        body => $reader->( '$constructor' ),
     ));
 
     # this method is needed for Object->new
@@ -245,7 +260,7 @@ sub init {
     # this method is needed by Class->find_method
     $::Class->add_method(mop::internal::create_method(
         name => 'get_methods',
-        body => sub { mop::internal::instance::get_slot_at( $::SELF, '$methods' ) }
+        body => $reader->( '$methods' ),
     ));
 
     # this method is needed to find Object->new (SEE BELOW)
@@ -275,7 +290,7 @@ sub init {
     # this method is needed by Class->add_attribute
     $::Attribute->add_method(mop::internal::create_method(
         name => 'get_name',
-        body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' ) }
+        body => $reader->( '$name' ),
     ));
 
     # this method is needed to add the attributes
@@ -325,24 +340,15 @@ sub init {
     $::Class->add_method( $::Method->new( name => 'attribute_class',   body => sub { $::Attribute }));
     $::Class->add_method( $::Method->new( name => 'method_class',      body => sub { $::Method    }));
     $::Class->add_method( $::Method->new( name => 'base_object_class', body => sub { $::Object    }));
-    $::Class->add_method( $::Method->new( name => 'get_name',          body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' )       }));
-    $::Class->add_method( $::Method->new( name => 'get_version',       body => sub { mop::internal::instance::get_slot_at( $::SELF, '$version' )    }));
-    $::Class->add_method( $::Method->new( name => 'get_authority',     body => sub { mop::internal::instance::get_slot_at( $::SELF, '$authority' )  }));
-    $::Class->add_method( $::Method->new( name => 'get_destructor',    body => sub { mop::internal::instance::get_slot_at( $::SELF, '$destructor' ) }));
+    $::Class->add_method( $::Method->new( name => 'get_name',          body => $reader->( '$name' )       ));
+    $::Class->add_method( $::Method->new( name => 'get_version',       body => $reader->( '$version' )    ));
+    $::Class->add_method( $::Method->new( name => 'get_authority',     body => $reader->( '$authority' )  ));
+    $::Class->add_method( $::Method->new( name => 'get_destructor',    body => $reader->( '$destructor' ) ));
 
     ## mutators
-    $::Class->add_method( $::Method->new( name => 'set_constructor', body => sub {
-        my $constructor = shift;
-        mop::internal::instance::set_slot_at( $::SELF, '$constructor', \$constructor );
-    }));
-    $::Class->add_method( $::Method->new( name => 'set_destructor', body => sub {
-        my $destructor = shift;
-        mop::internal::instance::set_slot_at( $::SELF, '$destructor', \$destructor );
-    }));
-    $::Class->add_method( $::Method->new( name => 'set_superclass', body => sub {
-        my $superclass = shift;
-        mop::internal::instance::set_slot_at( $::SELF, '$superclass', \$superclass );
-    }));
+    $::Class->add_method( $::Method->new( name => 'set_constructor', body => $writer->( '$constructor' )));
+    $::Class->add_method( $::Method->new( name => 'set_destructor', body => $writer->( '$destructor' )));
+    $::Class->add_method( $::Method->new( name => 'set_superclass', body => $writer->( '$superclass' )));
 
     ## predicate methods for Class
     $::Class->add_method( $::Method->new(
@@ -456,14 +462,14 @@ sub init {
     ## $::Method
     ## --------------------------------
 
-    $::Method->add_method( $::Method->new( name => 'get_name', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' ) }));
-    $::Method->add_method( $::Method->new( name => 'get_body', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$body' ) }));
+    $::Method->add_method( $::Method->new( name => 'get_name', body => $reader->( '$name' ) ) );
+    $::Method->add_method( $::Method->new( name => 'get_body', body => $reader->( '$body' ) ) );
 
     ## --------------------------------
     ## $::Attribute
     ## --------------------------------
 
-    $::Attribute->add_method( $::Method->new( name => 'get_initial_value', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$initial_value' ) }));
+    $::Attribute->add_method( $::Method->new( name => 'get_initial_value', body => $reader->( '$initial_value' ) ) );
 
     ## --------------------------------
     ## Phase 7 : Bootstrap cleanup
