@@ -24,20 +24,17 @@ BEGIN {
             ::note "Looking up method $name";
             super($name);
         }
-        method FINALIZE {
-            # there is no fallback dispatching if our method cache doesn't exist,
-            # so we need to install one instead of just leaving it empty
+        method publish_method_cache {
+            # there is no fallback dispatching if our method cache doesn't
+            # exist, so we need to install one instead of just leaving it empty
             # this may change in the future
 
-            # still need to set up things like base classes
-            super;
-
             my $stash = mop::internal::get_stash_for($self);
-            %$stash = (DESTROY => $stash->{DESTROY});
             $stash->add_method(AUTOLOAD => sub {
                 (my $name = our $AUTOLOAD) =~ s/.*:://;
                 $self->find_method($name)->execute(@_);
             });
+            $stash->add_method(DESTROY => sub { });
         }
     }
 
