@@ -7,7 +7,7 @@ use Test::More;
 
 use mop;
 
-my $Foo = Class->new;
+my $Foo = $::Class->new;
 
 my $has_Bar_been_created = 0;
 
