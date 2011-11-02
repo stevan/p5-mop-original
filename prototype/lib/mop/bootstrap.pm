@@ -324,12 +324,13 @@ sub init {
     ## --------------------------------
 
     ## accessors
-    $::Class->add_method( $::Method->new( name => 'attribute_class', body => sub { $::Attribute }));
-    $::Class->add_method( $::Method->new( name => 'method_class',    body => sub { $::Method    }));
-    $::Class->add_method( $::Method->new( name => 'get_name',        body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' )       }));
-    $::Class->add_method( $::Method->new( name => 'get_version',     body => sub { mop::internal::instance::get_slot_at( $::SELF, '$version' )    }));
-    $::Class->add_method( $::Method->new( name => 'get_authority',   body => sub { mop::internal::instance::get_slot_at( $::SELF, '$authority' )  }));
-    $::Class->add_method( $::Method->new( name => 'get_destructor',  body => sub { mop::internal::instance::get_slot_at( $::SELF, '$destructor' ) }));
+    $::Class->add_method( $::Method->new( name => 'attribute_class',   body => sub { $::Attribute }));
+    $::Class->add_method( $::Method->new( name => 'method_class',      body => sub { $::Method    }));
+    $::Class->add_method( $::Method->new( name => 'base_object_class', body => sub { $::Object    }));
+    $::Class->add_method( $::Method->new( name => 'get_name',          body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' )       }));
+    $::Class->add_method( $::Method->new( name => 'get_version',       body => sub { mop::internal::instance::get_slot_at( $::SELF, '$version' )    }));
+    $::Class->add_method( $::Method->new( name => 'get_authority',     body => sub { mop::internal::instance::get_slot_at( $::SELF, '$authority' )  }));
+    $::Class->add_method( $::Method->new( name => 'get_destructor',    body => sub { mop::internal::instance::get_slot_at( $::SELF, '$destructor' ) }));
 
     ## mutators
     $::Class->add_method( $::Method->new( name => 'set_constructor', body => sub {
@@ -364,13 +365,11 @@ sub init {
     ));
 
     ## FINALIZE protocol
-    $::Class->add_method( $::Method->new( name => 'FINALIZE', body => sub {
-        $::SELF->set_superclass( $::Object )
-            unless $::SELF->get_superclass;
-
-        # pre-compute the vtable
+    $::Class->add_method( $::Method->new( name => 'publish_method_cache', body => sub {
         my $stash      = mop::internal::get_stash_for( $::SELF );
         my $dispatcher = $::SELF->get_dispatcher;
+
+        %$stash = ();
 
         mop::WALKCLASS(
             $dispatcher,
@@ -397,8 +396,13 @@ sub init {
             );
         });
 
-        return $stash;
+        return;
+    }));
+    $::Class->add_method( $::Method->new( name => 'FINALIZE',             body => sub {
+        $::SELF->set_superclass( $::SELF->base_object_class )
+            unless $::SELF->get_superclass;
 
+        $::SELF->publish_method_cache;
     }));
 
     # ...
