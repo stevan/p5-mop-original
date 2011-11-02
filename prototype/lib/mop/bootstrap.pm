@@ -218,9 +218,7 @@ sub init {
                                 $data->{ $attr_name } = \$value;
                             }
                             else {
-                                $data->{ $attr_name } = $attrs->{$attr_name}->get_initial_value_for_instance(
-                                    $attrs->{ $attr_name }
-                                );
+                                $data->{ $attr_name } = $attrs->{$attr_name}->get_initial_value_for_instance;
                             }
 
                         }
