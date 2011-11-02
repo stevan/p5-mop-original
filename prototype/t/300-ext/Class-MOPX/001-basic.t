@@ -36,7 +36,7 @@ class Foo {
 
     ok($foo->has_baz);
     $foo->clear_baz;
-    ok(!$foo->clear_baz);
+    ok(!$foo->has_baz);
 }
 
 done_testing;
