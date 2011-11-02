@@ -144,6 +144,18 @@ sub init {
         body => $reader->( '$superclass' ),
     ));
 
+    # this method is needed for Attribute->get_initial_value_for_instance
+    $::Attribute->add_method(mop::internal::create_method(
+        name => 'get_initial_value',
+        body => $reader->( '$initial_value' )
+    ));
+
+    # this method is needed for Attribute->get_param_name
+    $::Attribute->add_method(mop::internal::create_method(
+        name => 'get_name',
+        body => $reader->( '$name' ),
+    ));
+
     # this method is needed for Class->CREATE
     $::Class->add_method(mop::internal::create_method(
         name => 'get_mro',
@@ -163,7 +175,7 @@ sub init {
     $::Attribute->add_method(mop::internal::create_method(
         name => 'get_initial_value_for_instance',
         body => sub {
-            my $value = ${ mop::internal::instance::get_slot_at( $::SELF, '$initial_value' ) };
+            my $value = ${ $::SELF->get_initial_value };
             if ( ref $value ) {
                 if ( ref $value eq 'CODE' ) {
                     $value = $value->();
@@ -180,7 +192,7 @@ sub init {
     $::Attribute->add_method(mop::internal::create_method(
         name => 'get_param_name',
         body => sub {
-            my $name = mop::internal::instance::get_slot_at( $::SELF, '$name' );
+            my $name = $::SELF->get_name;
             $name =~ s/^\$//;
             $name;
         }
@@ -289,12 +301,6 @@ sub init {
             sub { $method->execute( @_ ) }
         );
     }
-
-    # this method is needed by Class->add_attribute
-    $::Attribute->add_method(mop::internal::create_method(
-        name => 'get_name',
-        body => $reader->( '$name' ),
-    ));
 
     # this method is needed to add the attributes
     # to Attribute and Method (SEE BELOW)
@@ -471,7 +477,6 @@ sub init {
     ## $::Attribute
     ## --------------------------------
 
-    $::Attribute->add_method( $::Method->new( name => 'get_initial_value', body => $reader->( '$initial_value' ) ) );
 
     ## --------------------------------
     ## Phase 7 : Bootstrap cleanup
@@ -538,8 +543,7 @@ sub init {
 
     $::Class->add_method( $::Method->new( name => 'add_method', body => sub {
         my $method = shift;
-        my $name   = mop::internal::instance::get_slot_at( $method, '$name' );
-        mop::internal::instance::get_slot_at( $::SELF, '$methods' )->{ $name } = $method;
+        $::SELF->get_methods->{ $method->get_name } = $method;
     }));
 
     ## --------------------------------
