@@ -29,17 +29,15 @@ sub init {
                     my $method = shift;
                     my $name   = mop::internal::instance::get_slot_at( $method, '$name' );
                     mop::internal::instance::get_slot_at( $::SELF, '$methods' )->{ $name } = $method;
-                    # NOTE:
-                    # we won't always have a stash
-                    # because it is created at FINALIZE
-                    # and not when the class itself is
-                    # created.
-                    # - SL
-                    if ( my $stash = mop::internal::get_stash_for( $::SELF ) ) {
-                        mop::internal::get_stash_for( $::Method )->bless( $method )
-                            unless Scalar::Util::blessed( $method );
-                        $stash->add_method( $name, sub { $method->execute( @_ ) } );
-                    }
+
+                    # this is temporary for bootstrapping, so that we don't
+                    # have to keep manually updating the stash in order to use
+                    # newly installed methods. it will be removed at the end
+                    # of the bootstrap process.
+                    my $stash = mop::internal::get_stash_for( $::SELF );
+                    mop::internal::get_stash_for( $::Method )->bless( $method )
+                        unless Scalar::Util::blessed( $method );
+                    $stash->add_method( $name, sub { $method->execute( @_ ) } );
                 }
             )
         }
@@ -529,6 +527,18 @@ sub init {
             );
         }
     }
+
+    ## --------------------------------
+    ## ensure that for actual classes,
+    ## nothing is added to the stash
+    ## until FINALIZE time
+    ## --------------------------------
+
+    $::Class->add_method( $::Method->new( name => 'add_method', body => sub {
+        my $method = shift;
+        my $name   = mop::internal::instance::get_slot_at( $method, '$name' );
+        mop::internal::instance::get_slot_at( $::SELF, '$methods' )->{ $name } = $method;
+    }));
 
     ## --------------------------------
     ## END BOOTSTRAP
