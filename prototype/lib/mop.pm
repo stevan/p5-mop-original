@@ -43,7 +43,13 @@ BEGIN { XSLoader::load(__PACKAGE__, our $VERSION) }
 
 mop::bootstrap::init();
 
-sub import { mop::syntax->setup_for( caller ) }
+sub import {
+    shift;
+    my %options = @_;
+    $^H{'mop/default_metaclass'} = $options{'-metaclass'}
+        if $options{'-metaclass'};
+    mop::syntax->setup_for( caller )
+}
 
 sub WALKCLASS {
     my ($dispatcher, $solver) = @_;
