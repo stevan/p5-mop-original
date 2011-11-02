@@ -57,7 +57,7 @@ style classes can compliment old style perl.
 
 =cut
 
-use lib 't/ext';
+use lib 't/ext/Test-BuilderX';
 
 BEGIN {
     use_ok( 'Test::BuilderX' );
