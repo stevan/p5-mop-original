@@ -264,10 +264,13 @@ sub init {
     ));
 
     # this method is needed to find Object->new (SEE BELOW)
-    $::Class->add_method(mop::internal::create_method( name => 'find_method', body => sub {
-        my $method_name = shift;
-        $::SELF->get_methods->{ $method_name };
-    }));
+    $::Class->add_method(mop::internal::create_method(
+        name => 'find_method',
+        body => sub {
+            my $method_name = shift;
+            $::SELF->get_methods->{ $method_name };
+        },
+    ));
 
     {
         ## ------------------------------------------
@@ -295,10 +298,13 @@ sub init {
 
     # this method is needed to add the attributes
     # to Attribute and Method (SEE BELOW)
-    $::Class->add_method(mop::internal::create_method( name => 'add_attribute', body => sub {
-        my $attr = shift;
-        $::SELF->get_attributes->{ $attr->get_name } = $attr;
-    }));
+    $::Class->add_method(mop::internal::create_method(
+        name => 'add_attribute',
+        body => sub {
+            my $attr = shift;
+            $::SELF->get_attributes->{ $attr->get_name } = $attr;
+        },
+    ));
 
     ## ------------------------------------------
     ## NOTE:
@@ -325,8 +331,8 @@ sub init {
 
     # Horray, Now we can actually create objects!
 
-    $::Method->add_attribute( $::Attribute->new( name => '$name', initial_value => \(my $method_name)) );
-    $::Method->add_attribute( $::Attribute->new( name => '$body', initial_value => \(my $method_body)) );
+    $::Method->add_attribute( $::Attribute->new( name => '$name', initial_value => \(my $method_name) ) );
+    $::Method->add_attribute( $::Attribute->new( name => '$body', initial_value => \(my $method_body) ) );
 
     ## ------------------------------------------
     ## Phase 6 : Create the rest of the MOP
@@ -337,18 +343,18 @@ sub init {
     ## --------------------------------
 
     ## accessors
-    $::Class->add_method( $::Method->new( name => 'attribute_class',   body => sub { $::Attribute }));
-    $::Class->add_method( $::Method->new( name => 'method_class',      body => sub { $::Method    }));
-    $::Class->add_method( $::Method->new( name => 'base_object_class', body => sub { $::Object    }));
-    $::Class->add_method( $::Method->new( name => 'get_name',          body => $reader->( '$name' )       ));
-    $::Class->add_method( $::Method->new( name => 'get_version',       body => $reader->( '$version' )    ));
-    $::Class->add_method( $::Method->new( name => 'get_authority',     body => $reader->( '$authority' )  ));
-    $::Class->add_method( $::Method->new( name => 'get_destructor',    body => $reader->( '$destructor' ) ));
+    $::Class->add_method( $::Method->new( name => 'attribute_class',   body => sub { $::Attribute } ) );
+    $::Class->add_method( $::Method->new( name => 'method_class',      body => sub { $::Method    } ) );
+    $::Class->add_method( $::Method->new( name => 'base_object_class', body => sub { $::Object    } ) );
+    $::Class->add_method( $::Method->new( name => 'get_name',          body => $reader->( '$name' )       ) );
+    $::Class->add_method( $::Method->new( name => 'get_version',       body => $reader->( '$version' )    ) );
+    $::Class->add_method( $::Method->new( name => 'get_authority',     body => $reader->( '$authority' )  ) );
+    $::Class->add_method( $::Method->new( name => 'get_destructor',    body => $reader->( '$destructor' ) ) );
 
     ## mutators
-    $::Class->add_method( $::Method->new( name => 'set_constructor', body => $writer->( '$constructor' )));
-    $::Class->add_method( $::Method->new( name => 'set_destructor', body => $writer->( '$destructor' )));
-    $::Class->add_method( $::Method->new( name => 'set_superclass', body => $writer->( '$superclass' )));
+    $::Class->add_method( $::Method->new( name => 'set_constructor', body => $writer->( '$constructor' ) ) );
+    $::Class->add_method( $::Method->new( name => 'set_destructor',  body => $writer->( '$destructor'  ) ) );
+    $::Class->add_method( $::Method->new( name => 'set_superclass',  body => $writer->( '$superclass'  ) ) );
 
     ## predicate methods for Class
     $::Class->add_method( $::Method->new(
@@ -356,8 +362,8 @@ sub init {
         body => sub {
             my $other = shift;
             return mop::internal::instance::get_uuid( $::SELF ) eq mop::internal::instance::get_uuid( $other );
-        }
-    ));
+        },
+    ) );
     $::Class->add_method( $::Method->new(
         name => 'is_subclass_of',
         body => sub {
@@ -365,52 +371,57 @@ sub init {
             my @mro = @{ $::SELF->get_mro };
             shift @mro;
             return scalar grep { $super->equals( $_ ) } @mro;
-        }
-    ));
+        },
+    ) );
 
     ## FINALIZE protocol
-    $::Class->add_method( $::Method->new( name => 'publish_method_cache', body => sub {
-        my $stash      = mop::internal::get_stash_for( $::SELF );
-        my $dispatcher = $::SELF->get_dispatcher;
+    $::Class->add_method( $::Method->new(
+        name => 'publish_method_cache',
+        body => sub {
+            my $stash      = mop::internal::get_stash_for( $::SELF );
+            my $dispatcher = $::SELF->get_dispatcher;
 
-        %$stash = ();
+            %$stash = ();
 
-        mop::WALKCLASS(
-            $dispatcher,
-            sub {
-                my $c = shift;
-                my $methods = $c->get_methods;
-                foreach my $name ( keys %$methods ) {
-                    my $method = $methods->{ $name };
-                    $stash->add_method(
-                        $name,
-                        sub { $method->execute( @_ ) }
-                    ) unless exists $stash->{ $name };
-                }
-            }
-        );
-
-        $stash->add_method('DESTROY' => sub {
-            my $invocant = shift;
-            my $class    = mop::internal::instance::get_class( $invocant );
-            return unless $class; # likely in global destruction ...
             mop::WALKCLASS(
-                $class->get_dispatcher(),
-                sub { ( $_[0]->get_destructor || return )->execute( $invocant ); return }
+                $dispatcher,
+                sub {
+                    my $c = shift;
+                    my $methods = $c->get_methods;
+                    foreach my $name ( keys %$methods ) {
+                        my $method = $methods->{ $name };
+                        $stash->add_method(
+                            $name,
+                            sub { $method->execute( @_ ) }
+                        ) unless exists $stash->{ $name };
+                    }
+                }
             );
-        });
 
-        return;
-    }));
-    $::Class->add_method( $::Method->new( name => 'FINALIZE',             body => sub {
-        $::SELF->set_superclass( $::SELF->base_object_class )
-            unless $::SELF->get_superclass;
+            $stash->add_method('DESTROY' => sub {
+                my $invocant = shift;
+                my $class    = mop::internal::instance::get_class( $invocant );
+                return unless $class; # likely in global destruction ...
+                mop::WALKCLASS(
+                    $class->get_dispatcher(),
+                    sub { ( $_[0]->get_destructor || return )->execute( $invocant ); return }
+                );
+            });
 
-        $::SELF->publish_method_cache;
-    }));
+            return;
+        },
+    ) );
+    $::Class->add_method( $::Method->new(
+        name => 'FINALIZE',
+        body => sub {
+            $::SELF->set_superclass( $::SELF->base_object_class )
+                unless $::SELF->get_superclass;
 
-    # ...
+            $::SELF->publish_method_cache;
+        },
+    ) );
 
+    ## check metaclass compat in Class->BUILD
     $::Class->add_method( $::Method->new(
         name => 'get_compatible_class',
         body => sub {
@@ -421,10 +432,8 @@ sub init {
             return $::SELF if $::SELF->is_subclass_of( $class ) || $class->equals( $::SELF );
             # reconciling this group of metaclasses isn't possible
             return;
-        }
-    ));
-
-    ## check metaclass compat in Class->BUILD
+        },
+    ) );
     $::Class->set_constructor( $::Method->new(
         name => 'BUILD',
         body => sub {
@@ -439,24 +448,24 @@ sub init {
                       . $superclass_class->get_name;
                 }
             }
-        }
-    ));
+        },
+    ) );
 
     ## add in the attributes
-    $::Class->add_attribute( $::Attribute->new( name => '$name',        initial_value => \(my $class_name)));
-    $::Class->add_attribute( $::Attribute->new( name => '$version',     initial_value => \(my $class_version)));
-    $::Class->add_attribute( $::Attribute->new( name => '$authority',   initial_value => \(my $class_authority)));
-    $::Class->add_attribute( $::Attribute->new( name => '$superclass',  initial_value => \(my $superclass)));
-    $::Class->add_attribute( $::Attribute->new( name => '$attributes',  initial_value => \sub { +{} }));
-    $::Class->add_attribute( $::Attribute->new( name => '$methods',     initial_value => \sub { +{} }));
-    $::Class->add_attribute( $::Attribute->new( name => '$constructor', initial_value => \(my $constructor)));
-    $::Class->add_attribute( $::Attribute->new( name => '$destructor',  initial_value => \(my $destructor)));
+    $::Class->add_attribute( $::Attribute->new( name => '$name',        initial_value => \(my $class_name)      ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$version',     initial_value => \(my $class_version)   ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$authority',   initial_value => \(my $class_authority) ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$superclass',  initial_value => \(my $superclass)      ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$attributes',  initial_value => \sub { +{} }           ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$methods',     initial_value => \sub { +{} }           ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$constructor', initial_value => \(my $constructor)     ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$destructor',  initial_value => \(my $destructor)      ) );
 
     ## --------------------------------
     ## $::Object
     ## --------------------------------
 
-    $::Object->add_method( $::Method->new( name => 'isa',  body => sub { $::CLASS->equals( $_[0] ) || $::CLASS->is_subclass_of( $_[0] ) }));
+    $::Object->add_method( $::Method->new( name => 'isa',  body => sub { $::CLASS->equals( $_[0] ) || $::CLASS->is_subclass_of( $_[0] ) } ) );
 
     ## --------------------------------
     ## $::Method
