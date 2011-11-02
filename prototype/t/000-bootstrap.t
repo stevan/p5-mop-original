@@ -66,6 +66,7 @@ foreach my $method ( values %{ $::Class->get_methods } ) {
 
 foreach my $attribute ( values %{ $::Class->get_attributes } ) {
     ok $attribute->isa( $::Attribute ), '... attribute (' . $attribute->get_name . ') of class Class is an Attribute object';
+    is $::Class->find_attribute( $attribute->get_name ), $attribute, '... found the attribute too';
 }
 
 is $::Object->get_name, 'Object', '... got the right name';
@@ -89,6 +90,7 @@ foreach my $method ( values %{ $::Object->get_methods } ) {
 
 foreach my $attribute ( values %{ $::Object->get_attributes } ) {
     ok $attribute->isa( $::Attribute ), '... attribute (' . $attribute->get_name . ') of class Object is an Attribute object';
+    is $::Object->find_attribute( $attribute->get_name ), $attribute, '... found the attribute too';
 }
 
 is $::Method->get_name, 'Method', '... got the right name';
@@ -112,6 +114,7 @@ foreach my $method ( values %{ $::Method->get_methods } ) {
 
 foreach my $attribute ( values %{ $::Method->get_attributes } ) {
     ok $attribute->isa( $::Attribute ), '... attribute (' . $attribute->get_name . ') of class Method is an Attribute object';
+    is $::Method->find_attribute( $attribute->get_name ), $attribute, '... found the attribute too';
 }
 
 is $::Attribute->get_name, 'Attribute', '... got the right name';
@@ -135,6 +138,7 @@ foreach my $method ( values %{ $::Attribute->get_methods } ) {
 
 foreach my $attribute ( values %{ $::Attribute->get_attributes } ) {
     ok $attribute->isa( $::Attribute ), '... attribute (' . $attribute->get_name . ') of class Attribute is an Attribute object';
+    is $::Attribute->find_attribute( $attribute->get_name ), $attribute, '... found the attribute too';
 }
 
 done_testing;

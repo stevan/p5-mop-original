@@ -351,6 +351,8 @@ sub init {
     $::Class->add_method( $::Method->new( name => 'get_authority',     body => $reader->( '$authority' )  ) );
     $::Class->add_method( $::Method->new( name => 'get_destructor',    body => $reader->( '$destructor' ) ) );
 
+    $::Class->add_method( $::Method->new( name => 'find_attribute',    body => sub { $::SELF->get_attributes->{ $_[0] } } ) );
+
     ## mutators
     $::Class->add_method( $::Method->new( name => 'set_constructor', body => $writer->( '$constructor' ) ) );
     $::Class->add_method( $::Method->new( name => 'set_destructor',  body => $writer->( '$destructor'  ) ) );
