@@ -48,7 +48,7 @@ sub import {
     my %options = @_;
     $^H{'mop/default_metaclass'} = $options{'-metaclass'}
         if $options{'-metaclass'};
-    mop::syntax->setup_for( caller )
+    mop::syntax->setup_for( $options{'-into'} // caller )
 }
 
 sub WALKCLASS {
