@@ -4,7 +4,6 @@ use warnings;
 use Test::More;
 use lib 't/ext/Class-MOPX';
 
-use mop;
 use Class::MOPX;
 
 class Foo {

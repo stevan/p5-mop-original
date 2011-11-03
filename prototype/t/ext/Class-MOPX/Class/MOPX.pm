@@ -118,7 +118,7 @@ class Class (extends => $::Class) {
 }
 
 sub import {
-    mop->import(-metaclass => Class);
+    mop->import(-metaclass => Class, -into => scalar(caller));
 }
 
 1;
