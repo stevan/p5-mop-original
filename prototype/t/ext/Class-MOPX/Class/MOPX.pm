@@ -12,8 +12,8 @@ class Attribute (extends => $::Attribute) {
     has $accessor;
     has $predicate;
     has $clearer;
+    has $init_arg;
     # has $builder;
-    # has $init_arg;
 
     method accessor_class { Method }
 
@@ -22,12 +22,14 @@ class Attribute (extends => $::Attribute) {
     method accessor  { $accessor  }
     method predicate { $predicate }
     method clearer   { $clearer   }
+    method init_arg  { $init_arg  }
 
     method has_reader    { defined $reader    }
     method has_writer    { defined $writer    }
     method has_accessor  { defined $accessor  }
     method has_predicate { defined $predicate }
     method has_clearer   { defined $clearer   }
+    method has_init_arg  { defined $init_arg  }
 
     method create_reader {
         my $slot = $self->get_name;
@@ -78,6 +80,11 @@ class Attribute (extends => $::Attribute) {
                 mop::internal::instance::set_slot_at($::SELF, $slot, undef);
             },
         );
+    }
+
+    method get_param_name {
+        return $self->init_arg if $self->has_init_arg;
+        super;
     }
 }
 
