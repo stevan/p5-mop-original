@@ -28,6 +28,18 @@ class Attribute (extends => $::Attribute) {
     has $builder;
     has $lazy;
 
+    BUILD ($params) {
+        if (my $is = $params->{is}) {
+            (my $method = $self->get_name) =~ s/^\$//;
+            if ($is eq 'ro') {
+                $reader = $method;
+            }
+            elsif ($is eq 'rw') {
+                $accessor = $method;
+            }
+        }
+    }
+
     method associated_class ($class) {
         weaken($associated_class = $class)
             if $class;
