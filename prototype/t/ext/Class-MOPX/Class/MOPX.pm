@@ -26,6 +26,7 @@ class Attribute (extends => $::Attribute) {
     has $clearer;
     has $init_arg;
     has $builder;
+    has $lazy;
 
     method associated_class ($class) {
         weaken($associated_class = $class)
@@ -41,6 +42,7 @@ class Attribute (extends => $::Attribute) {
     method clearer   { $clearer   }
     method init_arg  { $init_arg  }
     method builder   { $builder   }
+    method lazy      { $lazy      }
 
     method has_reader    { defined $reader    }
     method has_writer    { defined $writer    }
@@ -50,14 +52,51 @@ class Attribute (extends => $::Attribute) {
     method has_init_arg  { defined $init_arg  }
     method has_builder   { defined $builder   }
 
+    method _create_default_generator {
+        my $get_default;
+        # XXX actual defaults are always set in the constructor, not sure
+        # what the best way around this is
+        # if (defined $self->get_initial_value) {
+        #     $get_default = sub { $self->get_initial_value_for_instance };
+        # }
+        if ($self->has_builder) {
+            my $builder = $self->builder;
+            $get_default = sub { shift->$builder };
+        }
+        else {
+            $get_default = sub { undef };
+        }
+        $get_default;
+    }
+
     method create_reader {
         my $slot = $self->get_name;
-        $self->accessor_class->new(
-            name => $self->reader,
-            body => sub {
-                mop::internal::instance::get_slot_at($::SELF, $slot);
-            },
-        );
+        if ($self->lazy) {
+            my $get_default = $self->_create_default_generator;
+            $self->accessor_class->new(
+                name => $self->reader,
+                body => sub {
+                    my $val = mop::internal::instance::get_slot_at(
+                        $::SELF, $slot
+                    );
+                    if (!defined($val)) {
+                        $val = $get_default->($::SELF);
+                        mop::internal::instance::set_slot_at(
+                            $::SELF, $slot, \$val
+                        );
+                    }
+                    $val;
+                },
+            );
+        }
+        else {
+            $self->accessor_class->new(
+                name => $self->reader,
+                body => sub {
+                    mop::internal::instance::get_slot_at($::SELF, $slot);
+                },
+            );
+        }
     }
     method create_writer {
         my $slot = $self->get_name;
@@ -71,16 +110,44 @@ class Attribute (extends => $::Attribute) {
     }
     method create_accessor {
         my $slot = $self->get_name;
-        $self->accessor_class->new(
-            name => $self->accessor,
-            body => sub {
-                if (@_) {
-                    my $val = shift;
-                    mop::internal::instance::set_slot_at($::SELF, $slot, \$val);
-                }
-                mop::internal::instance::get_slot_at($::SELF, $slot);
-            },
-        );
+        if ($self->lazy) {
+            my $get_default = $self->_create_default_generator;
+            $self->accessor_class->new(
+                name => $self->accessor,
+                body => sub {
+                    if (@_) {
+                        my $val = shift;
+                        mop::internal::instance::set_slot_at(
+                            $::SELF, $slot, \$val
+                        );
+                    }
+                    my $val = mop::internal::instance::get_slot_at(
+                        $::SELF, $slot
+                    );
+                    if (!defined($val)) {
+                        $val = $get_default->($::SELF);
+                        mop::internal::instance::set_slot_at(
+                            $::SELF, $slot, \$val
+                        );
+                    }
+                    $val;
+                },
+            );
+        }
+        else {
+            $self->accessor_class->new(
+                name => $self->accessor,
+                body => sub {
+                    if (@_) {
+                        my $val = shift;
+                        mop::internal::instance::set_slot_at(
+                            $::SELF, $slot, \$val
+                        );
+                    }
+                    mop::internal::instance::get_slot_at($::SELF, $slot);
+                },
+            );
+        }
     }
     method create_predicate {
         my $slot = $self->get_name;
@@ -162,6 +229,7 @@ class Class (extends => $::Class) {
                         for my $attr (values %$attributes) {
                             next unless $attr->isa(Attribute);
                             next unless $attr->has_builder;
+                            next if $attr->lazy;
                             next if defined mop::internal::instance::get_slot_at(
                                 $instance, $attr->get_name
                             );
