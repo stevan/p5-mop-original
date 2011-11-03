@@ -25,7 +25,7 @@ class Foo {
 
     undef *Foo;
 
-    { local $TODO = "we're too leaky for this to work at the moment"
+    { local $TODO = "we're too leaky for this to work at the moment";
     is($attr->associated_class, undef);
     is($method->associated_class, undef);
     is($class, undef);
