@@ -13,7 +13,7 @@ class Attribute (extends => $::Attribute) {
     has $predicate;
     has $clearer;
     has $init_arg;
-    # has $builder;
+    has $builder;
 
     method accessor_class { Method }
 
@@ -23,6 +23,7 @@ class Attribute (extends => $::Attribute) {
     method predicate { $predicate }
     method clearer   { $clearer   }
     method init_arg  { $init_arg  }
+    method builder   { $builder   }
 
     method has_reader    { defined $reader    }
     method has_writer    { defined $writer    }
@@ -30,6 +31,7 @@ class Attribute (extends => $::Attribute) {
     method has_predicate { defined $predicate }
     method has_clearer   { defined $clearer   }
     method has_init_arg  { defined $init_arg  }
+    method has_builder   { defined $builder   }
 
     method create_reader {
         my $slot = $self->get_name;
@@ -118,8 +120,41 @@ class Class (extends => $::Class) {
         );
     }
 
+    method apply_builders_to_constructor {
+        my $constructor = $self->get_constructor;
+        my $dispatcher  = $self->get_dispatcher;
+        $self->set_constructor($self->method_class->new(
+            name => 'BUILD',
+            body => sub {
+                my $instance = $::SELF;
+                mop::WALKCLASS(
+                    $dispatcher,
+                    sub {
+                        my $c = shift;
+                        my $attributes = $c->get_attributes;
+                        for my $attr (values %$attributes) {
+                            next unless $attr->isa(Attribute);
+                            next unless $attr->has_builder;
+                            next if defined mop::internal::instance::get_slot_at(
+                                $instance, $attr->get_name
+                            );
+
+                            my $builder = $attr->builder;
+                            my $initial_value = $instance->$builder;
+                            mop::internal::instance::set_slot_at(
+                                $instance, $attr->get_name, \$initial_value
+                            );
+                        }
+                    },
+                );
+                $constructor->execute if $constructor;
+            },
+        ));
+    }
+
     method FINALIZE {
         $self->install_accessors;
+        $self->apply_builders_to_constructor;
         super;
     }
 }
