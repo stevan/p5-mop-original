@@ -4,9 +4,21 @@ use warnings;
 
 use mop;
 
-class Method (extends => $::Method) { }
+use Scalar::Util 'weaken';
+
+class Method (extends => $::Method) {
+    has $associated_class;
+
+    method associated_class ($class) {
+        weaken($associated_class = $class)
+            if $class;
+        $associated_class;
+    }
+}
 
 class Attribute (extends => $::Attribute) {
+    has $associated_class;
+
     has $reader;
     has $writer;
     has $accessor;
@@ -15,7 +27,12 @@ class Attribute (extends => $::Attribute) {
     has $init_arg;
     has $builder;
 
-    method accessor_class { Method }
+    method associated_class ($class) {
+        weaken($associated_class = $class)
+            if $class;
+        $associated_class;
+    }
+    method accessor_class { $self->associated_class->method_class }
 
     method reader    { $reader    }
     method writer    { $writer    }
@@ -93,6 +110,16 @@ class Attribute (extends => $::Attribute) {
 class Class (extends => $::Class) {
     method attribute_class { Attribute }
     method method_class    { Method    }
+
+    method add_attribute ($attribute) {
+        super($attribute);
+        $attribute->associated_class($self);
+    }
+
+    method add_method ($method) {
+        super($method);
+        $method->associated_class($self);
+    }
 
     method install_accessors {
         my $dispatcher = $self->get_dispatcher;
