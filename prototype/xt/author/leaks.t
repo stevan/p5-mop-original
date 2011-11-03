@@ -14,14 +14,16 @@ use mop;
 local $TODO = "we're pretty leaky";
 
 no_leaks_ok {
-    state $i = 0;
+    local $SIG{__WARN__} = sub {
+        return if $_[0] =~ /Constant subroutine main::Foo redefined/;
+        warn $_[0];
+    };
     eval <<CLASS;
-class Foo$i {
+class Foo {
     has \$foo;
     method foo { \$foo }
 }
 CLASS
-    $i++;
 };
 
 done_testing;
