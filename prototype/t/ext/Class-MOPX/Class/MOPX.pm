@@ -51,22 +51,24 @@ class Attribute (extends => $::Attribute) {
     }
     method accessor_class { $self->associated_class->method_class }
 
-    method reader    { $reader    }
-    method writer    { $writer    }
-    method accessor  { $accessor  }
-    method predicate { $predicate }
-    method clearer   { $clearer   }
-    method init_arg  { $init_arg  }
-    method builder   { $builder   }
-    method lazy      { $lazy      }
+    method constraint { $constraint }
+    method reader     { $reader     }
+    method writer     { $writer     }
+    method accessor   { $accessor   }
+    method predicate  { $predicate  }
+    method clearer    { $clearer    }
+    method init_arg   { $init_arg   }
+    method builder    { $builder    }
+    method lazy       { $lazy       }
 
-    method has_reader    { defined $reader    }
-    method has_writer    { defined $writer    }
-    method has_accessor  { defined $accessor  }
-    method has_predicate { defined $predicate }
-    method has_clearer   { defined $clearer   }
-    method has_init_arg  { defined $init_arg  }
-    method has_builder   { defined $builder   }
+    method has_constraint { defined $constraint }
+    method has_reader     { defined $reader     }
+    method has_writer     { defined $writer     }
+    method has_accessor   { defined $accessor   }
+    method has_predicate  { defined $predicate  }
+    method has_clearer    { defined $clearer    }
+    method has_init_arg   { defined $init_arg   }
+    method has_builder    { defined $builder    }
 
     method _create_default_generator {
         my $get_default;
@@ -95,6 +97,7 @@ class Attribute (extends => $::Attribute) {
 
     method create_reader {
         my $slot = $self->get_name;
+        my $validator = $self->_create_validator;
         if ($self->lazy) {
             my $get_default = $self->_create_default_generator;
             $self->accessor_class->new(
@@ -105,6 +108,7 @@ class Attribute (extends => $::Attribute) {
                     );
                     if (!defined($val)) {
                         $val = $get_default->($::SELF);
+                        $validator->($val);
                         mop::internal::instance::set_slot_at(
                             $::SELF, $slot, \$val
                         );
@@ -251,6 +255,16 @@ class Class (extends => $::Class) {
             name => 'BUILD',
             body => sub {
                 my $instance = $::SELF;
+                my ($params) = @_;
+
+                for my $param (keys %$params) {
+                    # XXX init_arg
+                    my $attr = $::CLASS->find_attribute('$' . $param);
+                    next unless $attr && $attr->isa(Attribute);
+                    $attr->constraint->validate($params->{$param})
+                        if $attr->has_constraint;
+                }
+
                 mop::WALKCLASS(
                     $dispatcher,
                     sub {
@@ -266,6 +280,8 @@ class Class (extends => $::Class) {
 
                             my $builder = $attr->builder;
                             my $initial_value = $instance->$builder;
+                            $attr->constraint->validate($initial_value)
+                                if $attr->has_constraint;
                             mop::internal::instance::set_slot_at(
                                 $instance, $attr->get_name, \$initial_value
                             );
