@@ -19,6 +19,7 @@ class Method (extends => $::Method) {
 class Attribute (extends => $::Attribute) {
     has $associated_class;
 
+    has $constraint;
     has $reader;
     has $writer;
     has $accessor;
@@ -37,6 +38,9 @@ class Attribute (extends => $::Attribute) {
             elsif ($is eq 'rw') {
                 $accessor = $method;
             }
+        }
+        if (my $isa = $params->{isa}) {
+            $constraint = $isa;
         }
     }
 
@@ -80,6 +84,14 @@ class Attribute (extends => $::Attribute) {
         }
         $get_default;
     }
+    method _create_validator {
+        if (defined $constraint) {
+            return sub { $constraint->validate($_[0]) };
+        }
+        else {
+            return sub { 1 };
+        }
+    }
 
     method create_reader {
         my $slot = $self->get_name;
@@ -112,16 +124,19 @@ class Attribute (extends => $::Attribute) {
     }
     method create_writer {
         my $slot = $self->get_name;
+        my $validator = $self->_create_validator;
         $self->accessor_class->new(
             name => $self->writer,
             body => sub {
                 my $val = shift;
+                $validator->($val);
                 mop::internal::instance::set_slot_at($::SELF, $slot, \$val);
             },
         );
     }
     method create_accessor {
         my $slot = $self->get_name;
+        my $validator = $self->_create_validator;
         if ($self->lazy) {
             my $get_default = $self->_create_default_generator;
             $self->accessor_class->new(
@@ -129,6 +144,7 @@ class Attribute (extends => $::Attribute) {
                 body => sub {
                     if (@_) {
                         my $val = shift;
+                        $validator->($val);
                         mop::internal::instance::set_slot_at(
                             $::SELF, $slot, \$val
                         );
@@ -138,6 +154,7 @@ class Attribute (extends => $::Attribute) {
                     );
                     if (!defined($val)) {
                         $val = $get_default->($::SELF);
+                        $validator->($val);
                         mop::internal::instance::set_slot_at(
                             $::SELF, $slot, \$val
                         );
@@ -152,6 +169,7 @@ class Attribute (extends => $::Attribute) {
                 body => sub {
                     if (@_) {
                         my $val = shift;
+                        $validator->($val);
                         mop::internal::instance::set_slot_at(
                             $::SELF, $slot, \$val
                         );
