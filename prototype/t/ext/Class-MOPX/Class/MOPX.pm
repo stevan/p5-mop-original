@@ -297,7 +297,7 @@ class Class (extends => $::Class) {
                         }
                     },
                 );
-                $constructor->execute if $constructor;
+                $constructor->execute($::SELF, @_) if $constructor;
             },
         ));
     }
