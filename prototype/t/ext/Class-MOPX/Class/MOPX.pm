@@ -28,6 +28,7 @@ class Attribute (extends => $::Attribute) {
     has $init_arg;
     has $builder;
     has $lazy;
+    has $required;
 
     BUILD ($params) {
         if (my $is = $params->{is}) {
@@ -60,6 +61,7 @@ class Attribute (extends => $::Attribute) {
     method init_arg   { $init_arg   }
     method builder    { $builder    }
     method lazy       { $lazy       }
+    method required   { $required   }
 
     method has_constraint { defined $constraint }
     method has_reader     { defined $reader     }
@@ -257,12 +259,19 @@ class Class (extends => $::Class) {
                 my $instance = $::SELF;
                 my ($params) = @_;
 
-                for my $param (keys %$params) {
-                    # XXX init_arg
-                    my $attr = $::CLASS->find_attribute('$' . $param);
-                    next unless $attr && $attr->isa(Attribute);
-                    $attr->constraint->validate($params->{$param})
-                        if $attr->has_constraint;
+                for my $attr (values %{ $::CLASS->get_attributes }) {
+                    next unless $attr->isa(Attribute);
+                    my $param = $attr->get_param_name;
+                    if (exists $params->{$param}) {
+                        $attr->constraint->validate($params->{$param})
+                            if $attr->has_constraint;
+                    }
+                    else {
+                        die "Attribute " . $attr->get_name . " is required"
+                            if $attr->required
+                            && !defined(${ $attr->get_initial_value })
+                            && !$attr->has_builder;
+                    }
                 }
 
                 mop::WALKCLASS(
