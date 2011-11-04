@@ -250,7 +250,7 @@ class Class (extends => $::Class) {
         );
     }
 
-    method apply_builders_to_constructor {
+    method install_constructor {
         my $constructor = $self->get_constructor;
         my $dispatcher  = $self->get_dispatcher;
         $self->set_constructor($self->method_class->new(
@@ -304,7 +304,7 @@ class Class (extends => $::Class) {
 
     method FINALIZE {
         $self->install_accessors;
-        $self->apply_builders_to_constructor;
+        $self->install_constructor;
         super;
     }
 }
