@@ -16,7 +16,7 @@ BEGIN {
 
         BUILD ($params) {
             if (my $is = $params->{is}) {
-                (my $name = $self->get_name) =~ s/^\$//;
+                (my $name = $self->name) =~ s/^\$//;
                 if ($is eq 'ro') {
                     $reader = 'get_' . $name;
                 }

@@ -47,10 +47,10 @@ like mop::uuid_of( Point ), qr/[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[
 is mop::class_of( Point ), $::Class, '... got the class we expected';
 ok Point->isa( $::Object ), '... class Point is a Object';
 ok Point->is_subclass_of( $::Object ), '... class Point is a subclass of Object';
-is Point->get_superclass, $::Object, '... got the superclass we expected';
-is_deeply Point->get_mro, [ Point, $::Object ], '... got the mro we expected';
+is Point->superclass, $::Object, '... got the superclass we expected';
+is_deeply Point->mro, [ Point, $::Object ], '... got the mro we expected';
 is_deeply
-    [ sort { $a cmp $b } map { $_->get_name } values %{ Point->get_attributes } ],
+    [ sort { $a cmp $b } map { $_->name } values %{ Point->attributes } ],
     [ '$x', '$y' ],
     '... got the attribute list we expected';
 
@@ -98,10 +98,10 @@ is mop::class_of( Point3D ), $::Class, '... got the class we expected';
 ok Point3D->isa( $::Object ), '... class Point3D is a Object';
 ok Point3D->is_subclass_of( Point ), '... class Point3D is a subclass of Point';
 ok Point3D->is_subclass_of( $::Object ), '... class Point3D is a subclass of Object';
-is Point3D->get_superclass, Point, '... got the superclass we expected';
-is_deeply Point3D->get_mro, [ Point3D, Point, $::Object ], '... got the mro we expected';
+is Point3D->superclass, Point, '... got the superclass we expected';
+is_deeply Point3D->mro, [ Point3D, Point, $::Object ], '... got the mro we expected';
 is_deeply
-    [ map { $_->get_name } values %{ Point3D->get_attributes } ],
+    [ map { $_->name } values %{ Point3D->attributes } ],
     [ '$z' ],
     '... got the attributes we expected';
 

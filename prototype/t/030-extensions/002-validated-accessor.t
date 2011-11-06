@@ -11,7 +11,7 @@ use mop;
 class ValidatedAttribute (extends => $::Attribute) {
     has $validator = sub { 1 };
 
-    method get_validator { $validator }
+    method validator { $validator }
 }
 
 class ValidatedAccessorMeta (extends => $::Class) {
@@ -20,9 +20,9 @@ class ValidatedAccessorMeta (extends => $::Class) {
 
     method FINALIZE {
 
-        foreach my $attribute ( values %{ $self->get_attributes } ) {
-            my $name = $attribute->get_name;
-            my $validator = $attribute->get_validator;
+        foreach my $attribute ( values %{ $self->attributes } ) {
+            my $name = $attribute->name;
+            my $validator = $attribute->validator;
 
             my $accessor_name = $name;
             $accessor_name =~ s/^\$//;

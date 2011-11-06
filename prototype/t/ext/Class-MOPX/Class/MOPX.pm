@@ -32,7 +32,7 @@ class Attribute (extends => $::Attribute) {
 
     BUILD ($params) {
         if (my $is = $params->{is}) {
-            (my $method = $self->get_name) =~ s/^\$//;
+            (my $method = $self->name) =~ s/^\$//;
             if ($is eq 'ro') {
                 $reader = $method;
             }
@@ -98,7 +98,7 @@ class Attribute (extends => $::Attribute) {
     }
 
     method create_reader {
-        my $slot = $self->get_name;
+        my $slot = $self->name;
         my $validator = $self->_create_validator;
         if ($self->lazy) {
             my $get_default = $self->_create_default_generator;
@@ -129,7 +129,7 @@ class Attribute (extends => $::Attribute) {
         }
     }
     method create_writer {
-        my $slot = $self->get_name;
+        my $slot = $self->name;
         my $validator = $self->_create_validator;
         $self->accessor_class->new(
             name => $self->writer,
@@ -141,7 +141,7 @@ class Attribute (extends => $::Attribute) {
         );
     }
     method create_accessor {
-        my $slot = $self->get_name;
+        my $slot = $self->name;
         my $validator = $self->_create_validator;
         if ($self->lazy) {
             my $get_default = $self->_create_default_generator;
@@ -186,7 +186,7 @@ class Attribute (extends => $::Attribute) {
         }
     }
     method create_predicate {
-        my $slot = $self->get_name;
+        my $slot = $self->name;
         $self->accessor_class->new(
             name => $self->predicate,
             body => sub {
@@ -195,7 +195,7 @@ class Attribute (extends => $::Attribute) {
         );
     }
     method create_clearer {
-        my $slot = $self->get_name;
+        my $slot = $self->name;
         $self->accessor_class->new(
             name => $self->clearer,
             body => sub {
@@ -204,7 +204,7 @@ class Attribute (extends => $::Attribute) {
         );
     }
 
-    method get_param_name {
+    method param_name {
         return $self->init_arg if $self->has_init_arg;
         super;
     }
@@ -225,13 +225,13 @@ class Class (extends => $::Class) {
     }
 
     method install_accessors {
-        my $dispatcher = $self->get_dispatcher;
+        my $dispatcher = $self->dispatcher;
 
         mop::WALKCLASS(
             $dispatcher,
             sub {
                 my $c = shift;
-                my $attributes = $c->get_attributes;
+                my $attributes = $c->attributes;
                 for my $attr (values %$attributes) {
                     next unless $attr->isa(Attribute);
 
@@ -251,25 +251,25 @@ class Class (extends => $::Class) {
     }
 
     method install_constructor {
-        my $constructor = $self->get_constructor;
-        my $dispatcher  = $self->get_dispatcher;
-        $self->set_constructor($self->method_class->new(
+        my $constructor = $self->constructor;
+        my $dispatcher  = $self->dispatcher;
+        $self->constructor($self->method_class->new(
             name => 'BUILD',
             body => sub {
                 my $instance = $::SELF;
                 my ($params) = @_;
 
-                for my $attr (values %{ $::CLASS->get_attributes }) {
+                for my $attr (values %{ $::CLASS->attributes }) {
                     next unless $attr->isa(Attribute);
-                    my $param = $attr->get_param_name;
+                    my $param = $attr->param_name;
                     if (exists $params->{$param}) {
                         $attr->constraint->validate($params->{$param})
                             if $attr->has_constraint;
                     }
                     else {
-                        die "Attribute " . $attr->get_name . " is required"
+                        die "Attribute " . $attr->name . " is required"
                             if $attr->required
-                            && !defined(${ $attr->get_initial_value })
+                            && !defined(${ $attr->initial_value })
                             && !$attr->has_builder;
                     }
                 }
@@ -278,13 +278,13 @@ class Class (extends => $::Class) {
                     $dispatcher,
                     sub {
                         my $c = shift;
-                        my $attributes = $c->get_attributes;
+                        my $attributes = $c->attributes;
                         for my $attr (values %$attributes) {
                             next unless $attr->isa(Attribute);
                             next unless $attr->has_builder;
                             next if $attr->lazy;
                             next if defined mop::internal::instance::get_slot_at(
-                                $instance, $attr->get_name
+                                $instance, $attr->name
                             );
 
                             my $builder = $attr->builder;
@@ -292,7 +292,7 @@ class Class (extends => $::Class) {
                             $attr->constraint->validate($initial_value)
                                 if $attr->has_constraint;
                             mop::internal::instance::set_slot_at(
-                                $instance, $attr->get_name, \$initial_value
+                                $instance, $attr->name, \$initial_value
                             );
                         }
                     },

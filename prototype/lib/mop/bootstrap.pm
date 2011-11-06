@@ -130,52 +130,55 @@ sub init {
             mop::internal::instance::get_slot_at( $::SELF, $slot );
         };
     };
-    my $writer = sub {
+    my $accessor = sub {
         my ($slot) = @_;
         sub {
-            my $val = shift;
-            mop::internal::instance::set_slot_at( $::SELF, $slot, \$val );
+            if (@_) {
+                my $val = shift;
+                mop::internal::instance::set_slot_at( $::SELF, $slot, \$val );
+            }
+            mop::internal::instance::get_slot_at( $::SELF, $slot );
         };
     };
 
-    # this method is needed for Class->get_mro
+    # this method is needed for Class->mro
     $::Class->add_method(mop::internal::create_method(
-        name => 'get_superclass',
-        body => $reader->( '$superclass' ),
+        name => 'superclass',
+        body => $accessor->( '$superclass' ),
     ));
 
-    # this method is needed for Attribute->get_initial_value_for_instance
+    # this method is needed for Attribute->initial_value_for_instance
     $::Attribute->add_method(mop::internal::create_method(
-        name => 'get_initial_value',
+        name => 'initial_value',
         body => $reader->( '$initial_value' )
     ));
 
-    # this method is needed for Attribute->get_param_name
+    # this method is needed for Attribute->param_name
     $::Attribute->add_method(mop::internal::create_method(
-        name => 'get_name',
+        name => 'name',
         body => $reader->( '$name' ),
     ));
 
     # this method is needed for Class->CREATE
     $::Class->add_method(mop::internal::create_method(
-        name => 'get_mro',
+        name => 'mro',
         body => sub {
-            my $super = $::SELF->get_superclass;
-            return [ $::SELF, $super ? @{ $super->get_mro } : () ]
+            my $super = $::SELF->superclass;
+            return [ $::SELF, $super ? @{ $super->mro } : () ]
         }
     ));
 
     # this method is needed for Class->CREATE
     $::Class->add_method(mop::internal::create_method(
-        name => 'get_attributes',
+        name => 'attributes',
         body => $reader->( '$attributes' ),
     ));
 
     # this method is needed for Class->CREATE
     $::Attribute->add_method(mop::internal::create_method(
-        name => 'get_initial_value_for_instance',
+        name => 'initial_value_for_instance',
         body => sub {
-            my $value = ${ $::SELF->get_initial_value };
+            my $value = ${ $::SELF->initial_value };
             if ( ref $value ) {
                 if ( ref $value eq 'CODE' ) {
                     $value = $value->();
@@ -190,9 +193,9 @@ sub init {
 
     # this method is needed for Class->CREATE
     $::Attribute->add_method(mop::internal::create_method(
-        name => 'get_param_name',
+        name => 'param_name',
         body => sub {
-            my $name = $::SELF->get_name;
+            my $name = $::SELF->name;
             $name =~ s/^\$//;
             $name;
         }
@@ -206,19 +209,19 @@ sub init {
             my $data = {};
 
             mop::WALKCLASS(
-                $::SELF->get_dispatcher,
+                $::SELF->dispatcher,
                 sub {
                     my $class = shift;
-                    my $attrs = $class->get_attributes;
+                    my $attrs = $class->attributes;
                     foreach my $attr_name ( keys %$attrs ) {
                         unless ( exists $data->{ $attr_name } ) {
-                            my $param_name = $attrs->{ $attr_name }->get_param_name;
+                            my $param_name = $attrs->{ $attr_name }->param_name;
                             if ( exists $args->{ $param_name } ) {
                                 my $value = $args->{ $param_name };
                                 $data->{ $attr_name } = \$value;
                             }
                             else {
-                                $data->{ $attr_name } = $attrs->{$attr_name}->get_initial_value_for_instance;
+                                $data->{ $attr_name } = $attrs->{$attr_name}->initial_value_for_instance;
                             }
 
                         }
@@ -226,7 +229,7 @@ sub init {
                 }
             );
 
-            (mop::internal::get_stash_for( $::SELF ) || die "Could not find stash for class(" . $::SELF->get_name . ")")->bless(
+            (mop::internal::get_stash_for( $::SELF ) || die "Could not find stash for class(" . $::SELF->name . ")")->bless(
                 mop::internal::instance::create( \$::SELF, $data )
             );
         }
@@ -234,18 +237,18 @@ sub init {
 
     # this method is needed for Object->new
     $::Class->add_method(mop::internal::create_method(
-        name => 'get_constructor',
-        body => $reader->( '$constructor' ),
+        name => 'constructor',
+        body => $accessor->( '$constructor' ),
     ));
 
     # this method is needed for Object->new
     $::Class->add_method(mop::internal::create_method(
-        name => 'get_dispatcher',
+        name => 'dispatcher',
         body => sub {
             my $type  = shift;
             my $class = $::SELF;
-            return sub { state $mro = $class->get_mro; shift @$mro } unless $type;
-            return sub { state $mro = $class->get_mro; pop   @$mro } if $type eq 'reverse';
+            return sub { state $mro = $class->mro; shift @$mro } unless $type;
+            return sub { state $mro = $class->mro; pop   @$mro } if $type eq 'reverse';
         }
     ));
 
@@ -255,8 +258,8 @@ sub init {
             my %args = @_;
             my $self = $::SELF->CREATE( \%args );
             mop::WALKCLASS(
-                $::SELF->get_dispatcher('reverse'),
-                sub { ( $_[0]->get_constructor || return )->execute( $self, \%args ); return }
+                $::SELF->dispatcher('reverse'),
+                sub { ( $_[0]->constructor || return )->execute( $self, \%args ); return }
             );
             $self;
         }
@@ -269,7 +272,7 @@ sub init {
 
     # this method is needed by Class->find_method
     $::Class->add_method(mop::internal::create_method(
-        name => 'get_methods',
+        name => 'methods',
         body => $reader->( '$methods' ),
     ));
 
@@ -278,7 +281,7 @@ sub init {
         name => 'find_method',
         body => sub {
             my $method_name = shift;
-            $::SELF->get_methods->{ $method_name };
+            $::SELF->methods->{ $method_name };
         },
     ));
 
@@ -306,7 +309,7 @@ sub init {
         name => 'add_attribute',
         body => sub {
             my $attr = shift;
-            $::SELF->get_attributes->{ $attr->get_name } = $attr;
+            $::SELF->attributes->{ $attr->name } = $attr;
         },
     ));
 
@@ -350,17 +353,12 @@ sub init {
     $::Class->add_method( $::Method->new( name => 'attribute_class',   body => sub { $::Attribute } ) );
     $::Class->add_method( $::Method->new( name => 'method_class',      body => sub { $::Method    } ) );
     $::Class->add_method( $::Method->new( name => 'base_object_class', body => sub { $::Object    } ) );
-    $::Class->add_method( $::Method->new( name => 'get_name',          body => $reader->( '$name' )       ) );
-    $::Class->add_method( $::Method->new( name => 'get_version',       body => $reader->( '$version' )    ) );
-    $::Class->add_method( $::Method->new( name => 'get_authority',     body => $reader->( '$authority' )  ) );
-    $::Class->add_method( $::Method->new( name => 'get_destructor',    body => $reader->( '$destructor' ) ) );
+    $::Class->add_method( $::Method->new( name => 'name',              body => $reader->( '$name' )       ) );
+    $::Class->add_method( $::Method->new( name => 'version',           body => $reader->( '$version' )    ) );
+    $::Class->add_method( $::Method->new( name => 'authority',         body => $reader->( '$authority' )  ) );
+    $::Class->add_method( $::Method->new( name => 'destructor',        body => $accessor->( '$destructor' ) ) );
 
-    $::Class->add_method( $::Method->new( name => 'find_attribute',    body => sub { $::SELF->get_attributes->{ $_[0] } } ) );
-
-    ## mutators
-    $::Class->add_method( $::Method->new( name => 'set_constructor', body => $writer->( '$constructor' ) ) );
-    $::Class->add_method( $::Method->new( name => 'set_destructor',  body => $writer->( '$destructor'  ) ) );
-    $::Class->add_method( $::Method->new( name => 'set_superclass',  body => $writer->( '$superclass'  ) ) );
+    $::Class->add_method( $::Method->new( name => 'find_attribute',    body => sub { $::SELF->attributes->{ $_[0] } } ) );
 
     ## predicate methods for Class
     $::Class->add_method( $::Method->new(
@@ -374,7 +372,7 @@ sub init {
         name => 'is_subclass_of',
         body => sub {
             my $super = shift;
-            my @mro = @{ $::SELF->get_mro };
+            my @mro = @{ $::SELF->mro };
             shift @mro;
             return scalar grep { $super->equals( $_ ) } @mro;
         },
@@ -385,7 +383,7 @@ sub init {
         name => 'FINALIZE',
         body => sub {
             my $stash      = mop::internal::get_stash_for( $::SELF );
-            my $dispatcher = $::SELF->get_dispatcher;
+            my $dispatcher = $::SELF->dispatcher;
 
             %$stash = ();
 
@@ -393,7 +391,7 @@ sub init {
                 $dispatcher,
                 sub {
                     my $c = shift;
-                    my $methods = $c->get_methods;
+                    my $methods = $c->methods;
                     foreach my $name ( keys %$methods ) {
                         my $method = $methods->{ $name };
                         $stash->add_method(
@@ -409,8 +407,8 @@ sub init {
                 my $class    = mop::internal::instance::get_class( $invocant );
                 return unless $class; # likely in global destruction ...
                 mop::WALKCLASS(
-                    $class->get_dispatcher(),
-                    sub { ( $_[0]->get_destructor || return )->execute( $invocant ); return }
+                    $class->dispatcher(),
+                    sub { ( $_[0]->destructor || return )->execute( $invocant ); return }
                 );
             });
         },
@@ -418,7 +416,7 @@ sub init {
 
     ## check metaclass compat in Class->BUILD
     $::Class->add_method( $::Method->new(
-        name => 'get_compatible_class',
+        name => 'find_compatible_class',
         body => sub {
             my $class = shift;
             # replace the class with a subclass of itself
@@ -429,20 +427,20 @@ sub init {
             return;
         },
     ) );
-    $::Class->set_constructor( $::Method->new(
+    $::Class->constructor( $::Method->new(
         name => 'BUILD',
         body => sub {
-            $::SELF->set_superclass( $::SELF->base_object_class )
-                unless $::SELF->get_superclass;
-            my $superclass = $::SELF->get_superclass;
+            $::SELF->superclass( $::SELF->base_object_class )
+                unless $::SELF->superclass;
+            my $superclass = $::SELF->superclass;
             if ( $superclass ) {
                 my $superclass_class = mop::internal::instance::get_class( $superclass );
-                my $compatible       = $::CLASS->get_compatible_class( $superclass_class );
+                my $compatible       = $::CLASS->find_compatible_class( $superclass_class );
                 if ( !defined( $compatible ) ) {
-                    die "While creating class " . $::SELF->get_name . ": "
-                      . "Metaclass " . $::CLASS->get_name . " is not compatible "
+                    die "While creating class " . $::SELF->name . ": "
+                      . "Metaclass " . $::CLASS->name . " is not compatible "
                       . "with the metaclass of its superclass: "
-                      . $superclass_class->get_name;
+                      . $superclass_class->name;
                 }
             }
         },
@@ -468,8 +466,8 @@ sub init {
     ## $::Method
     ## --------------------------------
 
-    $::Method->add_method( $::Method->new( name => 'get_name', body => $reader->( '$name' ) ) );
-    $::Method->add_method( $::Method->new( name => 'get_body', body => $reader->( '$body' ) ) );
+    $::Method->add_method( $::Method->new( name => 'name', body => $reader->( '$name' ) ) );
+    $::Method->add_method( $::Method->new( name => 'body', body => $reader->( '$body' ) ) );
 
     ## --------------------------------
     ## $::Attribute
@@ -541,7 +539,7 @@ sub init {
 
     $::Class->add_method( $::Method->new( name => 'add_method', body => sub {
         my $method = shift;
-        $::SELF->get_methods->{ $method->get_name } = $method;
+        $::SELF->methods->{ $method->name } = $method;
     }));
 
     ## --------------------------------

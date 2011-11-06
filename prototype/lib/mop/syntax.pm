@@ -48,7 +48,7 @@ sub has {
 
 sub BUILD {
     my ($body) = @_;
-    $::CLASS->set_constructor(
+    $::CLASS->constructor(
         $::CLASS->method_class->new(
             name => 'BUILD',
             body => Sub::Name::subname( 'BUILD', $body )
@@ -58,7 +58,7 @@ sub BUILD {
 
 sub DEMOLISH {
     my ($body) = @_;
-    $::CLASS->set_destructor(
+    $::CLASS->destructor(
         $::CLASS->method_class->new(
             name => 'DEMOLISH',
             body => Sub::Name::subname( 'DEMOLISH', $body )
@@ -70,7 +70,7 @@ sub super {
     die "Cannot call super() outside of a method" unless defined $::SELF;
     my $invocant    = $::SELF;
     my $method_name = (split '::' => ((caller(1))[3]))[-1];
-    my $dispatcher  = $::CLASS->get_dispatcher;
+    my $dispatcher  = $::CLASS->dispatcher;
     # find the method currently being called
     my $method = mop::WALKMETH( $dispatcher, $method_name );
     while ( $method != $::CALLER ) {
@@ -98,7 +98,7 @@ sub build_class {
     my $superclass = $metadata{ 'superclass' };
 
     if ( $superclass ) {
-        my $compatible = $class_Class->get_compatible_class(
+        my $compatible = $class_Class->find_compatible_class(
             mop::internal::instance::get_class( $superclass )
         );
         $class_Class = $compatible
