@@ -86,7 +86,7 @@ sub build_class {
     my ($name, $metadata, $caller) = @_;
     my %metadata = %{ $metadata || {} };
 
-    my $class_Class = $::Class;
+    my $class_Class = $^H{'mop/default_metaclass'} // $::Class;
     if ( exists $metadata{ 'metaclass' } ) {
         $class_Class = delete $metadata{ 'metaclass' };
     }

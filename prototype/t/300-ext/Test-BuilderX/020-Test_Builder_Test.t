@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Test::More;
-use lib 't/ext';
+use lib 't/ext/Test-BuilderX';
 
 BEGIN {
     use_ok( 'Test::BuilderX::Test' );

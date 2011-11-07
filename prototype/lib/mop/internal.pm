@@ -12,7 +12,6 @@ use mop::internal::instance;
 use Package::Anon;
 use PadWalker ();
 use Scope::Guard 'guard';
-use Scalar::Util 'refaddr';
 
 sub create_class {
     my %params = @_;
@@ -82,8 +81,6 @@ sub get_stash_for {
     $VTABLES->{ $uuid } //= Package::Anon->new( mop::internal::instance::get_slot_at( $class, '$name' ) );
     return $VTABLES->{ $uuid };
 }
-
-our $DEBUG = 0;
 
 sub execute_method {
     state $STACKS = {};
