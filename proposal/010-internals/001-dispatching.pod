@@ -15,73 +15,8 @@ previous document.
 Note that we will allude to classes here, but we won't actually
 get into the details of them until the next document.
 
-=head2 The dispatching API
-
-Through the process of dispatching, the instance structures
-(described in F<000-instance.pod>) should be passed into functions
-in the L<mop::internal::dispatcher> module. These functions will
-use the other L<mop::internal::> APIs to accomplish the
-dispatching of the method.
-
-The most useful parts of the dispatcher are the three methods;
-C<WALKMETH>, C<WALKCLASS> and C<DISPATCH>. Each one has
-a specific set of responsibilities described below.
-
-=over 4
-
-=item B<WALKMETH ($class, $method_name, ?%opts)>
-
-This is primarily responsible for finding a method within a
-given class. This means that it must know enough about a class
-to be able to find a method within it.
-
-=item B<WALKCLASS ($class, $solver, ?%opts)>
-
-This is primarily responsible for traversing the C<mro> of
-a class and applying a C<$solver> callback to each one until
-the callback returns something.
-
-=item B<DISPATCH ($method_name, $invocant, @args)>
-
-This is concerned with finding the method, after which it
-will call C<CALLMETHOD> to execute it. It uses the C<WALKMETH>
-and C<WALKCLASS> functions to accomplish this.
-
-=item B<SUBDISPATCH ($method_finder, $is_reverse, $invocant, @args)>
-
-This is mostly used internally and it will traverse the C<mro>
-(using C<WALKCLASS>) and (using the C<$method_finder> callback)
-finds and calls each matching method in the C<mro>. It can also
-be called in reverse C<mro> order by setting the C<$is_reverse>
-flag to true.
-
-This is specifically used for calling the constructor (BUILD)
-and destructor (DEMOLISH) on instance creation and destruction.
-
-=item B<CALLMETHOD ($method, $invocant, @args)>
-
-This is concerned with setting up a method to be executed
-and delegating details to the method object itself.
-
-=item B<NEXTMETHOD ($method_name, $invocant, @args)>
-
-This is the means by which a super method can be called. This
-could be viewed as conceptually similar to the C<SUPER> package
-or the C<next::method> method in classic Perl OO, though its
-behavior will be different.
-
-B<AUTHORS NOTE>
-
-I am unsure about C<NEXTMETHOD> and exactly how it should be
-accomplished. It could be argued that this feature could be
-handled by a separate package, but this likely should aim to
-work similar to the C<next::method> package.
-
-Also note that we are still deep in the internals, so this is
-by no means a user-exposed syntax. How that is handled is
-pretty much irrelevant to this (though how this is handled
-is critically important to the user-level syntax, and
-therein lies my uncertainty).
+TODO - need to update this to reflect what we are currently
+doing in the prototype
 
 =head1 NOTES
 

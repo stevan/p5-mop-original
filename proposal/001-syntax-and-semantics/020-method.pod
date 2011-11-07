@@ -11,6 +11,29 @@ new object system for Perl.
 
 =head1 SYNTAX
 
+=head2 Method definition
+
+Methods will be defined using the new C<method> keyword.
+
+As with the C<class> keyword, the C<method> keyword is
+simply sugar for the underlying calls to the MOP. So for
+instance, the following code:
+
+  method foo ( $bar ) { $bar + 10 }
+
+Is (roughly) equivalent to the following raw MOP code:
+
+  Method->new(
+      name => 'foo',
+      body => sub {
+          my ($bar) = @_;
+          $bar + 10;
+      }
+  );
+
+The tricky part here is exactly how the body of a method
+is defined.
+
 =head1 QUESTIONS
 
 =head2 How do create a private method?

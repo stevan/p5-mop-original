@@ -35,6 +35,11 @@ the first draft of this.
 
 This returns the name of the attribute as a string.
 
+=item C<get_param_name>
+
+This returns the name of the attribute with the sigil
+stripped off.
+
 =item C<get_initial_value>
 
 This returns the initial value (if any) that the attribute

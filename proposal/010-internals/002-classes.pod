@@ -20,13 +20,6 @@ is referring to the concept of a class, but when you see the
 uppercase "Class" this is referring to the specific class whose
 name is "Class".
 
-=head2 The importance of meta-circularity
-
-XXX - meta-circularity provides extensibility
-XXX - Perl OO is known for its extensibility
-XXX - meta-circularity should provide that same level of
-      extensibility and more, in a safe and verifiable way
-
 =head2 The parts of a class
 
 =over 4

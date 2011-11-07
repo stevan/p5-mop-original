@@ -22,8 +22,8 @@ the first draft of this, and a rough one at that.
 
 =head3 General
 
-These methods are simply accessors for specific metadata
-about a class.
+These methods are getters for specific metadata about
+the class.
 
 =over 4
 
@@ -39,6 +39,38 @@ This returns the class version as a value (type of value is TBD).
 
 This returns the class authority as a string.
 
+=back
+
+=head3 Associated Metaobjects
+
+These are simple getters that store the assciated meta-objects
+that are relevant to this class. These are helpful both for
+introspection, but also when dynamically adding things to a
+class.
+
+=over 4
+
+=item C<base_object_class>
+
+This is the base class which other classes will inherit from, this
+is typically some variant of Object
+
+=item C<attribute_class>
+
+This defines the meta-object for attributes that is used by this
+class.
+
+=item C<method_class>
+
+This defines the meta-object for methods that is used by this
+class.
+
+=back
+
+=head3 Utility
+
+=over 4
+
 =item C<is_subclass_of( $class )>
 
 This is simply a predicate to determine if a given C<$class> is
@@ -49,26 +81,25 @@ in the MRO of this class.
 This will compare the internal UUID of class with another one to
 determine equality.
 
-=item C<id>
-
-This returns the internal UUID of the class.
-
-=item C<class>
-
-This returns the class of the invocant. For most classes this
-returns Class (even for Class since we are meta-circular).
-
 =item C<clone( %params )>
 
 Clone this object and override any internal elements using
 the values in C<%params>.
 
+=item C<get_compatible_class>
+
+This will check and return the most compatible metaclass available.
+
 =back
 
-=head3 Events
+=head3 "Special" Methods
 
-Right now we only have two events defined, but it is possible
-that we will make more.
+Right now we only have two "special" methods defined, but it is
+possible that we will make more. These are specially named methods
+that signify certain events that occur with a class.
+
+It is expected that these methods, if overridden, will always
+call the super-method.
 
 =over 4
 
@@ -89,7 +120,8 @@ either the intial value, or a value from the C<%params>.
 =head3 Superclass
 
 These methods provide access to the superclass, as well as the
-compiled method resolution order of a class.
+compiled method resolution order of a class and a dispatcher
+mechanism.
 
 =over 4
 
@@ -105,6 +137,15 @@ This sets the superclass for this given class.
 
 This traverses the inheritance hierarchy to gather up all the
 classes in the same order in which method resolution would happen.
+
+=item C<get_dispatcher( ?$type )>
+
+This will return a CODE ref iterator which will traverse the MRO
+of this class in the order specified through the C<$type> parameter.
+
+Currently only normal order (C<$type> is undef) and reverse order
+(C<$type> is 'reverse') are supported. But more may be supported
+later on.
 
 =back
 
@@ -138,11 +179,6 @@ Given a C<$method>, this sets it to the value of the destructor.
 
 =over 4
 
-=item C<attribute_class>
-
-This is the default attribute class that should be used in making
-any new attributes for this class.
-
 =item C<get_attributes>
 
 This returns the set of attributes for this given class.
@@ -152,16 +188,16 @@ This returns the set of attributes for this given class.
 This will add an C<$attribute> object to the set of attributes
 in this class.
 
+=item C<find_attribute( $name )>
+
+Given a C<$name>, this will attempt to locate an attribute by that
+name within the MRO of the class.
+
 =back
 
 =head3 Methods
 
 =over 4
-
-=item C<method_class>
-
-This is the default method class that should be used in making any
-new method for this class.
 
 =item C<get_methods>
 

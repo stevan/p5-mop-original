@@ -19,7 +19,7 @@ Perl 5 MOP - Syntax & Semantics - Introduction
       has $z ( is => 'rw' ) = 0;
 
       method clear {
-          $self->next::method;
+          super;
           $z = 0;
       }
   }

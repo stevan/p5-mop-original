@@ -100,7 +100,8 @@ given as a string, but as a first-class citizen bareword.
 
 Additionally, there would also be unnamed, or anonymous
 variants of the class syntax as well. These would look
-and act the same way, just without a name.
+and act the same way, just without a name. The details of
+this are still pending.
 
 =head2 Constructor/Destructor definition
 
@@ -127,12 +128,23 @@ is an example:
       }
   }
 
-XXX - explain that they are just methods, and just not
-      stored with the other methods
-XXX - explain where BUILD gets $params from
-XXX - explain that DEMOLISH gets no args
-XXX - explain the order in which these are executed
-      on class construction and destruction
+It is important to note that these are actually instances
+of the Method class, but they are just not stored in the
+same way as normal method.
+
+While the C<DEMOLISH> destructor does not get any methods,
+the C<BUILD> constructor actually gets a HASH ref of the
+parameters that were passed to C<new>.
+
+=head3 Order of operations
+
+When an object is created, first the instance is constructed
+using the attributes defined in the class and its superclasses.
+Then, all the constructors within the class hierarchy are
+called in reverse order.
+
+Similarly, when an object is destroyed, all the destructors
+within the class hierarchy are called, in normal order.
 
 =head1 QUESTIONS
 

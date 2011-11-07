@@ -48,7 +48,7 @@ methods to manipulate aspects of the Socket, the MOP API
 would have methods to manipulate the aspects of the MOP
 (Classes, Methods, Attributes, etc.).
 
-The proposed MOP is constructed of four sub protocols,
+The proposed MOP is constructed of three sub protocols,
 each which deals with a certain aspect of the object
 system. Below is a brief overview of each section.
 
@@ -69,7 +69,7 @@ method or traverse the method resolution order.
 =item Attributes
 
 The concept of an attribute is that of the internal
-state of a class. Just a class can be viewed as the
+state of a class. Just as a class can be viewed as the
 definition of instances of it, an attribute in a class
 is the definition of a specific slot inside an instance.
 
@@ -86,17 +86,6 @@ whose scope is that of the instance itself.
 The method sub-protocol would have methods to
 introspect things like the name, arity and signature
 of the method.
-
-=item Instances
-
-The concept of an instance is a value which knows from
-what class it was created and contains a set of slots
-which correspond to the attributes in the class (and
-any superclasses).
-
-The instance sub-protocol would have methods to
-find the associated class, get/set the values in the
-slots or list the set of slots.
 
 =back
 
@@ -169,7 +158,7 @@ Of course we are back with our chicken-and-egg problem again
 because in order for this to work, several things had to
 exist. First the Object class must be there, second Class
 is itself a class (implemented in terms of itself). But this
-is where the bootstrap process comes into play. We simply
+is just where the bootstrap process comes into play. We simply
 use very low level primitives to construct all the necessary
 parts, then hook them together accordingly, using those
 similarly low level features.

@@ -75,13 +75,10 @@ This is Perl, so obviously there will be "more then one way".
 
 For starters you can always go back to the classic OO system,
 it B<should not be removed or deprecated>. However, this new system
-is being designed with the spirit of TIMTOWTDI at the core. It
-is my intention that the internals of the system will be
-pluggable in the same way that the regexp engine is pluggable.
-Additionally this system is being built to be fully meta-circular
-with a  powerful and flexible MOP at the core. This, along with
-the custom keyword functionality, means that there is very
-little you won't be able to change in the end.
+is being designed with the spirit of TIMTOWTDI at the core with a
+powerful and flexible fully meta-circular MOP at the core. This,
+along with the custom keyword functionality, means that there is
+very little you won't be able to change in the end.
 
 =head1 AUTHOR
 

@@ -11,14 +11,28 @@ new object system for Perl.
 
 =head1 SYNTAX
 
-=head2 The right-hand side of C<=>
+=head2 Attribute definition
 
-B<AUTHORS NOTE> This is still a gray fuzzy area, the current
-thinking on this involves some hand-waving and assumptions
-about what can be done by the perl compiler. We will however
-explain both what we want in an ideal world and how this
-currently works in the prototype (which is a subset of how
-we want the final to work).
+Attributes will be defined using the new C<has> keyword.
+
+As with the C<class> and C<method> keywords, the C<has>
+keyword is simply sugar for the underlying calls to the
+MOP. So for instance, the following code:
+
+  has $bar = 10;
+
+Is (roughly) equivalent to the following raw MOP code:
+
+  Attribute->new(
+      name          => '$bar',
+      initial_value => sub { 10 }
+  );
+
+The interesting part here is that the initial value
+has been wrapped in a CODE ref. The details of this
+are explained below.
+
+=head2 The right-hand side of C<=>
 
 The value on the right-hand side of the C<=> sign in a
 C<has> statement does not behave in the normal assignment
@@ -27,7 +41,7 @@ be stored in any instance slot which corresponds to the
 attribute.
 
 For those familiar with lazy languages like Haskell, the
-value is  basically like a thunk (see below for reference).
+value is basically like a thunk (see below for reference).
 
 =head3 String and Number literals
 
@@ -41,27 +55,13 @@ The value will be copied (as is the default behavior of Perl)
 when the instance is constructed. This is how it works in the
 prototype and how it should work in the final.
 
-=head3 Array and Hash references
-
-Literal ARRAY and HASH reference values are also legal, however
-this gets a little fuzzy. Looking at the following code:
-
-  has $baz = [ 1, 2, 3, 4 ];
-
-Currently the approach taken in the prototype is for this
-value to get deeply cloned when an instance is constructed.
-For simple initial values, this is probably just fine, but
-for deeper more complex ARRAY or HASH refs, this may not
-always be what is desired. Which brings us to the next
-level ...
-
 =head3 Everything else
 
-If you want an object or some other value not described
-above, then we have created the following syntax in the
-prototype:
+If you want an object, an ARRAY ref, HASH ref or some other
+value not described above, then the value is wrapped in a
+thunk, so that this:
 
-  has $bar = do { Some::Object->new };
+  has $bar = Some::Object->new;
 
 Which will get transformed into this:
 
@@ -70,21 +70,7 @@ Which will get transformed into this:
 The CODE ref is then called when an instance is constructed
 and the return value placed into the instance slot. For the
 most part, this technique works and allows you to do all
-sorts of tricky stuff when initializing. We are of the
-opinion that this syntax should be supported in the final
-too as it allows complex expressions to be initializers
-as well.
-
-Now, in an ideal world (but not currently supported in the
-prototype), we would be able to actually just  do the
-following in cases where the rhs of C<=> was a expression
-and not a statement.
-
-  has $bar = Some::Object->new;
-
-This would be transformed internally to be a thunk and to
-behave just as the C<do> block behaves above, but it would
-be a shortcut for simple non-statement cases.
+sorts of tricky stuff when initializing.
 
 =head1 QUESTIONS
 
