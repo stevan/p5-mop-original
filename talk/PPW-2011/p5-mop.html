@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Perl 5 MOP</title>
+<link rel="stylesheet" type="text/css" href="css/presentazion.css" media="screen,projection,handheld">
+<link rel="stylesheet" type="text/css" href="css/presentazion-print.css" media="print">
+<script type="text/javascript" src="js/jquery-1.7.min.js"></script>
+<script type="text/javascript" src="js/presentazion.js"></script>
+</head>
+<body>
+<div class="slideshow">
+
+<div class="multislide">
+A Brave New
+Perl World
+----
+Stevan Little
+stevan.little@iinteractive.com
+----
+// this summer at YAPC::NA, then again
+// at YAPC::EU, then at OSCON, and soon
+// at YAPC::Asia ...
+Perl 5.16 and Beyond
+by Jesse Vincent
+----
+// the thing that jumped out at me was
+Reducing the
+Perl Core
+----
+// the idea put forth was to move
+// things into modules, where they can
+// be loaded as needed, but not burden
+// the core perl-guts with them
+Core ↝ Modules
+// I used this neat unicode wavy arrow
+// because there is a certain amount of
+// handwaving here. Largely because he
+// also talks about preserving past
+// version semantics and other not so
+// simple things.
+----
+// but to be honest, if we can even get
+// 75% of what Jesse wants done, we will
+// be is an incredibly exciting place
+75%
+----
+// hell, even if it is only 50%, that
+// is still a pretty awesome accomplishment
+// and would me a LOT of the future of perl
+50%
+----
+// because, to put it simply, ...
+A simpler language
+is a more
+evolve-able language
+----
+  Perl was always designed to
+  be an evolving language.
+                        — Larry Wall
+----
+// so, before Jesse gave his talks there
+// had been some rumbling that he was perhaps
+// open to the idea of putting  MOP into Perl
+// so I had actually contacted him about this
+// and discussed the possibility, which he
+// then ended up putting in his talk slides
+// and so that began my
+Perl 5 MOP
+// project, and since I only have 20 min that
+// is largely what this talk is about
+----
+// wtf is a mop?
+MOP???
+----
+// An API for your object system
+API
+----
+// the mechanics of OO
+Classes, Methods,
+Attributes and
+Instances
+----
+// or, as I am sometimes fond
+// of telling people
+... an abstraction of a
+system of abstractions
+that is used to build
+abstractions.
+----
+an abstraction
+(the MOP)
+----
+system of abstractions
+(classes, methods, etc.)
+----
+build abstractions
+(your classes)
+----
+// now, lets stop to take a look
+// at what kind of MOPs exist in
+// Perl 5 today
+Status Quo
+----
+// very manual mop, which a
+// quirky (to say the least) API
+*{$pkg . '::foo'} = \&bar;
+----
+// NOTE: Moose 2.0205 is depended
+// on by 1433 modules on CPAN
+Moose
+----
+// which underlies Moose
+Class::MOP
+----
+// older MOP created by David Wheeler
+Class::Meta
+----
+// perl5i kinda has one
+// some of the other Moose-a-likes do too
+and others
+// so this is all well and good, we have
+// gotten a LONG way on these tools, the
+// core "MOP" has served us well for ~20
+// years, allowing things like Class::Accessor
+// and other useful modules, Moose has been
+// around for 5+ years now, etc etc.
+// But what about the next ~20 years? Can
+// we still continue build and inovate on this
+// same foundation?
+----
+The Future
+(perhaps)
+// what follows is a short tour of my
+// proposed new object system for Perl 5
+// note that we are still in an early stage
+// so some syntax may change and once this
+// goes to p5p the color of the bikeshed will
+// no doubt go through many revisions too.
+// But this is a start, and hopefully one
+// in the right direction, you be the judge.
+----
+// NOTE:
+// - class keyword
+//     - if no superclass, inherits from Object by default
+// - has keyword
+//     - "instance-lexical" scoping of attributes
+//     - build in support for ro, rw and wo accessors
+//         - this is actually a metadata expression
+//             - which is like annotations (Java), attributes (C//), decorators (Python)
+//             - it is executed at compile time and passed to the meta object being created
+//             - metadata is available on the class, has and method keywords
+//     - setting the default values of attributes
+// - method keyword
+//     - the attributes are available in methods as lexical variables
+//         - the scope of them being carried around in the instance
+//     - the destructuring bind in the clear method
+    class Point {
+        has $x ( is => 'rw' ) = 0;
+        has $y ( is => 'rw' ) = 0;
+
+        method clear {
+            ($x, $y) = (0, 0);
+        }
+    }
+----
+// NOTE:
+// - instance creation is pretty straight forward
+//    - constructor takes name/value pairs of the attributes
+//    - we didn't have to write a &new method, because we inherited from Object
+    my $point = Point->new( x => 10, y => 20 );
+----
+// NOTE:
+// - the extends syntax
+// - that $self exists inside methods
+// - the next::method syntax calling the superclass-method
+    class Point3D (extends => Point) {
+        has $z ( is => 'rw' ) = 0;
+
+        method clear {
+            $self->next::method;
+            $z = 0;
+        }
+    }
+----
+// NOTE:
+// - how clean the += and -= makes things
+//     - note there is no reference to $self in this entire class
+// - simple signatures on methods
+    class BankAccount {
+        has $balance ( is => 'ro' ) = 0;
+
+        method deposit ($amount) {
+            $balance += $amount
+        }
+
+        method withdraw ($amount) {
+            die "Account overdrawn"
+                if ($balance >= $amount);
+            $balance -= $amount;
+        }
+    }
+----
+// NOTE:
+// - $balance is not accessible in the subclass methods
+//     - attributes are completely private
+//     - which means we can now use undescore prefixed methods for protected
+    class CheckingAccount (extends => BankAccount) {
+        has $overdraft_account ( is => 'rw' );
+
+        method withdraw ($amount) {
+
+            my $overdraft_amount = $amount - $self->balance;
+
+            if ( $overdraft_account && $overdraft_amount > 0 ) {
+                $overdraft_account->withdraw(
+                    $overdraft_amount
+                );
+                $self->deposit( $overdraft_amount );
+            }
+
+            $self->next::method( $amount );
+        }
+    }
+----
+// NOTE:
+// - spelling errors on slots are compile time errors
+//    - similar to inside-out objects, but less cumbersome
+    class Foo {
+        has $bar;
+
+        method bar { $baz }; # COMPILE TIME ERROR!
+    }
+----
+// NOTE:
+// - packages can contain classes
+//     - because classes are first class citizens just like subs, etc.
+//     - this is much like other langauges (Java, etc)
+// - classes don't need strict and warnings
+//     - it would be on by default
+    package Foo;
+
+    use strict;
+    use warnings;
+
+    class Bar {
+        has $baz;
+        method foo { $baz }
+    }
+----
+// NOTE:
+// - and they are called just as you would expect
+    my $foobar = Foo::Bar->new( baz => 'gorch' );
+----
+// NOTE:
+// - the class has access to the package scope as well
+//     - this means you can have private subs that are not part of the class namespace
+//     - this means you can have static class scoped data as well
+//     - the possibilities here are pretty vast ...
+    package Bar;
+
+    our $FOO = 100_000;
+    sub do_something { ... }
+
+    class Baz {
+        has $gorch = 10;
+        method foo {
+            do_something( $gorch, $FOO )
+        }
+    }
+----
+// NOTE:
+// - import functions into your package,
+//     - then use them in your class
+//     - this removes the need to import anything into your class namespace.
+//     - no more namespace::clean hacks
+// - this also shows BUILD
+//     - works just like Moose does
+    package DB::FlatFile;
+
+    use Path::Class qw[ file ]
+
+    class DataFile {
+        has $path;
+        has $file;
+        has $data ( is => 'ro' );
+
+        BUILD {
+            $file = file( $path );
+            $data = [ $file->slurp( chomp => 1 ) ];
+        }
+    }
+----
+// all of this actually exists too
+http://github.com/stevan/p5-mop/
+// there is a prototype even which
+// tests the behavior of all of these
+// examples
+----
+The End
+----
+Any Questions?
+
+</div>
+
+</div>
+
+<div id="mediatype"></div>
+</body>
+</html>
