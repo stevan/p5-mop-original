@@ -24,6 +24,20 @@ stevan.little@iinteractive.com
 Perl 5.16 and Beyond
 by Jesse Vincent
 ----
+// but wait a second, Jesse
+// has actually resigned now
+&gt;&gt; !! &lt;&lt;
+</div>
+<div class="slide">
+    <img src="images/rjbs.png" height="100%" />
+</div>
+<div class="multislide">
+// but thankfully, ric is
+// continuing much of the
+// same policies and goals
+// as Jesse
+:)
+----
 // the thing that jumped out at me was
 Reducing the
 Perl Core
@@ -168,17 +182,20 @@ The Future
 // - instance creation is pretty straight forward
 //    - constructor takes name/value pairs of the attributes
 //    - we didn't have to write a &new method, because we inherited from Object
-    my $point = Point->new( x => 10, y => 20 );
+    my $point = Point->new(
+        x => 10,
+        y => 20
+    );
 ----
 // NOTE:
 // - the extends syntax
 // - that $self exists inside methods
-// - the next::method syntax calling the superclass-method
+// - the super syntax calling the superclass-method
     class Point3D (extends => Point) {
         has $z ( is => 'rw' ) = 0;
 
         method clear {
-            $self->next::method;
+            super;
             $z = 0;
         }
     }
@@ -219,7 +236,7 @@ The Future
                 $self->deposit( $overdraft_amount );
             }
 
-            $self->next::method( $amount );
+            super( $amount );
         }
     }
 ----
@@ -229,7 +246,8 @@ The Future
     class Foo {
         has $bar;
 
-        method bar { $baz }; # COMPILE TIME ERROR!
+        # COMPILE TIME ERROR!
+        method bar { $baz };
     }
 ----
 // NOTE:
@@ -250,7 +268,9 @@ The Future
 ----
 // NOTE:
 // - and they are called just as you would expect
-    my $foobar = Foo::Bar->new( baz => 'gorch' );
+    my $foobar = Foo::Bar->new(
+        baz => 'gorch'
+    );
 ----
 // NOTE:
 // - the class has access to the package scope as well
