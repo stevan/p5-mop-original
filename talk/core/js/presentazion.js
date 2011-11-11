@@ -205,11 +205,11 @@ Presentazion = {
                 }
 
                 // Add to the dOM
-                $(".multislide").before('<div class="slide">' + lines.join("\n") + '</div>');
+                $(el).before('<div class="slide">' + lines.join("\n") + '</div>');
             });
 
             // Remove multislide from the DOM, we don't need it anymore
-            $(".multislide").remove();
+            $(el).remove();
         });
 
     },
