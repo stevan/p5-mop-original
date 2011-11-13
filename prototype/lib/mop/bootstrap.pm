@@ -249,7 +249,7 @@ sub init {
         }
     ));
 
-    $::Object->add_method(mop::internal::create_method(
+    $::Class->add_method(mop::internal::create_method(
         name => 'new',
         body => sub {
             my %args = @_;
@@ -281,24 +281,6 @@ sub init {
             $::SELF->get_methods->{ $method_name };
         },
     ));
-
-    {
-        ## ------------------------------------------
-        ## NOTE:
-        ## ------------------------------------------
-        ## Add the Object->new method to the Class
-        ## stash, so we can use it to construct things
-        ## with it from now on.
-        ## ------------------------------------------
-
-        my $method = mop::internal::get_stash_for( $::Method )->bless(
-            $::Object->find_method('new')
-        );
-        mop::internal::get_stash_for( $::Class )->add_method(
-            'new',
-            sub { $method->execute( @_ ) }
-        );
-    }
 
     # this method is needed to add the attributes
     # to Attribute and Method (SEE BELOW)
