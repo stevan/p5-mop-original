@@ -267,21 +267,6 @@ sub init {
     ##           object construction work
     ## ------------------------------------------
 
-    # this method is needed by Class->find_method
-    $::Class->add_method(mop::internal::create_method(
-        name => 'get_methods',
-        body => $reader->( '$methods' ),
-    ));
-
-    # this method is needed to find Object->new (SEE BELOW)
-    $::Class->add_method(mop::internal::create_method(
-        name => 'find_method',
-        body => sub {
-            my $method_name = shift;
-            $::SELF->get_methods->{ $method_name };
-        },
-    ));
-
     # this method is needed to add the attributes
     # to Attribute and Method (SEE BELOW)
     $::Class->add_method(mop::internal::create_method(
@@ -335,9 +320,12 @@ sub init {
     $::Class->add_method( $::Method->new( name => 'get_name',          body => $reader->( '$name' )       ) );
     $::Class->add_method( $::Method->new( name => 'get_version',       body => $reader->( '$version' )    ) );
     $::Class->add_method( $::Method->new( name => 'get_authority',     body => $reader->( '$authority' )  ) );
+    $::Class->add_method( $::Method->new( name => 'get_methods',       body => $reader->( '$methods' )    ) );
     $::Class->add_method( $::Method->new( name => 'get_destructor',    body => $reader->( '$destructor' ) ) );
 
     $::Class->add_method( $::Method->new( name => 'find_attribute',    body => sub { $::SELF->get_attributes->{ $_[0] } } ) );
+    $::Class->add_method( $::Method->new( name => 'find_method',       body => sub { $::SELF->get_methods->{ $_[0] } } ) );
+
 
     ## mutators
     $::Class->add_method( $::Method->new( name => 'set_constructor', body => $writer->( '$constructor' ) ) );
