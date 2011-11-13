@@ -571,4 +571,83 @@ L<http://www.iinteractive.com>
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
+=begin bootstrap_goal
+
+    class Class (extends => Object, metaclass => Class) {
+        has $name;
+        has $version;
+        has $authority;
+        has $superclass;
+        has $attributes = {};
+        has $methods = {};
+        has $constructor;
+        has $destructor;
+
+        BUILD {
+            # set default base object
+            # metaclass compatibility checking
+            ...
+        }
+
+        method get_name             ()           { ... }
+        method get_version          ()           { ... }
+        method get_authority        ()           { ... }
+        method get_superclass       ()           { ... }
+        method get_attributes       ()           { ... }
+        method get_methods          ()           { ... }
+        method get_constructor      ()           { ... }
+        method get_destructor       ()           { ... }
+
+        method attribute_class      ()           { ... }
+        method method_class         ()           { ... }
+        method base_object_class    ()           { ... }
+
+        method equals               ($class)     { ... }
+        method find_attribute       ($name)      { ... }
+        method find_method          ($name)      { ... }
+        method get_compatible_class ($class)     { ... }
+        method get_dispatcher       ($type)      { ... }
+        method get_mro              ()           { ... }
+        method is_subclass_of       ($class)     { ... }
+
+        method add_method           ($method)    { ... }
+        method add_attribute        ($attribute) { ... }
+
+        method set_constructor      ($method)    { ... }
+        method set_destructor       ($method)    { ... }
+        method set_superclass       ($class)     { ... }
+
+        method CREATE               ($params)    { ... }
+        method new                  (%params)    { ... }
+
+        method FINALIZE             ()           { ... }
+    }
+
+    class Object (metaclass => Class) {
+        method isa ($class) { ... }
+    }
+
+    class Method (extends => Object, metaclass => Class) {
+        has $name;
+        has $body;
+
+        method get_name ()      { ... }
+        method get_body ()      { ... }
+
+        method execute  (@args) { ... }
+    }
+
+    class Attribute (extends => Object, metaclass => Class) {
+        has $name;
+        has $initial_value;
+
+        method get_name                       () { ... }
+        method get_initial_value              () { ... }
+
+        method get_initial_value_for_instance () { ... }
+        method get_param_name                 () { ... }
+    }
+
+=end bootstrap_goal
+
 =cut
