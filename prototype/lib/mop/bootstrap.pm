@@ -156,7 +156,7 @@ sub init {
         body => $reader->( '$name' ),
     ));
 
-    # this method is needed for Class->CREATE
+    # this method is needed for Class->create_instance
     $::Class->add_method(mop::internal::create_method(
         name => 'get_mro',
         body => sub {
@@ -165,13 +165,13 @@ sub init {
         }
     ));
 
-    # this method is needed for Class->CREATE
+    # this method is needed for Class->create_instance
     $::Class->add_method(mop::internal::create_method(
         name => 'get_attributes',
         body => $reader->( '$attributes' ),
     ));
 
-    # this method is needed for Class->CREATE
+    # this method is needed for Class->create_instance
     $::Attribute->add_method(mop::internal::create_method(
         name => 'get_initial_value_for_instance',
         body => sub {
@@ -188,7 +188,7 @@ sub init {
         }
     ));
 
-    # this method is needed for Class->CREATE
+    # this method is needed for Class->create_instance
     $::Attribute->add_method(mop::internal::create_method(
         name => 'get_param_name',
         body => sub {
@@ -200,7 +200,7 @@ sub init {
 
     # this method is needed for Object->new
     $::Class->add_method(mop::internal::create_method(
-        name => 'CREATE',
+        name => 'create_instance',
         body => sub {
             my $args = shift;
             my $data = {};
@@ -253,7 +253,7 @@ sub init {
         name => 'new',
         body => sub {
             my %args = @_;
-            my $self = $::SELF->CREATE( \%args );
+            my $self = $::SELF->create_instance( \%args );
             mop::WALKCLASS(
                 $::SELF->get_dispatcher('reverse'),
                 sub { ( $_[0]->get_constructor || return )->execute( $self, \%args ); return }
@@ -605,7 +605,7 @@ it under the same terms as Perl itself.
         method set_destructor       ($method)    { ... }
         method set_superclass       ($class)     { ... }
 
-        method CREATE               ($params)    { ... }
+        method create_instance      ($params)    { ... }
         method new                  (%params)    { ... }
 
         method FINALIZE             ()           { ... }
