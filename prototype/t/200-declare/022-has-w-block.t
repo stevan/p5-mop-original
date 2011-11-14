@@ -20,7 +20,7 @@ my $Foo = $::Class->new;
 }
 
 {
-    my $attribute = $Foo->get_attributes->{'$bar'};
+    my $attribute = $Foo->get_all_attributes->{'$bar'};
     ok( $attribute, '... found the attribute' );
     ok( $attribute->isa( $::Attribute ), '... it is a proper attribute');
     is( $attribute->get_name, '$bar', '... got the right name');
@@ -42,7 +42,7 @@ my $Foo = $::Class->new;
 }
 
 {
-    my $attribute = $Foo->get_attributes->{'$baz'};
+    my $attribute = $Foo->get_all_attributes->{'$baz'};
     ok( $attribute, '... found the attribute' );
     ok( $attribute->isa( $::Attribute ), '... it is a proper attribute');
     is( $attribute->get_name, '$baz', '... got the right name');

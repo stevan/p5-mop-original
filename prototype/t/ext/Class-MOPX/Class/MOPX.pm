@@ -227,27 +227,21 @@ class Class (extends => $::Class) {
     method install_accessors {
         my $dispatcher = $self->get_dispatcher;
 
-        mop::WALKCLASS(
-            $dispatcher,
-            sub {
-                my $c = shift;
-                my $attributes = $c->get_attributes;
-                for my $attr (values %$attributes) {
-                    next unless $attr->isa(Attribute);
+        my $attributes = $self->get_all_attributes;
+        for my $attr (values %$attributes) {
+            next unless $attr->isa(Attribute);
 
-                    $self->add_method($attr->create_reader)
-                        if $attr->has_reader;
-                    $self->add_method($attr->create_writer)
-                        if $attr->has_writer;
-                    $self->add_method($attr->create_accessor)
-                        if $attr->has_accessor;
-                    $self->add_method($attr->create_predicate)
-                        if $attr->has_predicate;
-                    $self->add_method($attr->create_clearer)
-                        if $attr->has_clearer;
-                }
-            }
-        );
+            $self->add_method($attr->create_reader)
+                if $attr->has_reader;
+            $self->add_method($attr->create_writer)
+                if $attr->has_writer;
+            $self->add_method($attr->create_accessor)
+                if $attr->has_accessor;
+            $self->add_method($attr->create_predicate)
+                if $attr->has_predicate;
+            $self->add_method($attr->create_clearer)
+                if $attr->has_clearer;
+        }
     }
 
     method install_constructor {
@@ -259,7 +253,7 @@ class Class (extends => $::Class) {
                 my $instance = $::SELF;
                 my ($params) = @_;
 
-                for my $attr (values %{ $::CLASS->get_attributes }) {
+                for my $attr (values %{ $::CLASS->get_all_attributes }) {
                     next unless $attr->isa(Attribute);
                     my $param = $attr->get_param_name;
                     if (exists $params->{$param}) {
@@ -274,29 +268,23 @@ class Class (extends => $::Class) {
                     }
                 }
 
-                mop::WALKCLASS(
-                    $dispatcher,
-                    sub {
-                        my $c = shift;
-                        my $attributes = $c->get_attributes;
-                        for my $attr (values %$attributes) {
-                            next unless $attr->isa(Attribute);
-                            next unless $attr->has_builder;
-                            next if $attr->lazy;
-                            next if defined mop::internal::instance::get_slot_at(
-                                $instance, $attr->get_name
-                            );
+                my $attributes = $::CLASS->get_all_attributes;
+                for my $attr (values %$attributes) {
+                    next unless $attr->isa(Attribute);
+                    next unless $attr->has_builder;
+                    next if $attr->lazy;
+                    next if defined mop::internal::instance::get_slot_at(
+                        $instance, $attr->get_name
+                    );
 
-                            my $builder = $attr->builder;
-                            my $initial_value = $instance->$builder;
-                            $attr->constraint->validate($initial_value)
-                                if $attr->has_constraint;
-                            mop::internal::instance::set_slot_at(
-                                $instance, $attr->get_name, \$initial_value
-                            );
-                        }
-                    },
-                );
+                    my $builder = $attr->builder;
+                    my $initial_value = $instance->$builder;
+                    $attr->constraint->validate($initial_value)
+                        if $attr->has_constraint;
+                    mop::internal::instance::set_slot_at(
+                        $instance, $attr->get_name, \$initial_value
+                    );
+                }
                 $constructor->execute($::SELF, @_) if $constructor;
             },
         ));

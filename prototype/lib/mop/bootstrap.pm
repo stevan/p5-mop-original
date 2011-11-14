@@ -165,10 +165,30 @@ sub init {
         }
     ));
 
+    # this method is needed for Class->get_all_attributes
+    $::Class->add_method(mop::internal::create_method(
+        name => 'get_local_attributes',
+        body => $reader->( '$attributes' ),
+    ));
+
     # this method is needed for Class->create_instance
     $::Class->add_method(mop::internal::create_method(
-        name => 'get_attributes',
-        body => $reader->( '$attributes' ),
+        name => 'get_all_attributes',
+        body => sub {
+            my %attrs;
+            mop::WALKCLASS(
+                $::SELF->get_dispatcher('reverse'),
+                sub {
+                    my $class = shift;
+                    %attrs = (
+                        %attrs,
+                        %{ $class->get_local_attributes },
+                    );
+                }
+            );
+
+            return \%attrs;
+        },
     ));
 
     # this method is needed for Class->create_instance
@@ -205,26 +225,20 @@ sub init {
             my $args = shift;
             my $data = {};
 
-            mop::WALKCLASS(
-                $::SELF->get_dispatcher,
-                sub {
-                    my $class = shift;
-                    my $attrs = $class->get_attributes;
-                    foreach my $attr_name ( keys %$attrs ) {
-                        unless ( exists $data->{ $attr_name } ) {
-                            my $param_name = $attrs->{ $attr_name }->get_param_name;
-                            if ( exists $args->{ $param_name } ) {
-                                my $value = $args->{ $param_name };
-                                $data->{ $attr_name } = \$value;
-                            }
-                            else {
-                                $data->{ $attr_name } = $attrs->{$attr_name}->get_initial_value_for_instance;
-                            }
-
-                        }
+            my $attrs = $::SELF->get_all_attributes;
+            foreach my $attr_name ( keys %$attrs ) {
+                unless ( exists $data->{ $attr_name } ) {
+                    my $param_name = $attrs->{ $attr_name }->get_param_name;
+                    if ( exists $args->{ $param_name } ) {
+                        my $value = $args->{ $param_name };
+                        $data->{ $attr_name } = \$value;
                     }
+                    else {
+                        $data->{ $attr_name } = $attrs->{$attr_name}->get_initial_value_for_instance;
+                    }
+
                 }
-            );
+            }
 
             (mop::internal::get_stash_for( $::SELF ) || die "Could not find stash for class(" . $::SELF->get_name . ")")->bless(
                 mop::internal::instance::create( \$::SELF, $data )
@@ -273,7 +287,7 @@ sub init {
         name => 'add_attribute',
         body => sub {
             my $attr = shift;
-            $::SELF->get_attributes->{ $attr->get_name } = $attr;
+            $::SELF->get_local_attributes->{ $attr->get_name } = $attr;
         },
     ));
 
@@ -317,14 +331,34 @@ sub init {
     $::Class->add_method( $::Method->new( name => 'attribute_class',   body => sub { $::Attribute } ) );
     $::Class->add_method( $::Method->new( name => 'method_class',      body => sub { $::Method    } ) );
     $::Class->add_method( $::Method->new( name => 'base_object_class', body => sub { $::Object    } ) );
+
     $::Class->add_method( $::Method->new( name => 'get_name',          body => $reader->( '$name' )       ) );
     $::Class->add_method( $::Method->new( name => 'get_version',       body => $reader->( '$version' )    ) );
     $::Class->add_method( $::Method->new( name => 'get_authority',     body => $reader->( '$authority' )  ) );
-    $::Class->add_method( $::Method->new( name => 'get_methods',       body => $reader->( '$methods' )    ) );
+    $::Class->add_method( $::Method->new( name => 'get_local_methods', body => $reader->( '$methods' )    ) );
     $::Class->add_method( $::Method->new( name => 'get_destructor',    body => $reader->( '$destructor' ) ) );
 
-    $::Class->add_method( $::Method->new( name => 'find_attribute',    body => sub { $::SELF->get_attributes->{ $_[0] } } ) );
-    $::Class->add_method( $::Method->new( name => 'find_method',       body => sub { $::SELF->get_methods->{ $_[0] } } ) );
+    $::Class->add_method( $::Method->new(
+        name => 'get_all_methods',
+        body => sub {
+            my %methods;
+            mop::WALKCLASS(
+                $::SELF->get_dispatcher('reverse'),
+                sub {
+                    my $class = shift;
+                    %methods = (
+                        %methods,
+                        %{ $class->get_local_methods },
+                    );
+                }
+            );
+
+            return \%methods;
+        },
+    ));
+
+    $::Class->add_method( $::Method->new( name => 'find_attribute', body => sub { $::SELF->get_all_attributes->{ $_[0] } } ) );
+    $::Class->add_method( $::Method->new( name => 'find_method',    body => sub { $::SELF->get_all_methods->{ $_[0] } }    ) );
 
 
     ## mutators
@@ -359,20 +393,14 @@ sub init {
 
             %$stash = ();
 
-            mop::WALKCLASS(
-                $dispatcher,
-                sub {
-                    my $c = shift;
-                    my $methods = $c->get_methods;
-                    foreach my $name ( keys %$methods ) {
-                        my $method = $methods->{ $name };
-                        $stash->add_method(
-                            $name,
-                            sub { $method->execute( @_ ) }
-                        ) unless exists $stash->{ $name };
-                    }
-                }
-            );
+            my $methods = $::SELF->get_all_methods;
+            foreach my $name ( keys %$methods ) {
+                my $method = $methods->{ $name };
+                $stash->add_method(
+                    $name,
+                    sub { $method->execute( @_ ) }
+                ) unless exists $stash->{ $name };
+            }
 
             $stash->add_method('DESTROY' => sub {
                 my $invocant = shift;
@@ -511,7 +539,7 @@ sub init {
 
     $::Class->add_method( $::Method->new( name => 'add_method', body => sub {
         my $method = shift;
-        $::SELF->get_methods->{ $method->get_name } = $method;
+        $::SELF->get_local_methods->{ $method->get_name } = $method;
     }));
 
     ## --------------------------------
@@ -581,8 +609,8 @@ it under the same terms as Perl itself.
         method get_version          ()           { ... }
         method get_authority        ()           { ... }
         method get_superclass       ()           { ... }
-        method get_attributes       ()           { ... }
-        method get_methods          ()           { ... }
+        method get_local_attributes ()           { ... }
+        method get_local_methods    ()           { ... }
         method get_constructor      ()           { ... }
         method get_destructor       ()           { ... }
 
@@ -592,7 +620,9 @@ it under the same terms as Perl itself.
 
         method equals               ($class)     { ... }
         method find_attribute       ($name)      { ... }
+        method get_all_attributes   ()           { ... }
         method find_method          ($name)      { ... }
+        method get_all_methods      ()           { ... }
         method get_compatible_class ($class)     { ... }
         method get_dispatcher       ($type)      { ... }
         method get_mro              ()           { ... }

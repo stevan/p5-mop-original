@@ -14,7 +14,7 @@ class Foo {
 is(Foo->get_name, 'Foo', '... got the name we expected');
 is(Foo->get_superclass, $::Object, '... got the superclass we expected');
 
-my $bar = Foo->get_attributes->{'$bar'};
+my $bar = Foo->get_all_attributes->{'$bar'};
 ok($bar, '... got a bar');
 ok($bar->isa( $::Attribute ), '... bar is a Attribute');
 is($bar->get_name, '$bar', '... got the right name for bar');

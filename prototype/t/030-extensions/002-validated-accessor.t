@@ -20,7 +20,7 @@ class ValidatedAccessorMeta (extends => $::Class) {
 
     method FINALIZE {
 
-        foreach my $attribute ( values %{ $self->get_attributes } ) {
+        foreach my $attribute ( values %{ $self->get_all_attributes } ) {
             my $name = $attribute->get_name;
             my $validator = $attribute->get_validator;
 

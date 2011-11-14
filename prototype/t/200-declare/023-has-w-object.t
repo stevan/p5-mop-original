@@ -22,7 +22,7 @@ class Bar {
 }
 
 {
-    my $attribute = $Foo->get_attributes->{'$foo'};
+    my $attribute = $Foo->get_all_attributes->{'$foo'};
     ok( $attribute, '... found the attribute' );
     ok( $attribute->isa( $::Attribute ), '... it is a proper attribute');
     is( $attribute->get_name, '$foo', '... got the right name');

@@ -59,12 +59,12 @@ is_deeply $::Class->get_mro, [ $::Class, $::Object ], '... got the right mro';
     }
 }
 
-foreach my $method ( values %{ $::Class->get_methods } ) {
+foreach my $method ( values %{ $::Class->get_all_methods } ) {
     ok $method->isa( $::Method ), '... method (' . $method->get_name . ') of class Class is a Method object';
     is $::Class->find_method( $method->get_name ), $method, '... found the method too';
 }
 
-foreach my $attribute ( values %{ $::Class->get_attributes } ) {
+foreach my $attribute ( values %{ $::Class->get_all_attributes } ) {
     ok $attribute->isa( $::Attribute ), '... attribute (' . $attribute->get_name . ') of class Class is an Attribute object';
     is $::Class->find_attribute( $attribute->get_name ), $attribute, '... found the attribute too';
 }
@@ -83,12 +83,12 @@ is_deeply $::Object->get_mro, [ $::Object ], '... got the right mro';
     }
 }
 
-foreach my $method ( values %{ $::Object->get_methods } ) {
+foreach my $method ( values %{ $::Object->get_all_methods } ) {
     ok $method->isa( $::Method ), '... method (' . $method->get_name . ') of class Object is a Method object';
     is $::Object->find_method( $method->get_name ), $method, '... found the method too';
 }
 
-foreach my $attribute ( values %{ $::Object->get_attributes } ) {
+foreach my $attribute ( values %{ $::Object->get_all_attributes } ) {
     ok $attribute->isa( $::Attribute ), '... attribute (' . $attribute->get_name . ') of class Object is an Attribute object';
     is $::Object->find_attribute( $attribute->get_name ), $attribute, '... found the attribute too';
 }
@@ -107,12 +107,12 @@ is_deeply $::Method->get_mro, [ $::Method, $::Object ], '... got the right mro';
     }
 }
 
-foreach my $method ( values %{ $::Method->get_methods } ) {
+foreach my $method ( values %{ $::Method->get_all_methods } ) {
     ok $method->isa( $::Method ), '... method (' . $method->get_name . ') of class Method is a Method object';
     is $::Method->find_method( $method->get_name ), $method, '... found the method too';
 }
 
-foreach my $attribute ( values %{ $::Method->get_attributes } ) {
+foreach my $attribute ( values %{ $::Method->get_all_attributes } ) {
     ok $attribute->isa( $::Attribute ), '... attribute (' . $attribute->get_name . ') of class Method is an Attribute object';
     is $::Method->find_attribute( $attribute->get_name ), $attribute, '... found the attribute too';
 }
@@ -131,12 +131,12 @@ is_deeply $::Attribute->get_mro, [ $::Attribute, $::Object ], '... got the right
     }
 }
 
-foreach my $method ( values %{ $::Attribute->get_methods } ) {
+foreach my $method ( values %{ $::Attribute->get_all_methods } ) {
     ok $method->isa( $::Method ), '... method (' . $method->get_name . ') of class Attribute is a Method object';
     is $::Attribute->find_method( $method->get_name ), $method, '... found the method too';
 }
 
-foreach my $attribute ( values %{ $::Attribute->get_attributes } ) {
+foreach my $attribute ( values %{ $::Attribute->get_all_attributes } ) {
     ok $attribute->isa( $::Attribute ), '... attribute (' . $attribute->get_name . ') of class Attribute is an Attribute object';
     is $::Attribute->find_attribute( $attribute->get_name ), $attribute, '... found the attribute too';
 }
