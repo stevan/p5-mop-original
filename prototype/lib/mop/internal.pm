@@ -12,6 +12,7 @@ use mop::internal::instance;
 use Package::Anon;
 use PadWalker ();
 use Scope::Guard 'guard';
+use version ();
 
 sub create_class {
     my %params = @_;
@@ -25,6 +26,9 @@ sub create_class {
     my $methods     = $params{'methods'}     || {};
     my $constructor = $params{'constructor'} || undef;
     my $destructor  = $params{'destructor'}  || undef;
+
+    $version = version->parse($version)
+        if defined $version;
 
     mop::internal::instance::create(
         $class,

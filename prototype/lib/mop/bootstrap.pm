@@ -8,6 +8,7 @@ our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
 use Scalar::Util ();
+use version ();
 
 use mop::internal;
 
@@ -361,6 +362,7 @@ sub init {
 
 
     ## mutators
+    $::Class->add_method( $::Method->new( name => 'set_version',     body => $writer->( '$version' )     ) );
     $::Class->add_method( $::Method->new( name => 'set_constructor', body => $writer->( '$constructor' ) ) );
     $::Class->add_method( $::Method->new( name => 'set_destructor',  body => $writer->( '$destructor'  ) ) );
     $::Class->add_method( $::Method->new( name => 'set_superclass',  body => $writer->( '$superclass'  ) ) );
@@ -431,6 +433,11 @@ sub init {
         body => sub {
             $::SELF->set_superclass( $::SELF->base_object_class )
                 unless $::SELF->get_superclass;
+
+            my $v = $::SELF->get_version;
+            $::SELF->set_version(version->parse($v))
+                if defined $v;
+
             my $superclass = $::SELF->get_superclass;
             if ( $superclass ) {
                 my $superclass_class = mop::internal::instance::get_class( $superclass );
@@ -478,23 +485,22 @@ sub init {
     $::Class->add_method( $::Method->new(
         name => 'VERSION',
         body => sub {
-            my $v = $::SELF->get_version;
-            return $v unless @_;
+            my $ver = $::SELF->get_version;
 
-            require version;
+            if ( @_ ) {
+                die "Invalid version format (non-numeric data)"
+                    unless version::is_lax( $_[0] );
 
-            die "Invalid version format (non-numeric data)"
-                unless version::is_lax( $v ) && version::is_lax( $_[0] );
+                my $req = version->parse( $_[0] );
 
-            my ( $ver, $req ) = map { version->parse( $_ ) } $v, $_[0];
-
-            if ( $ver < $req ) {
-                die sprintf ("%s version %s required--".
-                        "this is only version %s", $::SELF->get_name,
-                        $req->stringify, $ver->stringify);
+                if ( $ver < $req ) {
+                    die sprintf ("%s version %s required--".
+                            "this is only version %s", $::SELF->get_name,
+                            $req->stringify, $ver->stringify);
+                }
             }
 
-            return $v;
+            return $ver;
         }
     ) );
 
