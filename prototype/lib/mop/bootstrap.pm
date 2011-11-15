@@ -625,13 +625,14 @@ it under the same terms as Perl itself.
         has $version;
         has $authority;
         has $superclass;
-        has $attributes = {};
-        has $methods = {};
+        has $attributes   = {};
+        has $methods      = {};
         has $constructor;
         has $destructor;
 
         BUILD {
             # set default base object
+            # coerce $version to a version object
             # metaclass compatibility checking
             ...
         }
@@ -662,9 +663,10 @@ it under the same terms as Perl itself.
         method add_method           ($method)    { ... }
         method add_attribute        ($attribute) { ... }
 
+        method set_version          ($version)   { ... }
+        method set_superclass       ($class)     { ... }
         method set_constructor      ($method)    { ... }
         method set_destructor       ($method)    { ... }
-        method set_superclass       ($class)     { ... }
 
         method create_instance      ($params)    { ... }
         method new                  (%params)    { ... }
