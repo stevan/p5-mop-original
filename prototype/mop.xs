@@ -345,6 +345,7 @@ static OP *THX_parse_method_prototype(pTHX)
     }
 
     myvars = newLISTOP(OP_LIST, 0, NULL, NULL);
+    myvars->op_private |= OPpLVAL_INTRO;
 
     for (;;) {
         SV *varname;
@@ -366,7 +367,7 @@ static OP *THX_parse_method_prototype(pTHX)
             croak("syntax error");
         }
 
-        pad_op = newOP(OP_PADSV, (OPpLVAL_INTRO<<8));
+        pad_op = newOP(OP_PADSV, (OPpLVAL_INTRO<<8)|OPf_WANT_LIST);
         pad_op->op_targ = pad_add_my_scalar_sv(varname);
         op_append_elem(OP_LIST, myvars, pad_op);
 
@@ -384,9 +385,11 @@ static OP *THX_parse_method_prototype(pTHX)
         }
     }
 
+    myvars->op_flags |= OPf_PARENS;
+
     get_args = newUNOP(OP_RV2AV, 0, newGVOP(OP_GV, 0, gv_fetchpv("_", 0, SVt_PVAV)));
 
-    return newASSIGNOP(0, myvars, 0, get_args);
+    return newASSIGNOP(OPf_STACKED, myvars, 0, get_args);
 }
 
 static OP *parse_method(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
