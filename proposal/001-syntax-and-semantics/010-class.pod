@@ -190,6 +190,34 @@ return the value of C<$BAZ>.
 Additionally the C<__PACKAGE__> variable in C<Bar> would be "Foo"
 just as it would be inside the package scope.
 
+=head2 How can I export methods from my class?
+
+Surely a sane person would never do this, however it is not uncommon
+in the Perl world to provide both a procedural and object-oriented
+interface to a CPAN module. So in order to accomplish this goal,
+instead of exporting methods, you use the relationship between the
+classes and package to do this in a sane way. The best way to show
+this is actually to just show code.
+
+  package Foo;
+  use strict;
+  use warnings;
+  use Exporter;
+
+  our @EXPORT = ('bar');
+
+  my $foo_instance = OO->new;
+
+  sub bar { $bar_instance->bar }
+
+  class OO {
+      method bar { ... }
+  }
+
+The result of this is that you (sanely) export a package sub C<foo>
+which has access to an instance of the OO interface, while still
+retaining the OO interface through the C<Foo::OO> class.
+
 =head2 How does C<strict> and C<warnings> affect classes?
 
 The same way C<strict> and C<warnings> affect subroutines, if
