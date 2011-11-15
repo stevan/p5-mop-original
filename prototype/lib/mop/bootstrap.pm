@@ -323,10 +323,6 @@ sub init {
     ## Phase 6 : Create the rest of the MOP
     ## ------------------------------------------
 
-    ## --------------------------------
-    ## $::Class
-    ## --------------------------------
-
     ## accessors
     $::Class->add_method( $::Method->new( name => 'attribute_class',   body => sub { $::Attribute } ) );
     $::Class->add_method( $::Method->new( name => 'method_class',      body => sub { $::Method    } ) );
@@ -356,6 +352,9 @@ sub init {
             return \%methods;
         },
     ));
+
+    $::Method->add_method( $::Method->new( name => 'get_name', body => $reader->( '$name' ) ) );
+    $::Method->add_method( $::Method->new( name => 'get_body', body => $reader->( '$body' ) ) );
 
     $::Class->add_method( $::Method->new( name => 'find_attribute', body => sub { $::SELF->get_all_attributes->{ $_[0] } } ) );
     $::Class->add_method( $::Method->new( name => 'find_method',    body => sub { $::SELF->get_all_methods->{ $_[0] } }    ) );
@@ -457,21 +456,47 @@ sub init {
     $::Class->add_attribute( $::Attribute->new( name => '$destructor',  initial_value => \(my $destructor)      ) );
 
     ## --------------------------------
-    ## $::Object
+    ## UNIVERSAL methods
     ## --------------------------------
 
-    $::Object->add_method( $::Method->new( name => 'isa',  body => sub { $::CLASS->equals( $_[0] ) || $::CLASS->is_subclass_of( $_[0] ) } ) );
+    # implement all of UNIVERSAL here, because the mop's dispatcher should
+    # not be using UNIVERSAL at all
 
-    ## --------------------------------
-    ## $::Method
-    ## --------------------------------
+    $::Object->add_method( $::Method->new( name => 'isa',  body => sub { ref( $_[0] ) && ( $::CLASS->equals( $_[0] ) || $::CLASS->is_subclass_of( $_[0] ) ) } ) );
+    # XXX ideally, ->can would return a method object, which would do the
+    # right thing when used as a coderef (so that
+    # if (my $foo = $obj->can('foo')) { $obj->$foo(...) }
+    # and similar things work as expected), but as far as i can tell,
+    # overloading doesn't currently work with anonymous packages
+    $::Object->add_method( $::Method->new( name => 'can',  body => sub { my $m = $::CLASS->find_method( $_[0] ); $m ? sub { $m->execute( @_ ) } : () } ) );
+    $::Object->add_method( $::Method->new( name => 'DOES',  body => sub { $::SELF->isa( @_ ) } ) );
 
-    $::Method->add_method( $::Method->new( name => 'get_name', body => $reader->( '$name' ) ) );
-    $::Method->add_method( $::Method->new( name => 'get_body', body => $reader->( '$body' ) ) );
+    # VERSION is really a class method
+    # XXX this logic is not nearly right, it should really use the logic
+    # used by the current UNIVERSAL::VERSION, but UNIVERSAL::VERSION looks
+    # up the class's version in $VERSION, which isn't what we want
+    $::Class->add_method( $::Method->new(
+        name => 'VERSION',
+        body => sub {
+            my $v = $::SELF->get_version;
+            return $v unless @_;
 
-    ## --------------------------------
-    ## $::Attribute
-    ## --------------------------------
+            require version;
+
+            die "Invalid version format (non-numeric data)"
+                unless version::is_lax( $v ) && version::is_lax( $_[0] );
+
+            my ( $ver, $req ) = map { version->parse( $_ ) } $v, $_[0];
+
+            if ( $ver < $req ) {
+                die sprintf ("%s version %s required--".
+                        "this is only version %s", $::SELF->get_name,
+                        $req->stringify, $ver->stringify);
+            }
+
+            return $v;
+        }
+    ) );
 
 
     ## --------------------------------
@@ -639,10 +664,14 @@ it under the same terms as Perl itself.
         method new                  (%params)    { ... }
 
         method FINALIZE             ()           { ... }
+
+        method VERSION              ()           { ... }
     }
 
     class Object (metaclass => Class) {
-        method isa ($class) { ... }
+        method isa  ($class) { ... }
+        method can  ($name)  { ... }
+        method DOES ($class) { ... }
     }
 
     class Method (extends => Object, metaclass => Class) {
