@@ -156,7 +156,7 @@ sub init {
         body => $reader->( '$name' ),
     ));
 
-    # this method is needed for Class->CREATE
+    # this method is needed for Class->create_instance
     $::Class->add_method(mop::internal::create_method(
         name => 'get_mro',
         body => sub {
@@ -165,13 +165,13 @@ sub init {
         }
     ));
 
-    # this method is needed for Class->CREATE
+    # this method is needed for Class->create_instance
     $::Class->add_method(mop::internal::create_method(
         name => 'get_attributes',
         body => $reader->( '$attributes' ),
     ));
 
-    # this method is needed for Class->CREATE
+    # this method is needed for Class->create_instance
     $::Attribute->add_method(mop::internal::create_method(
         name => 'get_initial_value_for_instance',
         body => sub {
@@ -188,7 +188,7 @@ sub init {
         }
     ));
 
-    # this method is needed for Class->CREATE
+    # this method is needed for Class->create_instance
     $::Attribute->add_method(mop::internal::create_method(
         name => 'get_param_name',
         body => sub {
@@ -200,7 +200,7 @@ sub init {
 
     # this method is needed for Object->new
     $::Class->add_method(mop::internal::create_method(
-        name => 'CREATE',
+        name => 'create_instance',
         body => sub {
             my $args = shift;
             my $data = {};
@@ -249,11 +249,11 @@ sub init {
         }
     ));
 
-    $::Object->add_method(mop::internal::create_method(
+    $::Class->add_method(mop::internal::create_method(
         name => 'new',
         body => sub {
             my %args = @_;
-            my $self = $::SELF->CREATE( \%args );
+            my $self = $::SELF->create_instance( \%args );
             mop::WALKCLASS(
                 $::SELF->get_dispatcher('reverse'),
                 sub { ( $_[0]->get_constructor || return )->execute( $self, \%args ); return }
@@ -266,39 +266,6 @@ sub init {
     ## Phase 5 : Some fixup to make the actual
     ##           object construction work
     ## ------------------------------------------
-
-    # this method is needed by Class->find_method
-    $::Class->add_method(mop::internal::create_method(
-        name => 'get_methods',
-        body => $reader->( '$methods' ),
-    ));
-
-    # this method is needed to find Object->new (SEE BELOW)
-    $::Class->add_method(mop::internal::create_method(
-        name => 'find_method',
-        body => sub {
-            my $method_name = shift;
-            $::SELF->get_methods->{ $method_name };
-        },
-    ));
-
-    {
-        ## ------------------------------------------
-        ## NOTE:
-        ## ------------------------------------------
-        ## Add the Object->new method to the Class
-        ## stash, so we can use it to construct things
-        ## with it from now on.
-        ## ------------------------------------------
-
-        my $method = mop::internal::get_stash_for( $::Method )->bless(
-            $::Object->find_method('new')
-        );
-        mop::internal::get_stash_for( $::Class )->add_method(
-            'new',
-            sub { $method->execute( @_ ) }
-        );
-    }
 
     # this method is needed to add the attributes
     # to Attribute and Method (SEE BELOW)
@@ -353,9 +320,12 @@ sub init {
     $::Class->add_method( $::Method->new( name => 'get_name',          body => $reader->( '$name' )       ) );
     $::Class->add_method( $::Method->new( name => 'get_version',       body => $reader->( '$version' )    ) );
     $::Class->add_method( $::Method->new( name => 'get_authority',     body => $reader->( '$authority' )  ) );
+    $::Class->add_method( $::Method->new( name => 'get_methods',       body => $reader->( '$methods' )    ) );
     $::Class->add_method( $::Method->new( name => 'get_destructor',    body => $reader->( '$destructor' ) ) );
 
     $::Class->add_method( $::Method->new( name => 'find_attribute',    body => sub { $::SELF->get_attributes->{ $_[0] } } ) );
+    $::Class->add_method( $::Method->new( name => 'find_method',       body => sub { $::SELF->get_methods->{ $_[0] } } ) );
+
 
     ## mutators
     $::Class->add_method( $::Method->new( name => 'set_constructor', body => $writer->( '$constructor' ) ) );
@@ -588,5 +558,84 @@ L<http://www.iinteractive.com>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
+
+=begin bootstrap_goal
+
+    class Class (extends => Object, metaclass => Class) {
+        has $name;
+        has $version;
+        has $authority;
+        has $superclass;
+        has $attributes = {};
+        has $methods = {};
+        has $constructor;
+        has $destructor;
+
+        BUILD {
+            # set default base object
+            # metaclass compatibility checking
+            ...
+        }
+
+        method get_name             ()           { ... }
+        method get_version          ()           { ... }
+        method get_authority        ()           { ... }
+        method get_superclass       ()           { ... }
+        method get_attributes       ()           { ... }
+        method get_methods          ()           { ... }
+        method get_constructor      ()           { ... }
+        method get_destructor       ()           { ... }
+
+        method attribute_class      ()           { ... }
+        method method_class         ()           { ... }
+        method base_object_class    ()           { ... }
+
+        method equals               ($class)     { ... }
+        method find_attribute       ($name)      { ... }
+        method find_method          ($name)      { ... }
+        method get_compatible_class ($class)     { ... }
+        method get_dispatcher       ($type)      { ... }
+        method get_mro              ()           { ... }
+        method is_subclass_of       ($class)     { ... }
+
+        method add_method           ($method)    { ... }
+        method add_attribute        ($attribute) { ... }
+
+        method set_constructor      ($method)    { ... }
+        method set_destructor       ($method)    { ... }
+        method set_superclass       ($class)     { ... }
+
+        method create_instance      ($params)    { ... }
+        method new                  (%params)    { ... }
+
+        method FINALIZE             ()           { ... }
+    }
+
+    class Object (metaclass => Class) {
+        method isa ($class) { ... }
+    }
+
+    class Method (extends => Object, metaclass => Class) {
+        has $name;
+        has $body;
+
+        method get_name ()      { ... }
+        method get_body ()      { ... }
+
+        method execute  (@args) { ... }
+    }
+
+    class Attribute (extends => Object, metaclass => Class) {
+        has $name;
+        has $initial_value;
+
+        method get_name                       () { ... }
+        method get_initial_value              () { ... }
+
+        method get_initial_value_for_instance () { ... }
+        method get_param_name                 () { ... }
+    }
+
+=end bootstrap_goal
 
 =cut
