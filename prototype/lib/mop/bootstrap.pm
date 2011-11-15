@@ -367,6 +367,23 @@ sub init {
     $::Class->add_method( $::Method->new( name => 'set_destructor',  body => $writer->( '$destructor'  ) ) );
     $::Class->add_method( $::Method->new( name => 'set_superclass',  body => $writer->( '$superclass'  ) ) );
 
+    ## clone
+    $::Method->add_method( $::Method->new(
+        name => 'clone',
+        body => sub {
+            my %params = (
+                (map {
+                    $_->get_param_name => mop::internal::instance::get_slot_at(
+                        $::SELF, $_->get_name
+                    )
+                } values %{ $::CLASS->get_all_attributes }),
+                @_,
+            );
+            return $::CLASS->new(%params);
+        },
+    ) );
+    $::Attribute->add_method( $::Method->find_method('clone')->clone );
+
     ## predicate methods for Class
     $::Class->add_method( $::Method->new(
         name => 'equals',
@@ -686,21 +703,25 @@ it under the same terms as Perl itself.
         has $name;
         has $body;
 
-        method get_name ()      { ... }
-        method get_body ()      { ... }
+        method get_name ()        { ... }
+        method get_body ()        { ... }
 
-        method execute  (@args) { ... }
+        method clone    (%params) { ... }
+
+        method execute  (@args)   { ... }
     }
 
     class Attribute (extends => Object, metaclass => Class) {
         has $name;
         has $initial_value;
 
-        method get_name                       () { ... }
-        method get_initial_value              () { ... }
+        method get_name                       ()        { ... }
+        method get_initial_value              ()        { ... }
 
-        method get_initial_value_for_instance () { ... }
-        method get_param_name                 () { ... }
+        method get_initial_value_for_instance ()        { ... }
+        method get_param_name                 ()        { ... }
+
+        method clone                          (%params) { ... }
     }
 
 =end bootstrap_goal
