@@ -285,13 +285,13 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 
 static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 {
-    SV *varname;
+    SV *name;
     OP *ret, *pad_op, *metadata = NULL, *attr_default = NULL;
 
     *flagsp |= CALLPARSER_STATEMENT;
 
     lex_read_space(0);
-    varname = parse_scalar_varname();
+    name = parse_scalar_varname();
 
     lex_read_space(0);
     if (lex_peek_unichar(0) == '(') {
@@ -309,11 +309,11 @@ static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     }
 
     pad_op = newOP(OP_PADSV, (OPpLVAL_INTRO<<8)|OPf_PARENS|OPf_WANT_LIST);
-    pad_op->op_targ = pad_add_my_scalar_sv(varname);
+    pad_op->op_targ = pad_add_my_scalar_sv(name);
 
-    SvREFCNT_inc(varname);
+    SvREFCNT_inc(name);
     ret = newLISTOP(OP_LIST, 0,
-                    newSVOP(OP_CONST, 0, varname),
+                    newSVOP(OP_CONST, 0, name),
                     newUNOP(OP_REFGEN, 0, pad_op));
 
     if (metadata) {
