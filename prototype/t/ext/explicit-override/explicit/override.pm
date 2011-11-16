@@ -7,9 +7,8 @@ use List::MoreUtils 'any';
 
 class ExplicitOverride (extends => $::Class) {
     method add_method ($method, $override) {
-        # XXX need a find_method that checks mro on its own
         die "Overriding method " . $method->get_name . " without using override"
-            if !$override && any { $_->find_method($method->get_name) } @{ $self->get_mro };
+            if !$override && $self->find_method($method->get_name);
         super($method);
     }
 
