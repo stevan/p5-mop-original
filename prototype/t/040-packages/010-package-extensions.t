@@ -78,7 +78,7 @@ Baz class.
         # can also easily make sure to use the
         # class from the previously derived
         # package as well.
-        method bar { __PACKAGE__->Bar->new( @_ ) }
+        method bar (%params) { __PACKAGE__->Bar->new( %params ) }
     };
 }
 
