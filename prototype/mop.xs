@@ -3,7 +3,7 @@
 #include "callparser1.h"
 #include "XSUB.h"
 
-/* stolen from Scope::Escape::Sugar */
+/* stolen (with modifications) from Scope::Escape::Sugar */
 
 #define SVt_PADNAME SVt_PVMG
 
@@ -22,16 +22,17 @@
  * It doesn't warn about shadowing.
  */
 
-#define pad_add_my_scalar_pvn(namepv, namelen) \
-		THX_pad_add_my_scalar_pvn(aTHX_ namepv, namelen)
-static PADOFFSET THX_pad_add_my_scalar_pvn(pTHX_
-	char const *namepv, STRLEN namelen)
+#define pad_add_my_pvn(namepv, namelen, type) \
+		THX_pad_add_my_pvn(aTHX_ namepv, namelen, type)
+static PADOFFSET THX_pad_add_my_pvn(pTHX_
+	char const *namepv, STRLEN namelen, svtype type)
 {
 	PADOFFSET offset;
 	SV *namesv, *myvar;
 	myvar = *av_fetch(PL_comppad, AvFILLp(PL_comppad) + 1, 1);
 	offset = AvFILLp(PL_comppad);
 	SvPADMY_on(myvar);
+        SvUPGRADE(myvar, type);
 	PL_curpad = AvARRAY(PL_comppad);
 	namesv = newSV_type(SVt_PADNAME);
 	sv_setpvn(namesv, namepv, namelen);
@@ -42,14 +43,24 @@ static PADOFFSET THX_pad_add_my_scalar_pvn(pTHX_
 	return offset;
 }
 
-#define pad_add_my_scalar_sv(namesv) THX_pad_add_my_scalar_sv(aTHX_ namesv)
-static PADOFFSET THX_pad_add_my_scalar_sv(pTHX_ SV *namesv)
+#define pad_add_my_sv(namesv, type) THX_pad_add_my_sv(aTHX_ namesv, type)
+static PADOFFSET THX_pad_add_my_sv(pTHX_ SV *namesv, svtype type)
 {
 	char const *pv;
 	STRLEN len;
 	pv = SvPV(namesv, len);
-	return pad_add_my_scalar_pvn(pv, len);
+	return pad_add_my_pvn(pv, len, type);
 }
+
+#define pad_add_my_scalar_sv(namesv) THX_pad_add_my_sv(aTHX_ namesv, SVt_NULL)
+#define pad_add_my_array_sv(namesv)  THX_pad_add_my_sv(aTHX_ namesv, SVt_PVAV)
+#define pad_add_my_hash_sv(namesv)   THX_pad_add_my_sv(aTHX_ namesv, SVt_PVHV)
+#define pad_add_my_scalar_pvn(namepv, namelen) \
+    THX_pad_add_my_pvn(aTHX_ namepv, namelen, SVt_NULL)
+#define pad_add_my_array_pvn(namepv, namelen) \
+    THX_pad_add_my_pvn(aTHX_ namepv, namelen, SVt_PVAV)
+#define pad_add_my_hash_pvn(namepv, namelen) \
+    THX_pad_add_my_pvn(aTHX_ namepv, namelen, SVt_PVHV)
 
 /*
  * parser pieces
@@ -92,91 +103,19 @@ static SV *THX_parse_idword(pTHX_ char const *prefix)
 	return sv;
 }
 
-#define parse_scalar_varname() THX_parse_scalar_varname(aTHX)
-static SV *THX_parse_scalar_varname(pTHX)
+#define parse_varname(sigil) THX_parse_varname(aTHX_ sigil)
+static SV *THX_parse_varname(pTHX_ const char *sigil)
 {
-	demand_unichar('$', DEMAND_IMMEDIATE);
+	demand_unichar(sigil[0], DEMAND_IMMEDIATE);
 	lex_read_space(0);
-	return parse_idword("$");
+	return parse_idword(sigil);
 }
+
+#define parse_scalar_varname() THX_parse_varname(aTHX_ "$")
+#define parse_array_varname()  THX_parse_varname(aTHX_ "@")
+#define parse_hash_varname()   THX_parse_varname(aTHX_ "%")
 
 /* end stolen from Scope::Escape::Sugar */
-
-#define pad_add_my_array_pvn(namepv, namelen) \
-		THX_pad_add_my_array_pvn(aTHX_ namepv, namelen)
-static PADOFFSET THX_pad_add_my_array_pvn(pTHX_
-	char const *namepv, STRLEN namelen)
-{
-	PADOFFSET offset;
-	SV *namesv, *myvar;
-	myvar = *av_fetch(PL_comppad, AvFILLp(PL_comppad) + 1, 1);
-	offset = AvFILLp(PL_comppad);
-	SvPADMY_on(myvar);
-        SvUPGRADE(myvar, SVt_PVAV);
-	PL_curpad = AvARRAY(PL_comppad);
-	namesv = newSV_type(SVt_PADNAME);
-	sv_setpvn(namesv, namepv, namelen);
-	COP_SEQ_RANGE_LOW_set(namesv, PL_cop_seqmax);
-	COP_SEQ_RANGE_HIGH_set(namesv, PERL_PADSEQ_INTRO);
-	PL_cop_seqmax++;
-	av_store(PL_comppad_name, offset, namesv);
-	return offset;
-}
-
-#define pad_add_my_array_sv(namesv) THX_pad_add_my_array_sv(aTHX_ namesv)
-static PADOFFSET THX_pad_add_my_array_sv(pTHX_ SV *namesv)
-{
-	char const *pv;
-	STRLEN len;
-	pv = SvPV(namesv, len);
-	return pad_add_my_array_pvn(pv, len);
-}
-
-#define pad_add_my_hash_pvn(namepv, namelen) \
-		THX_pad_add_my_hash_pvn(aTHX_ namepv, namelen)
-static PADOFFSET THX_pad_add_my_hash_pvn(pTHX_
-	char const *namepv, STRLEN namelen)
-{
-	PADOFFSET offset;
-	SV *namesv, *myvar;
-	myvar = *av_fetch(PL_comppad, AvFILLp(PL_comppad) + 1, 1);
-	offset = AvFILLp(PL_comppad);
-	SvPADMY_on(myvar);
-        SvUPGRADE(myvar, SVt_PVHV);
-	PL_curpad = AvARRAY(PL_comppad);
-	namesv = newSV_type(SVt_PADNAME);
-	sv_setpvn(namesv, namepv, namelen);
-	COP_SEQ_RANGE_LOW_set(namesv, PL_cop_seqmax);
-	COP_SEQ_RANGE_HIGH_set(namesv, PERL_PADSEQ_INTRO);
-	PL_cop_seqmax++;
-	av_store(PL_comppad_name, offset, namesv);
-	return offset;
-}
-
-#define pad_add_my_hash_sv(namesv) THX_pad_add_my_hash_sv(aTHX_ namesv)
-static PADOFFSET THX_pad_add_my_hash_sv(pTHX_ SV *namesv)
-{
-	char const *pv;
-	STRLEN len;
-	pv = SvPV(namesv, len);
-	return pad_add_my_hash_pvn(pv, len);
-}
-
-#define parse_array_varname() THX_parse_array_varname(aTHX)
-static SV *THX_parse_array_varname(pTHX)
-{
-	demand_unichar('@', DEMAND_IMMEDIATE);
-	lex_read_space(0);
-	return parse_idword("@");
-}
-
-#define parse_hash_varname() THX_parse_hash_varname(aTHX)
-static SV *THX_parse_hash_varname(pTHX)
-{
-	demand_unichar('%', DEMAND_IMMEDIATE);
-	lex_read_space(0);
-	return parse_idword("%");
-}
 
 #define caller_package() THX_caller_package(aTHX)
 static SV *THX_caller_package(pTHX)
