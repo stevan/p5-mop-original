@@ -5,6 +5,11 @@ use Test::More;
 use Test::Fatal;
 use lib 't/ext/explicit-override';
 
+BEGIN {
+    eval { require List::MoreUtils; 1 }
+        or plan skip_all => "List::MoreUtils is required for this test";
+}
+
 use mop;
 use explicit::override;
 
