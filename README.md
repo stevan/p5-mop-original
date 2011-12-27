@@ -15,6 +15,8 @@ This proposal will be developed in the open and comments
 are welcome.
 
 -----------------------------
+Prototype notes ...
+-----------------------------
 
 This is a prototype of the proposed MOP for Perl 5. The
 main purpose of this prototypes is to work out a few
