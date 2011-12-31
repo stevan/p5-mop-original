@@ -46,9 +46,11 @@ mop::internal::instance - The p5-mop instance internals
 
 This module implements an instance type for the p5-mop.
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
+
+Jesse Luehrs E<lt>doy at tozt dot netE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 

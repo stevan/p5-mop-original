@@ -79,9 +79,50 @@ mop - The p5-mop
 This is the main module for the mop, it handles the intial
 bootstrapping and exporting of the syntactic sugar.
 
-=head1 AUTHOR
+To find out more about this module you will want to look at
+L<mop::proposal::intro>.
+
+=head1 AUTHORS
 
 Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
+
+Jesse Luehrs E<lt>doy at tozt dot netE<gt>
+
+=head1 CONTRIBUTORS
+
+The following is a list of people who have contributed to
+the development of this module through discussion and/or
+encouragement.
+
+Jesse Vincent
+
+Shawn Moore
+
+chromatic
+
+Steffen Mueller
+
+Abigail
+
+Father Chrysostomos
+
+Yuki Kimoto
+
+Nicholas Clark
+
+Reini Urban
+
+Andrew Main (Zefram)
+
+Hugo van der Sanden
+
+Aarron Crane
+
+Vyacheslav Matjukhin
+
+A.Vieth (forwardever)
+
+Dmitry Karasik
 
 =head1 COPYRIGHT AND LICENSE
 

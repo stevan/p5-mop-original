@@ -141,9 +141,11 @@ mop::syntax - The syntax module for the p5-mop
 This module uses Devel::CallParser to provide the desired
 syntax for the p5-mop.
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
+
+Jesse Luehrs E<lt>doy at tozt dot netE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 

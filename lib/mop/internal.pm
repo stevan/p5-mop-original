@@ -144,11 +144,15 @@ mop::internal - The internals of the p5-mop
 =head1 DESCRIPTION
 
 This module contains some internal functions that
-are mostly used in the bootstraping process.
+are mostly used in the bootstraping process. It is
+here were most of the dragons lie, be not afraid,
+this will not be the final implementation.
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
+
+Jesse Luehrs E<lt>doy at tozt dot netE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 

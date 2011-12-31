@@ -622,9 +622,104 @@ following things are true:
 This is what will give us our desired "turtles all the way down"
 metacircularity.
 
-=head1 AUTHOR
+=head1 BOOTSTRAP GOAL
+
+Below is an illustration of goal of the bootstrapping process
+defined in the pr-5mop syntax itself. This is purely for
+illustrative purposes and it not meant to be executable.
+
+  class Class (extends => Object, metaclass => Class) {
+      has $name;
+      has $version;
+      has $authority;
+      has $superclass;
+      has $attributes   = {};
+      has $methods      = {};
+      has $constructor;
+      has $destructor;
+
+      BUILD {
+          # set default base object
+          # coerce $version to a version object
+          # metaclass compatibility checking
+          ...
+      }
+
+      method get_name             ()           { ... }
+      method get_version          ()           { ... }
+      method get_authority        ()           { ... }
+      method get_superclass       ()           { ... }
+      method get_local_attributes ()           { ... }
+      method get_local_methods    ()           { ... }
+      method get_constructor      ()           { ... }
+      method get_destructor       ()           { ... }
+
+      method attribute_class      ()           { ... }
+      method method_class         ()           { ... }
+      method base_object_class    ()           { ... }
+
+      method equals               ($class)     { ... }
+      method find_attribute       ($name)      { ... }
+      method get_all_attributes   ()           { ... }
+      method find_method          ($name)      { ... }
+      method get_all_methods      ()           { ... }
+      method get_compatible_class ($class)     { ... }
+      method get_dispatcher       ($type)      { ... }
+      method get_mro              ()           { ... }
+      method is_subclass_of       ($class)     { ... }
+
+      method add_method           ($method)    { ... }
+      method add_attribute        ($attribute) { ... }
+
+      method set_version          ($version)   { ... }
+      method set_superclass       ($class)     { ... }
+      method set_constructor      ($method)    { ... }
+      method set_destructor       ($method)    { ... }
+
+      method create_instance      ($params)    { ... }
+      method new                  (%params)    { ... }
+
+      method FINALIZE             ()           { ... }
+
+      method VERSION              ()           { ... }
+  }
+
+  class Object (metaclass => Class) {
+      method isa  ($class) { ... }
+      method can  ($name)  { ... }
+      method DOES ($class) { ... }
+  }
+
+  class Method (extends => Object, metaclass => Class) {
+      has $name;
+      has $body;
+
+      method get_name ()        { ... }
+      method get_body ()        { ... }
+
+      method clone    (%params) { ... }
+
+      method execute  (@args)   { ... }
+  }
+
+  class Attribute (extends => Object, metaclass => Class) {
+      has $name;
+      has $initial_value;
+
+      method get_name                       ()        { ... }
+      method get_initial_value              ()        { ... }
+
+      method get_initial_value_for_instance ()        { ... }
+      method get_param_name                 ()        { ... }
+
+      method clone                          (%params) { ... }
+  }
+
+=head1 AUTHORS
 
 Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
+
+Jesse Luehrs E<lt>doy at tozt dot netE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -634,96 +729,5 @@ L<http://www.iinteractive.com>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
-
-=begin bootstrap_goal
-
-    class Class (extends => Object, metaclass => Class) {
-        has $name;
-        has $version;
-        has $authority;
-        has $superclass;
-        has $attributes   = {};
-        has $methods      = {};
-        has $constructor;
-        has $destructor;
-
-        BUILD {
-            # set default base object
-            # coerce $version to a version object
-            # metaclass compatibility checking
-            ...
-        }
-
-        method get_name             ()           { ... }
-        method get_version          ()           { ... }
-        method get_authority        ()           { ... }
-        method get_superclass       ()           { ... }
-        method get_local_attributes ()           { ... }
-        method get_local_methods    ()           { ... }
-        method get_constructor      ()           { ... }
-        method get_destructor       ()           { ... }
-
-        method attribute_class      ()           { ... }
-        method method_class         ()           { ... }
-        method base_object_class    ()           { ... }
-
-        method equals               ($class)     { ... }
-        method find_attribute       ($name)      { ... }
-        method get_all_attributes   ()           { ... }
-        method find_method          ($name)      { ... }
-        method get_all_methods      ()           { ... }
-        method get_compatible_class ($class)     { ... }
-        method get_dispatcher       ($type)      { ... }
-        method get_mro              ()           { ... }
-        method is_subclass_of       ($class)     { ... }
-
-        method add_method           ($method)    { ... }
-        method add_attribute        ($attribute) { ... }
-
-        method set_version          ($version)   { ... }
-        method set_superclass       ($class)     { ... }
-        method set_constructor      ($method)    { ... }
-        method set_destructor       ($method)    { ... }
-
-        method create_instance      ($params)    { ... }
-        method new                  (%params)    { ... }
-
-        method FINALIZE             ()           { ... }
-
-        method VERSION              ()           { ... }
-    }
-
-    class Object (metaclass => Class) {
-        method isa  ($class) { ... }
-        method can  ($name)  { ... }
-        method DOES ($class) { ... }
-    }
-
-    class Method (extends => Object, metaclass => Class) {
-        has $name;
-        has $body;
-
-        method get_name ()        { ... }
-        method get_body ()        { ... }
-
-        method clone    (%params) { ... }
-
-        method execute  (@args)   { ... }
-    }
-
-    class Attribute (extends => Object, metaclass => Class) {
-        has $name;
-        has $initial_value;
-
-        method get_name                       ()        { ... }
-        method get_initial_value              ()        { ... }
-
-        method get_initial_value_for_instance ()        { ... }
-        method get_param_name                 ()        { ... }
-
-        method clone                          (%params) { ... }
-    }
-
-=end bootstrap_goal
 
 =cut
