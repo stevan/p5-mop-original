@@ -33,6 +33,18 @@ Perl 5 MOP - Syntax & Semantics - Introduction
 This is an introduction to the syntax oriented documents of
 this proposal.
 
+=over 4
+
+=item L<Metadata|mop::proposal::syntax::metadata>
+
+=item L<Class|mop::proposal::syntax::class>
+
+=item L<Method|mop::proposal::syntax::method>
+
+=item L<Attribute|mop::proposal::syntax::attributes>
+
+=back
+
 =head1 AUTHOR
 
 Stevan Little E<lt>stevan.little@iinteractive.comE<gt>

@@ -1,0 +1,43 @@
+=pod
+
+=head1 NAME
+
+Perl 5 MOP - Internals - Introduction
+
+=head1 DESCRIPTION
+
+This is an introduction to the internals oriented documents
+of this proposal.
+
+=over 4
+
+=item L<Instance|mop::proposal::internals::instance>
+
+=item L<Dispatching|mop::proposal::internals::dispatching>
+
+=item L<Classes|mop::proposal::internals::classes>
+
+=item L<Methods|mop::proposal::internals::methods>
+
+=item L<Attributes|mop::proposal::internals::attributes>
+
+=item L<Bootstrap|mop::proposal::internals::bootstrap>
+
+=item L<Rants|mop::proposal::internals::rants>
+
+=back
+
+=head1 AUTHOR
+
+Stevan Little E<lt>stevan.little@iinteractive.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2011 Infinity Interactive, Inc.
+
+L<http://www.iinteractive.com>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

@@ -54,7 +54,7 @@ system. Below is a brief overview of each section.
 
 =over 4
 
-=item Classes
+=item L<Classes|mop::proposal::mop::class>
 
 The concept of a class is core to the entire MOP and
 is the top-level container for the remaining three
@@ -66,7 +66,7 @@ The class sub-protocol would have methods to do things
 like introspect the set of attributes, add a new
 method or traverse the method resolution order.
 
-=item Attributes
+=item L<Attributes|mop::proposal::mop::attribute>
 
 The concept of an attribute is that of the internal
 state of a class. Just as a class can be viewed as the
@@ -77,7 +77,7 @@ The attribute sub-protocol would have methods to
 introspect things like the name of the attribute, the
 default value assigned.
 
-=item Methods
+=item L<Methods|mop::proposal::mop::method>
 
 The concept of a method is simple really, it is just
 a function which can be dispatched from an instance and

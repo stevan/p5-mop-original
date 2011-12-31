@@ -17,26 +17,24 @@ different parts and are meant to be read in order so as to
 build the conceptual understandings necessary for the
 subsequent parts. The major parts are as follows:
 
-=head2 Meta Object Protocol
+=head2 L<Meta Object Protocol|mop::proposal::mop::intro>
 
-These documents can be found in the F<000-mop> folder and
-they explain some of the core concepts of the class system.
+These documents explain some of the core concepts of the
+class system.
 
 This really should be read first in order for the later
 documents to make sense. If nothing more, just the intro
 document should be read, the rest can be reviewed later on.
 
-=head2 Syntax and Semantics
+=head2 L<Syntax and Semantics|mop::proposal::syntax::intro>
 
-These documents can be found in the F<001-syntax-and-semantics>
-folder and they explain the proposed syntax and semantics for
+These documents explain the proposed syntax and semantics for
 this new object system.
 
-=head2 Internals
+=head2 L<Internals|mop::proposal::internals::intro>
 
-These documents can be found in the F<010-internals> folder
-and contain a number of documents detailing some of the
-internal mechanisms of this proposal.
+This is a collection of a number of documents detailing some
+of the internal mechanisms of this proposal.
 
 =head1 FAQs
 
