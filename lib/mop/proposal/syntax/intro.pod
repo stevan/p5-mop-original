@@ -7,8 +7,8 @@ Perl 5 MOP - Syntax & Semantics - Introduction
 =head1 SYNOPSIS
 
   class Point {
-      has $x ( is => 'rw' ) = 0;
-      has $y ( is => 'rw' ) = 0;
+      has $x = 0;
+      has $y = 0;
 
       method clear {
           ($x, $y) = (0, 0);
@@ -16,7 +16,7 @@ Perl 5 MOP - Syntax & Semantics - Introduction
   }
 
   class Point3D ( extends => Point ) {
-      has $z ( is => 'rw' ) = 0;
+      has $z = 0;
 
       method clear {
           super;
