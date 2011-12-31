@@ -63,7 +63,7 @@ thunk, so that this:
 
   has $bar = Some::Object->new;
 
-Which will get transformed into this:
+Which will essentially get transformed into this:
 
   has $bar = sub { Some::Object->new };
 
