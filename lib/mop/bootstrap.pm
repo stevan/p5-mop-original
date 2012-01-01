@@ -620,21 +620,52 @@ following things are true:
   Class is a subclass of Object
 
 This is what will give us our desired "turtles all the way down"
-metacircularity.
+metacircularity. Additionally, in order to get the right role
+features we also create the following relationship:
+
+  Role is an instance of Class
+  Class consumes Role
+  (therefore) Role does Role
 
 =head1 BOOTSTRAP GOAL
 
 Below is an illustration of goal of the bootstrapping process
-defined in the pr-5mop syntax itself. This is purely for
+defined in the p5-mop syntax itself. This is purely for
 illustrative purposes and it not meant to be executable.
 
-  class Class (extends => Object, metaclass => Class) {
+  class Role (metaclass => Class) {
       has $name;
       has $version;
       has $authority;
-      has $superclass;
       has $attributes   = {};
       has $methods      = {};
+      has $roles        = [];
+
+      method attribute_class      ()           { ... }
+      method method_class         ()           { ... }
+
+      method get_name             ()           { ... }
+      method get_version          ()           { ... }
+      method get_authority        ()           { ... }
+
+      method find_attribute       ($name)      { ... }
+      method get_all_attributes   ()           { ... }
+      method find_method          ($name)      { ... }
+      method get_all_methods      ()           { ... }
+
+      method add_method           ($method)    { ... }
+      method add_attribute        ($attribute) { ... }
+
+      method set_version          ($version)   { ... }
+
+      method does_role            ($role)      { ... }
+
+      method COMPOSE              ($role)      { ... }
+  }
+
+  class Class (extends => Object, with => Role, metaclass => Class) {
+
+      has $superclass;
       has $constructor;
       has $destructor;
 
@@ -645,33 +676,19 @@ illustrative purposes and it not meant to be executable.
           ...
       }
 
-      method get_name             ()           { ... }
-      method get_version          ()           { ... }
-      method get_authority        ()           { ... }
       method get_superclass       ()           { ... }
       method get_local_attributes ()           { ... }
       method get_local_methods    ()           { ... }
       method get_constructor      ()           { ... }
       method get_destructor       ()           { ... }
-
-      method attribute_class      ()           { ... }
-      method method_class         ()           { ... }
       method base_object_class    ()           { ... }
 
       method equals               ($class)     { ... }
-      method find_attribute       ($name)      { ... }
-      method get_all_attributes   ()           { ... }
-      method find_method          ($name)      { ... }
-      method get_all_methods      ()           { ... }
       method get_compatible_class ($class)     { ... }
       method get_dispatcher       ($type)      { ... }
       method get_mro              ()           { ... }
       method is_subclass_of       ($class)     { ... }
 
-      method add_method           ($method)    { ... }
-      method add_attribute        ($attribute) { ... }
-
-      method set_version          ($version)   { ... }
       method set_superclass       ($class)     { ... }
       method set_constructor      ($method)    { ... }
       method set_destructor       ($method)    { ... }
