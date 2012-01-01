@@ -9,14 +9,46 @@ use mop;
 
 =pod
 
-role Foo {
+role Foo {}
+
+=cut
+
+my $Foo = $::Role->new(
+    name      => 'Foo',
+    version   => '0.01',
+    authority => 'cpan:STEVAN'
+);
+
+can_ok( $Foo, 'attribute_class' );
+can_ok( $Foo, 'method_class' );
+
+can_ok( $Foo, 'get_name' );
+can_ok( $Foo, 'get_version' );
+can_ok( $Foo, 'get_authority' );
+
+can_ok( $Foo, 'find_method' );
+can_ok( $Foo, 'get_all_methods' );
+
+can_ok( $Foo, 'find_attribute' );
+can_ok( $Foo, 'get_all_attributes' );
+
+is( $Foo->attribute_class, $::Attribute, '... got the expected value of attribute_class');
+is( $Foo->method_class, $::Method, '... got the expected value of method_class');
+
+is( $Foo->get_name, 'Foo', '... got the expected value for get_name');
+is( $Foo->get_version, '0.01', '... got the expected value for get_version');
+is( $Foo->get_authority, 'cpan:STEVAN', '... got the expected value for get_authority');
+
+=pod
+
+role Bar {
     has $bar = 'bar';
     method bar { $bar }
 }
 
 =cut
 
-my $Foo = $::Role->new(
+my $Bar = $::Role->new(
     attributes => {
         '$bar' => $::Attribute->new( name => '$bar', initial_value => \'bar' )
     },
@@ -25,28 +57,13 @@ my $Foo = $::Role->new(
     }
 );
 
-class Baz (with => $Foo) {
-    method baz { join ", "  => $self->bar, 'baz' }
-}
+my $method = $Bar->find_method( 'bar' );
+ok( $method->isa( $::Method ), '... got the method we expected' );
+is( $method->get_name, 'bar', '... got the name of the method we expected');
 
-{
-    my $baz = Baz->new;
-
-    ok( Baz->has_method('baz'), '... the Baz class has the baz method' );
-    ok( Baz->has_method('bar'), '... the Baz class has the bar method (composed from Foo role)' );
-
-    ok( Baz->has_attribute('$bar'), '... the Baz class has the $bar attribute' );
-
-    ok( $baz->isa( Baz ), '... the object is from class Baz' );
-    ok( $baz->isa( $::Object ), '... the object is derived from class Object' );
-    is( mop::class_of( $baz ), Baz, '... the class of this object is Baz' );
-    ok( $baz->DOES( $Foo ), '... the object also DOES the Foo role')
-
-    can_ok( $baz, 'baz' );
-    can_ok( $baz, 'bar' );
-
-    is( $baz->bar, 'bar', '... got the right value from ->bar');
-    is( $baz->baz, 'bar, baz', '... got the right value from ->baz');
-}
+my $attribute = $Bar->find_attribute( '$bar' );
+ok( $attribute->isa( $::Attribute ), '... got the attribute we expected' );
+is( $attribute->get_name, '$bar', '... got the name of the attribute we expected');
 
 done_testing;
+
