@@ -400,7 +400,9 @@ sub init {
             my $other = shift;
             return mop::internal::instance::get_uuid( $::SELF ) eq mop::internal::instance::get_uuid( $other );
         },
-    ) );
+    ) ); # FIXME: can come from Role
+
+
     $::Class->add_method( $::Method->new(
         name => 'is_subclass_of',
         body => sub {
@@ -499,10 +501,12 @@ sub init {
     $::Role->add_attribute( $::Attribute->new( name => '$authority',   initial_value => \(my $role_authority) ) );
     $::Role->add_attribute( $::Attribute->new( name => '$attributes',  initial_value => \sub { +{} }          ) );
     $::Role->add_attribute( $::Attribute->new( name => '$methods',     initial_value => \sub { +{} }          ) );
+    $::Role->add_attribute( $::Attribute->new( name => '$roles',       initial_value => \sub { +[] }          ) );
 
     $::Role->add_method( $::Method->new( name => 'get_name',           body => $reader->( '$name' )       ) );
     $::Role->add_method( $::Method->new( name => 'get_version',        body => $reader->( '$version' )    ) );
     $::Role->add_method( $::Method->new( name => 'get_authority',      body => $reader->( '$authority' )  ) );
+    $::Role->add_method( $::Method->new( name => 'get_roles',          body => $reader->( '$roles' )      ) );
     $::Role->add_method( $::Method->new( name => 'get_all_attributes', body => $reader->( '$attributes' ) ) );
     $::Role->add_method( $::Method->new( name => 'get_all_methods',    body => $reader->( '$methods'    ) ) );
 
@@ -511,6 +515,37 @@ sub init {
     $::Role->add_method( $::Method->new( name => 'find_attribute', body => sub { $::SELF->get_all_attributes->{ $_[0] } } ) );
     $::Role->add_method( $::Method->new( name => 'find_method',    body => sub { $::SELF->get_all_methods->{ $_[0] } }    ) );
 
+    $::Role->add_method( $::Method->new( name => 'add_method', body => sub {
+        my $method = shift;
+        $::SELF->get_all_methods->{ $method->get_name } = $method;
+    }));
+
+    $::Role->add_method( $::Method->new( name => 'add_attribute', body => sub {
+        my $attribute = shift;
+        $::SELF->get_all_attributes->{ $attribute->get_name } = $attribute;
+    }));
+
+    $::Role->add_method( $::Method->new(
+        name => 'equals',
+        body => sub {
+            my $other = shift;
+            return mop::internal::instance::get_uuid( $::SELF ) eq mop::internal::instance::get_uuid( $other );
+        },
+    ) );
+
+    $::Role->add_method( $::Method->new(
+        name => 'does_role',
+        body => sub {
+            my $role = shift;
+            foreach ( @{ $::SELF->get_roles } ) {
+                return 1
+                    if $_->equals( $role )
+                    || $role->does_role( $_ );
+            }
+            return 0;
+        }
+    ) );
+
     $::Role->set_constructor( $::Method->new(
         name => 'BUILD',
         body => sub {
@@ -518,6 +553,32 @@ sub init {
             $::SELF->set_version(version->parse($v))
                 if defined $v;
         },
+    ) );
+
+    $::Role->add_method( $::Method->new(
+        name => 'COMPOSE',
+        body => sub {
+            my $other = shift;
+
+            # TODO:
+            # if $other is an array-ref of roles, then
+            # merge them all first, then proceed with the
+            # resulting composite role as $other
+            # - SL
+
+            foreach my $attribute_name ( keys %{ $other->get_all_attributes } ) {
+                die "Attribute conflict found for '$attribute_name'"
+                    if $::SELF->find_attribute( $attribute_name );
+                $::SELF->add_attribute( $other->find_attribute( $attribute_name ) );
+            }
+
+            foreach my $method_name ( keys %{ $other->get_all_methods } ) {
+                $::SELF->add_method( $other->find_method( $method_name ) )
+                    unless $::SELF->find_method( $method_name );
+            }
+
+            push @{ $::SELF->get_roles } => $other;
+        }
     ) );
 
     ## TODO NOTES:
@@ -530,13 +591,6 @@ sub init {
     # in order to accomplish this the composition logic
     # needs to live in Role, but will be merged into Class
     # at which point Class can do it too.
-
-    # Role needs two methods for composition:
-    #   - compose( Role $role )
-    #   - merge( Array[Roles] @roles )
-    # because compose will expect something that
-    # does Role, and Class does Role, the method
-    # should work polymophically.
 
     ## --------------------------------
     ## UNIVERSAL methods
@@ -717,6 +771,7 @@ illustrative purposes and it not meant to be executable.
 
       method set_version          ($version)   { ... }
 
+      method equals               ($object)    { ... }
       method does_role            ($role)      { ... }
 
       method COMPOSE              ($role)      { ... }
@@ -742,7 +797,6 @@ illustrative purposes and it not meant to be executable.
       method get_destructor       ()           { ... }
       method base_object_class    ()           { ... }
 
-      method equals               ($class)     { ... }
       method get_compatible_class ($class)     { ... }
       method get_dispatcher       ($type)      { ... }
       method get_mro              ()           { ... }
