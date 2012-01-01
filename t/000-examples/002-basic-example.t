@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Test::More;
+use Test::Fatal;
 
 use mop;
 
@@ -15,7 +16,7 @@ class BankAccount {
     method deposit ($amount) { $balance += $amount }
 
     method withdraw ($amount) {
-        ($balance >= $amount)
+        ($amount <= $balance)
             || die "Account overdrawn";
         $balance -= $amount;
     }
@@ -55,6 +56,10 @@ is $savings->balance, 200, '... got the savings balance we expected';
 
 $savings->deposit( 150 );
 is $savings->balance, 350, '... got the savings balance we expected';
+
+like(exception {
+    $savings->withdraw( 400 );
+}, qr/Account overdrawn/, '... got the expection we expected');
 
 my $checking = CheckingAccount->new(
     overdraft_account => $savings,
