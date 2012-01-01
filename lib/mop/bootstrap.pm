@@ -79,6 +79,14 @@ sub init {
         superclass => $::Object,
     );
 
+    $::Role = mop::internal::create_class(
+        class      => \$::Class,
+        name       => 'Role',
+        version    => $VERSION,
+        authority  => $AUTHORITY,
+        superclass => $::Object,
+    );
+
     ## ------------------------------------------
     ## Phase 2 : Tie the knot
     ## ------------------------------------------
@@ -93,6 +101,7 @@ sub init {
     mop::internal::get_stash_for( $::Class )->bless( $::Class,     );
     mop::internal::get_stash_for( $::Class )->bless( $::Method,    );
     mop::internal::get_stash_for( $::Class )->bless( $::Attribute  );
+    mop::internal::get_stash_for( $::Class )->bless( $::Role       );
 
     # make sure to manually add the
     # add_method method to the Class
@@ -325,13 +334,13 @@ sub init {
     ## ------------------------------------------
 
     ## accessors
-    $::Class->add_method( $::Method->new( name => 'attribute_class',   body => sub { $::Attribute } ) );
-    $::Class->add_method( $::Method->new( name => 'method_class',      body => sub { $::Method    } ) );
+    $::Class->add_method( $::Method->new( name => 'attribute_class',   body => sub { $::Attribute } ) ); # FIXME: can come from Role
+    $::Class->add_method( $::Method->new( name => 'method_class',      body => sub { $::Method    } ) ); # FIXME: can come from Role
     $::Class->add_method( $::Method->new( name => 'base_object_class', body => sub { $::Object    } ) );
 
-    $::Class->add_method( $::Method->new( name => 'get_name',          body => $reader->( '$name' )       ) );
-    $::Class->add_method( $::Method->new( name => 'get_version',       body => $reader->( '$version' )    ) );
-    $::Class->add_method( $::Method->new( name => 'get_authority',     body => $reader->( '$authority' )  ) );
+    $::Class->add_method( $::Method->new( name => 'get_name',          body => $reader->( '$name' )       ) ); # FIXME: can come from Role
+    $::Class->add_method( $::Method->new( name => 'get_version',       body => $reader->( '$version' )    ) ); # FIXME: can come from Role
+    $::Class->add_method( $::Method->new( name => 'get_authority',     body => $reader->( '$authority' )  ) ); # FIXME: can come from Role
     $::Class->add_method( $::Method->new( name => 'get_local_methods', body => $reader->( '$methods' )    ) );
     $::Class->add_method( $::Method->new( name => 'get_destructor',    body => $reader->( '$destructor' ) ) );
 
@@ -357,12 +366,12 @@ sub init {
     $::Method->add_method( $::Method->new( name => 'get_name', body => $reader->( '$name' ) ) );
     $::Method->add_method( $::Method->new( name => 'get_body', body => $reader->( '$body' ) ) );
 
-    $::Class->add_method( $::Method->new( name => 'find_attribute', body => sub { $::SELF->get_all_attributes->{ $_[0] } } ) );
-    $::Class->add_method( $::Method->new( name => 'find_method',    body => sub { $::SELF->get_all_methods->{ $_[0] } }    ) );
+    $::Class->add_method( $::Method->new( name => 'find_attribute', body => sub { $::SELF->get_all_attributes->{ $_[0] } } ) ); # FIXME: can come from Role
+    $::Class->add_method( $::Method->new( name => 'find_method',    body => sub { $::SELF->get_all_methods->{ $_[0] } }    ) ); # FIXME: can come from Role
 
 
     ## mutators
-    $::Class->add_method( $::Method->new( name => 'set_version',     body => $writer->( '$version' )     ) );
+    $::Class->add_method( $::Method->new( name => 'set_version',     body => $writer->( '$version' )     ) ); # FIXME: can come from Role
     $::Class->add_method( $::Method->new( name => 'set_constructor', body => $writer->( '$constructor' ) ) );
     $::Class->add_method( $::Method->new( name => 'set_destructor',  body => $writer->( '$destructor'  ) ) );
     $::Class->add_method( $::Method->new( name => 'set_superclass',  body => $writer->( '$superclass'  ) ) );
@@ -470,14 +479,64 @@ sub init {
     ) );
 
     ## add in the attributes
-    $::Class->add_attribute( $::Attribute->new( name => '$name',        initial_value => \(my $class_name)      ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$version',     initial_value => \(my $class_version)   ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$authority',   initial_value => \(my $class_authority) ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$name',        initial_value => \(my $class_name)      ) ); # FIXME: can come from Role
+    $::Class->add_attribute( $::Attribute->new( name => '$version',     initial_value => \(my $class_version)   ) ); # FIXME: can come from Role
+    $::Class->add_attribute( $::Attribute->new( name => '$authority',   initial_value => \(my $class_authority) ) ); # FIXME: can come from Role
     $::Class->add_attribute( $::Attribute->new( name => '$superclass',  initial_value => \(my $superclass)      ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$attributes',  initial_value => \sub { +{} }           ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$methods',     initial_value => \sub { +{} }           ) );
+    $::Class->add_attribute( $::Attribute->new( name => '$attributes',  initial_value => \sub { +{} }           ) ); # FIXME: can come from Role
+    $::Class->add_attribute( $::Attribute->new( name => '$methods',     initial_value => \sub { +{} }           ) ); # FIXME: can come from Role
     $::Class->add_attribute( $::Attribute->new( name => '$constructor', initial_value => \(my $constructor)     ) );
     $::Class->add_attribute( $::Attribute->new( name => '$destructor',  initial_value => \(my $destructor)      ) );
+
+
+    # create Role here ...
+
+    $::Role->add_method( $::Method->new( name => 'attribute_class',   body => sub { $::Attribute } ) );
+    $::Role->add_method( $::Method->new( name => 'method_class',      body => sub { $::Method    } ) );
+
+    $::Role->add_attribute( $::Attribute->new( name => '$name',        initial_value => \(my $role_name)      ) );
+    $::Role->add_attribute( $::Attribute->new( name => '$version',     initial_value => \(my $role_version)   ) );
+    $::Role->add_attribute( $::Attribute->new( name => '$authority',   initial_value => \(my $role_authority) ) );
+    $::Role->add_attribute( $::Attribute->new( name => '$attributes',  initial_value => \sub { +{} }          ) );
+    $::Role->add_attribute( $::Attribute->new( name => '$methods',     initial_value => \sub { +{} }          ) );
+
+    $::Role->add_method( $::Method->new( name => 'get_name',           body => $reader->( '$name' )       ) );
+    $::Role->add_method( $::Method->new( name => 'get_version',        body => $reader->( '$version' )    ) );
+    $::Role->add_method( $::Method->new( name => 'get_authority',      body => $reader->( '$authority' )  ) );
+    $::Role->add_method( $::Method->new( name => 'get_all_attributes', body => $reader->( '$attributes' ) ) );
+    $::Role->add_method( $::Method->new( name => 'get_all_methods',    body => $reader->( '$methods'    ) ) );
+
+    $::Role->add_method( $::Method->new( name => 'set_version', body => $writer->( '$version' ) ) );
+
+    $::Role->add_method( $::Method->new( name => 'find_attribute', body => sub { $::SELF->get_all_attributes->{ $_[0] } } ) );
+    $::Role->add_method( $::Method->new( name => 'find_method',    body => sub { $::SELF->get_all_methods->{ $_[0] } }    ) );
+
+    $::Role->set_constructor( $::Method->new(
+        name => 'BUILD',
+        body => sub {
+            my $v = $::SELF->get_version;
+            $::SELF->set_version(version->parse($v))
+                if defined $v;
+        },
+    ) );
+
+    ## TODO NOTES:
+    # so if we were to leave out the marked class attributes
+    # and methods and then once we reach this spot, compose
+    # Role into Class, then the result would be:
+    #    - Class does Role
+    #    - Role isa Class
+    #    - therefore Role does Role
+    # in order to accomplish this the composition logic
+    # needs to live in Role, but will be merged into Class
+    # at which point Class can do it too.
+
+    # Role needs two methods for composition:
+    #   - compose( Role $role )
+    #   - merge( Array[Roles] @roles )
+    # because compose will expect something that
+    # does Role, and Class does Role, the method
+    # should work polymophically.
 
     ## --------------------------------
     ## UNIVERSAL methods
