@@ -7,5 +7,48 @@ use Test::More;
 
 use mop;
 
+=pod
+
+role Foo {
+    has $bar = 'bar';
+    method bar { $bar }
+}
+
+role Baz ( with => Foo ) {
+    method baz { join ", "  => $self->bar, 'baz' }
+}
+
+=cut
+
+my $Foo = $::Role->new(
+    attributes => {
+        '$bar' => $::Attribute->new( name => '$bar', initial_value => \'bar' )
+    },
+    methods => {
+        'bar' => $::Method->new( name => 'bar', body => sub { mop::internal::instance::get_data_for('$bar') } )
+    }
+);
+
+my $Baz = $::Role->new(
+    methods => {
+        'baz' => $::Method->new( name => 'baz', body => sub { join ", "  => $::SELF->bar, 'baz' } )
+    }
+);
+
+$Baz->COMPOSE( $Foo );
+
+ok( $Baz->does_role( $Foo ), '... Baz does the Foo role');
+
+my $bar_method = $Baz->find_method('bar');
+ok( $bar_method->isa( $::Method ), '... got a method object' );
+is( $bar_method->get_name, 'bar', '... got the method we expected' );
+
+my $bar_attribute = $Baz->find_attribute('$bar');
+ok( $bar_attribute->isa( $::Attribute ), '... got an attribute object' );
+is( $bar_attribute->get_name, '$bar', '... got the attribute we expected' );
+
+my $baz_method = $Baz->find_method('baz');
+ok( $baz_method->isa( $::Method ), '... got a method object' );
+is( $baz_method->get_name, 'baz', '... got the method we expected' );
 
 done_testing;
