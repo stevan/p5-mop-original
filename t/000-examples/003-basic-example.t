@@ -60,4 +60,7 @@ is(mop::class_of(Comparable), $::Role);
 is(mop::class_of(Printable), $::Role);
 is(mop::class_of(US::Currency), $::Class);
 
+ok(Eq->find_method('equal_to')->is_stub);
+ok(!Eq->find_method('not_equal_to')->is_stub);
+
 done_testing;

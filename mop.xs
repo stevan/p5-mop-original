@@ -405,7 +405,7 @@ static OP *parse_method(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 {
     I32 floor;
     SV *method_name = NULL;
-    OP *arg_assign = NULL, *block, *code;
+    OP *arg_assign = NULL, *block, *code = NULL;
 
     *flagsp |= CALLPARSER_STATEMENT;
 
@@ -421,17 +421,21 @@ static OP *parse_method(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
         arg_assign = parse_method_prototype();
     }
 
-    demand_unichar('{', DEMAND_NOCONSUME);
+    lex_read_space(0);
+    if (lex_peek_unichar(0) == '{') {
+        block = parse_block(0);
 
-    block = parse_block(0);
+        if (arg_assign) {
+            block = op_prepend_elem(OP_LINESEQ,
+                                    newSTATEOP(0, NULL, arg_assign),
+                                    block);
+        }
 
-    if (arg_assign) {
-        block = op_prepend_elem(OP_LINESEQ,
-	                        newSTATEOP(0, NULL, arg_assign),
-	                        block);
+        code = newANONSUB(floor, NULL, block);
     }
-
-    code = newANONSUB(floor, NULL, block);
+    else {
+        newANONSUB(floor, NULL, newOP(OP_NULL, 0));
+    }
 
     if (SvTRUE(psobj)) {
         SvREFCNT_inc(method_name);
