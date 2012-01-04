@@ -442,6 +442,11 @@ sub init {
             });
         },
     ) );
+    # just a stub for now
+    $::Role->add_method( $::Method->new(
+        name => 'FINALIZE',
+        body => sub { },
+    ) );
 
     ## check metaclass compat in Class->BUILD
     $::Class->add_method( $::Method->new(
