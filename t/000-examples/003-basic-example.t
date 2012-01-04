@@ -55,4 +55,9 @@ class US::Currency ( with => [ Comparable, Printable ] ) {
     }
 }
 
+is(mop::class_of(Eq), $::Role);
+is(mop::class_of(Comparable), $::Role);
+is(mop::class_of(Printable), $::Role);
+is(mop::class_of(US::Currency), $::Class);
+
 done_testing;
