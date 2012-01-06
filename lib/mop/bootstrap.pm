@@ -418,6 +418,12 @@ sub init {
     $::Class->add_method( $::Method->new(
         name => 'FINALIZE',
         body => sub {
+
+            # compose roles if you got 'em
+            foreach my $role ( @{ $::SELF->get_roles } ) {
+                $role->compose_into( $::SELF );
+            }
+
             my $stash      = mop::internal::get_stash_for( $::SELF );
             my $dispatcher = $::SELF->get_dispatcher;
 
