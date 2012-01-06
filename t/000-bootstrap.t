@@ -11,6 +11,7 @@ ok $::Class,     '... we have the class Class';
 ok $::Object,    '... we have the class Object';
 ok $::Method,    '... we have the class Method';
 ok $::Attribute, '... we have the class Attribute';
+ok $::Role,      '... we have the class Role';
 
 # check the simple bootstrapped knot tie-ing
 
@@ -28,6 +29,14 @@ ok !$::Object->is_subclass_of( $::Class ), '... class Object is not a subclass o
 
 ok $::Object->isa( $::Object ), '... class Object is-a Object';
 ok $::Object->isa( $::Class ), '... class Object is-a Class';
+
+# check the role bootstrap knot tie-ing
+
+is mop::class_of( $::Object ), $::Class, '... the class of Role is Class';
+ok $::Role->isa( $::Class ), '... class Role is a Class';
+
+ok $::Class->does_role( $::Role ), '... class Class does class Role';
+ok $::Role->does( $::Role ), '... class Role does class Role';
 
 # check the other elements
 
@@ -140,5 +149,30 @@ foreach my $attribute ( values %{ $::Attribute->get_all_attributes } ) {
     ok $attribute->isa( $::Attribute ), '... attribute (' . $attribute->get_name . ') of class Attribute is an Attribute object';
     is $::Attribute->find_attribute( $attribute->get_name ), $attribute, '... found the attribute too';
 }
+
+is $::Role->get_name, 'Role', '... got the right name';
+is $::Role->get_version, '0.01', '... got the right version';
+is $::Role->get_authority, 'cpan:STEVAN', '... got the right authority';
+is $::Role->get_superclass, $::Object, '... got the right superclass';
+is_deeply $::Role->get_mro, [ $::Role, $::Object ], '... got the right mro';
+
+{
+    my @mro = @{ $::Role->get_mro };
+    is((shift @mro), $::Role, '... we are the first entry in our mro');
+    foreach my $super ( @mro ) {
+        ok $::Role->is_subclass_of( $super ), '... we are a subclass of class (' . $super->get_name . ')';
+    }
+}
+
+foreach my $method ( values %{ $::Role->get_all_methods } ) {
+    ok $method->isa( $::Method ), '... method (' . $method->get_name . ') of class Role is a Method object';
+    is $::Role->find_method( $method->get_name ), $method, '... found the method too';
+}
+
+foreach my $attribute ( values %{ $::Role->get_all_attributes } ) {
+    ok $attribute->isa( $::Attribute ), '... attribute (' . $attribute->get_name . ') of class Role is an Attribute object';
+    is $::Role->find_attribute( $attribute->get_name ), $attribute, '... found the attribute too';
+}
+
 
 done_testing;
