@@ -110,6 +110,10 @@ sub build_class {
             if defined $compatible;
     }
 
+    if ( my $roles = delete $metadata{ 'with' } ) {
+        $metadata{ 'roles' } = ref $roles eq 'ARRAY' ? $roles : [ $roles ];
+    }
+
     $class_Class->new(
         name => ($caller eq 'main' ? $name : "${caller}::${name}"),
         %metadata
