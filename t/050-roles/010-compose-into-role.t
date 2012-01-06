@@ -16,9 +16,6 @@ role Baz ( with => Foo ) {
     method baz { join ", "  => $self->bar, 'baz' }
 }
 
-# XXX this should happen automatically when (with => Foo) is specified
-Baz->COMPOSE( Foo );
-
 ok( Baz->does_role( Foo ), '... Baz does the Foo role');
 
 my $bar_method = Baz->find_method('bar');

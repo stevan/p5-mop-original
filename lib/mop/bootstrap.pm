@@ -443,11 +443,6 @@ sub init {
             });
         },
     ) );
-    # just a stub for now
-    $::Role->add_method( $::Method->new(
-        name => 'FINALIZE',
-        body => sub { },
-    ) );
 
     ## check metaclass compat in Class->BUILD
     $::Class->add_method( $::Method->new(
@@ -562,15 +557,9 @@ sub init {
     ) );
 
     $::Role->add_method( $::Method->new(
-        name => 'COMPOSE',
+        name => 'compose',
         body => sub {
             my $other = shift;
-
-            # TODO:
-            # if $other is an array-ref of roles, then
-            # merge them all first, then proceed with the
-            # resulting composite role as $other
-            # - SL
 
             foreach my $attribute_name ( keys %{ $other->get_all_attributes } ) {
                 die "Attribute conflict found for '$attribute_name'"
@@ -582,9 +571,17 @@ sub init {
                 $::SELF->add_method( $other->find_method( $method_name ) )
                     unless $::SELF->find_method( $method_name );
             }
-
-            push @{ $::SELF->get_roles } => $other;
         }
+    ) );
+
+    # just a stub for now
+    $::Role->add_method( $::Method->new(
+        name => 'FINALIZE',
+        body => sub {
+            foreach my $role ( @{ $::SELF->get_roles } ) {
+                $::SELF->compose( $role );
+            }
+        },
     ) );
 
     ## TODO NOTES:
