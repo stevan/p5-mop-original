@@ -334,13 +334,13 @@ sub init {
     ## ------------------------------------------
 
     ## accessors
-    $::Class->add_method( $::Method->new( name => 'attribute_class',   body => sub { $::Attribute } ) ); # FIXME: can come from Role
-    $::Class->add_method( $::Method->new( name => 'method_class',      body => sub { $::Method    } ) ); # FIXME: can come from Role
+    #$::Class->add_method( $::Method->new( name => 'attribute_class',   body => sub { $::Attribute } ) ); # FIXME: can come from Role
+    #$::Class->add_method( $::Method->new( name => 'method_class',      body => sub { $::Method    } ) ); # FIXME: can come from Role
     $::Class->add_method( $::Method->new( name => 'base_object_class', body => sub { $::Object    } ) );
 
-    $::Class->add_method( $::Method->new( name => 'get_name',          body => $reader->( '$name' )       ) ); # FIXME: can come from Role
-    $::Class->add_method( $::Method->new( name => 'get_version',       body => $reader->( '$version' )    ) ); # FIXME: can come from Role
-    $::Class->add_method( $::Method->new( name => 'get_authority',     body => $reader->( '$authority' )  ) ); # FIXME: can come from Role
+    #$::Class->add_method( $::Method->new( name => 'get_name',          body => $reader->( '$name' )       ) ); # FIXME: can come from Role
+    #$::Class->add_method( $::Method->new( name => 'get_version',       body => $reader->( '$version' )    ) ); # FIXME: can come from Role
+    #$::Class->add_method( $::Method->new( name => 'get_authority',     body => $reader->( '$authority' )  ) ); # FIXME: can come from Role
     $::Class->add_method( $::Method->new( name => 'get_local_methods', body => $reader->( '$methods' )    ) );
     $::Class->add_method( $::Method->new( name => 'get_destructor',    body => $reader->( '$destructor' ) ) );
 
@@ -372,7 +372,7 @@ sub init {
 
 
     ## mutators
-    $::Class->add_method( $::Method->new( name => 'set_version',     body => $writer->( '$version' )     ) ); # FIXME: can come from Role
+    #$::Class->add_method( $::Method->new( name => 'set_version',     body => $writer->( '$version' )     ) ); # FIXME: can come from Role
     $::Class->add_method( $::Method->new( name => 'set_constructor', body => $writer->( '$constructor' ) ) );
     $::Class->add_method( $::Method->new( name => 'set_destructor',  body => $writer->( '$destructor'  ) ) );
     $::Class->add_method( $::Method->new( name => 'set_superclass',  body => $writer->( '$superclass'  ) ) );
@@ -395,13 +395,13 @@ sub init {
     $::Attribute->add_method( $::Method->find_method('clone')->clone );
 
     ## predicate methods for Class
-    $::Class->add_method( $::Method->new(
-        name => 'equals',
-        body => sub {
-            my $other = shift;
-            return mop::internal::instance::get_uuid( $::SELF ) eq mop::internal::instance::get_uuid( $other );
-        },
-    ) ); # FIXME: can come from Role
+    #$::Class->add_method( $::Method->new(
+    #    name => 'equals',
+    #    body => sub {
+    #        my $other = shift;
+    #        return mop::internal::instance::get_uuid( $::SELF ) eq mop::internal::instance::get_uuid( $other );
+    #    },
+    #) ); # FIXME: can come from Role
 
 
     $::Class->add_method( $::Method->new(
@@ -482,12 +482,12 @@ sub init {
     ) );
 
     ## add in the attributes
-    $::Class->add_attribute( $::Attribute->new( name => '$name',        initial_value => \(my $class_name)      ) ); # FIXME: can come from Role
-    $::Class->add_attribute( $::Attribute->new( name => '$version',     initial_value => \(my $class_version)   ) ); # FIXME: can come from Role
-    $::Class->add_attribute( $::Attribute->new( name => '$authority',   initial_value => \(my $class_authority) ) ); # FIXME: can come from Role
+    #$::Class->add_attribute( $::Attribute->new( name => '$name',        initial_value => \(my $class_name)      ) ); # FIXME: can come from Role
+    #$::Class->add_attribute( $::Attribute->new( name => '$version',     initial_value => \(my $class_version)   ) ); # FIXME: can come from Role
+    #$::Class->add_attribute( $::Attribute->new( name => '$authority',   initial_value => \(my $class_authority) ) ); # FIXME: can come from Role
     $::Class->add_attribute( $::Attribute->new( name => '$superclass',  initial_value => \(my $superclass)      ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$attributes',  initial_value => \sub { +{} }           ) ); # FIXME: can come from Role
-    $::Class->add_attribute( $::Attribute->new( name => '$methods',     initial_value => \sub { +{} }           ) ); # FIXME: can come from Role
+    #$::Class->add_attribute( $::Attribute->new( name => '$attributes',  initial_value => \sub { +{} }           ) ); # FIXME: can come from Role
+    #$::Class->add_attribute( $::Attribute->new( name => '$methods',     initial_value => \sub { +{} }           ) ); # FIXME: can come from Role
     $::Class->add_attribute( $::Attribute->new( name => '$constructor', initial_value => \(my $constructor)     ) );
     $::Class->add_attribute( $::Attribute->new( name => '$destructor',  initial_value => \(my $destructor)      ) );
 
@@ -556,22 +556,24 @@ sub init {
         },
     ) );
 
-    $::Role->add_method( $::Method->new(
-        name => 'compose',
-        body => sub {
-            my $other = shift;
+    my $compose_into = sub {
+        my $other = shift;
 
-            foreach my $attribute_name ( keys %{ $other->get_all_attributes } ) {
-                die "Attribute conflict found for '$attribute_name'"
-                    if $::SELF->find_attribute( $attribute_name );
-                $::SELF->add_attribute( $other->find_attribute( $attribute_name ) );
-            }
-
-            foreach my $method_name ( keys %{ $other->get_all_methods } ) {
-                $::SELF->add_method( $other->find_method( $method_name ) )
-                    unless $::SELF->find_method( $method_name );
-            }
+        foreach my $attribute_name ( keys %{ $::SELF->get_all_attributes } ) {
+            die "Attribute conflict found for '$attribute_name'"
+                if $other->find_attribute( $attribute_name );
+            $other->add_attribute( $::SELF->find_attribute( $attribute_name ) );
         }
+
+        foreach my $method_name ( keys %{ $::SELF->get_all_methods } ) {
+            $other->add_method( $::SELF->find_method( $method_name ) )
+                unless $other->find_method( $method_name );
+        }
+    };
+
+    $::Role->add_method( $::Method->new(
+        name => 'compose_into',
+        body => $compose_into
     ) );
 
     # just a stub for now
@@ -579,10 +581,16 @@ sub init {
         name => 'FINALIZE',
         body => sub {
             foreach my $role ( @{ $::SELF->get_roles } ) {
-                $::SELF->compose( $role );
+                $role->compose_into( $::SELF );
             }
         },
     ) );
+
+    {
+        local $::SELF = $::Role;
+        $compose_into->( $::Class );
+        mop::internal::instance::set_slot_at( $::Class, '$roles', \[ $::Role ] );
+    }
 
     ## TODO NOTES:
     # so if we were to leave out the marked class attributes
