@@ -547,7 +547,7 @@ sub init {
             foreach ( @{ $::SELF->get_roles } ) {
                 return 1
                     if $_->equals( $role )
-                    || $role->does_role( $_ );
+                    || $_->does_role( $role );
             }
             return 0;
         }
