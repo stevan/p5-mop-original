@@ -624,6 +624,7 @@ sub init {
     # overloading doesn't currently work with anonymous packages
     $::Object->add_method( $::Method->new( name => 'can',  body => sub { my $m = $::CLASS->find_method( $_[0] ); $m ? sub { $m->execute( @_ ) } : () } ) );
     $::Object->add_method( $::Method->new( name => 'DOES',  body => sub { $::SELF->isa( @_ ) } ) );
+    $::Object->add_method( $::Method->new( name => 'does',  body => sub { $::CLASS->does_role( @_ ) } ) );
 
     # VERSION is really a class method
     # XXX this logic is not nearly right, it should really use the logic
