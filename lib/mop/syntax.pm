@@ -125,6 +125,10 @@ sub build_role {
         $class_Role = delete $metadata{ 'metaclass' };
     }
 
+    if ( my $roles = delete $metadata{ 'with' } ) {
+        $metadata{ 'roles' } = ref $roles eq 'ARRAY' ? $roles : [ $roles ];
+    }
+
     $class_Role->new(
         name => ($caller eq 'main' ? $name : "${caller}::${name}"),
         %metadata
@@ -143,8 +147,14 @@ sub finalize_class {
 }
 
 sub finalize_role {
-    # these can be the same for now
-    finalize_class(@_);
+    my ($name, $role, $caller) = @_;
+
+    $role->FINALIZE;
+
+    {
+        no strict 'refs';
+        *{"${caller}::${name}"} = Sub::Name::subname( $name, sub () { $role } );
+    }
 }
 
 1;
