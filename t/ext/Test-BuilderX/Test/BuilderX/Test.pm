@@ -3,17 +3,12 @@ use strict;
 use warnings;
 use mop;
 
-class Base {
+role Base {
 
     has $passed;
-    has $number;
-    has $diagnostic;
+    has $number     = 0;
+    has $diagnostic = '???';
     has $description;
-
-    BUILD {
-        $number     //= 0;
-        $diagnostic //= '???';
-    }
 
     method passed      { $passed      }
     method number      { $number      }
@@ -31,35 +26,37 @@ class Base {
     }
 }
 
-class Pass ( extends => Base ) {}
-class Fail ( extends => Base ) {}
+class Pass ( with => Base ) {}
+class Fail ( with => Base ) {}
 
-class WithReason ( extends => Base ) {
+role WithReason ( with => Base ) {
     has $reason;
 
     method reason { $reason }
 
     method status {
-        my $status = super;
+        # FIXME
+        my $status = Base->find_method('status')->execute( $self );
         $status->{'reason'} = $reason;
         $status;
     }
 }
 
-class Skip ( extends => WithReason ) {
+class Skip ( with => WithReason ) {
 
     method report {
         return "not ok " . $self->number . " #skip " . $self->reason;
     }
 
     method status {
-        my $status = super;
+        # FIXME
+        my $status = WithReason->find_method('status')->execute( $self );
         $status->{'skip'} = 1;
         $status;
     }
 }
 
-class TODO ( extends => WithReason ) {
+class TODO ( with => WithReason ) {
 
     method report {
         my $ok          = $self->passed ? 'ok' : 'not ok';
@@ -68,7 +65,8 @@ class TODO ( extends => WithReason ) {
     }
 
     method status {
-        my $status = super;
+        # FIXME
+        my $status = WithReason->find_method('status')->execute( $self );
         $status->{'TODO'}          = 1;
         $status->{'passed'}        = 1;
         $status->{'really_passed'} = $self->passed;
