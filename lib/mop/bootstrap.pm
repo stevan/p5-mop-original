@@ -571,6 +571,12 @@ sub init {
             $other->add_attribute( $::SELF->find_attribute( $attribute_name ) );
         }
 
+        # TODO:
+        # check for stub methods and
+        # makes sure they are implemented
+        # especially if this is a class
+        # - SL
+
         foreach my $method_name ( keys %{ $::SELF->get_all_methods } ) {
             $other->add_method( $::SELF->find_method( $method_name ) )
                 unless $other->find_method( $method_name );
@@ -592,6 +598,9 @@ sub init {
         },
     ) );
 
+    # FIXME
+    # this is an ugly hack
+    # - SL
     {
         local $::SELF = $::Role;
         $compose_into->( $::Class );
