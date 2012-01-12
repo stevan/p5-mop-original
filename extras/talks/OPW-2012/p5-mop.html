@@ -240,6 +240,53 @@ The Future
         }
     }
 ----
+// we also have roles, horray!
+// - methods with no body are 'required' methods
+    role Eq {
+        method equal_to;
+
+        method not_equal_to ($other) {
+            not $self->equal_to($other);
+        }
+    }
+----
+// roles can consume other roles ...
+    role Comparable ( with => Eq ) {
+        method compare;
+
+        method equal_to ($other) {
+            $self->compare($other) == 0
+        }
+
+        method greater_than ($other) {
+            $self->compare($other) == 1
+        }
+
+        method less_than ($other) {
+            $self->compare($other) == -1
+        }
+    }
+----
+// roles can be just interfaces too
+    role Printable {
+        method to_string;
+    }
+----
+// classes can consume roles (more then one if they want)
+    class US::Currency ( with => [ Comparable, Printable ] ) {
+        has $amount = 0;
+
+        method amount { $amount }
+
+        method compare ($other) {
+            $amount <=> $other->amount
+        }
+
+        method to_string {
+            sprintf '$%0.2f USD' => $amount
+        }
+    }
+----
 // NOTE:
 // - spelling errors on slots are compile time errors
 //    - similar to inside-out objects, but less cumbersome
