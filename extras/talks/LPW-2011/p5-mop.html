@@ -29,7 +29,7 @@ by Jesse Vincent
 &gt;&gt; !! &lt;&lt;
 </div>
 <div class="slide">
-    <img src="../core/images/rjbs.png" height="100%" />
+    <img src="images/rjbs.png" height="100%" />
 </div>
 <div class="multislide">
 // but thankfully, ric is
@@ -213,7 +213,7 @@ The Future
 
         method withdraw ($amount) {
             die "Account overdrawn"
-                if ($balance >= $amount);
+                if ($balance <= $amount);
             $balance -= $amount;
         }
     }
