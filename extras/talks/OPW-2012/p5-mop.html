@@ -213,7 +213,7 @@ The Future
 
         method withdraw ($amount) {
             die "Account overdrawn"
-                if ($balance >= $amount);
+                if ($balance <= $amount);
             $balance -= $amount;
         }
     }
@@ -274,9 +274,7 @@ The Future
 ----
 // classes can consume roles (more then one if they want)
     class US::Currency ( with => [ Comparable, Printable ] ) {
-        has $amount = 0;
-
-        method amount { $amount }
+        has $amount ( is => 'rw' )= 0;
 
         method compare ($other) {
             $amount <=> $other->amount

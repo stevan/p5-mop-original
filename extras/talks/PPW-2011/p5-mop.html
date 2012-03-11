@@ -196,7 +196,7 @@ The Future
 
         method withdraw ($amount) {
             die "Account overdrawn"
-                if ($balance >= $amount);
+                if ($balance <= $amount);
             $balance -= $amount;
         }
     }
