@@ -66,7 +66,7 @@ The second problem is with how inheritance is dispatched. The
 magical C<@ISA> variable is expected to contain a string which
 represents a package name. That package name is then looked up
 internally and the same local package dispatching rules are
-then applied. No only does this open up the possibility of
+then applied. Not only does this open up the possibility of
 "typo as bug", but because the C<@ISA> variable must be declared
 with C<our> it is not private to the package and therefore
 is exposed to outside code. Of course this is considered "rude"
