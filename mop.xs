@@ -305,7 +305,7 @@ static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
         demand_unichar('=', 0);
         lex_read_space(0);
         floor = start_subparse(0, CVf_ANON);
-        attr_default = newANONSUB(floor, NULL, parse_termexpr(0));
+        attr_default = newANONSUB(floor, NULL, parse_arithexpr(0));
     }
 
     pad_op = newOP(OP_PADSV, (OPpLVAL_INTRO<<8)|OPf_PARENS|OPf_WANT_LIST);
