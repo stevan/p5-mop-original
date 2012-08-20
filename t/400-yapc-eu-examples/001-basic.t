@@ -15,15 +15,18 @@ package MyApp::IO {
     use strict;
     use warnings;
     use mop;
+    use Fun;
+    # use GuardedAttributeRole;
+    # use Perl6::Junctions;
 
-    role HasFilenameAndMode {
-        has $mode;
-        has $filename;
+    role FileInfo { # (metaclass => GuardedAttributeRole) {
+        has $mode     ;# ( guard => fun ($m) { $m eq any('r', 'w') } );
+        has $filename ;# ( guard => fun ($m) { defined $m } );
         method mode     { $mode     }
         method filename { $filename }
     }
 
-    class FileHandle ( with => HasFilenameAndMode ) {
+    class FileHandle ( with => FileInfo ) {
         has $fh;
 
         BUILD ($params) {
@@ -60,13 +63,13 @@ package MyApp::IO {
 
         use Throwable;
 
-        class FileNotFound ( extends => Throwable, with => MyApp::IO::HasFilenameAndMode ) {
+        class FileNotFound ( extends => Throwable, with => MyApp::IO::FileInfo ) {
             method format_message ( $message ) {
                 "File '" . $self->filename . "' not found" . ($message ? ": $message" : '')
             }
         }
 
-        class PermissionsError ( extends => Throwable, with => MyApp::IO::HasFilenameAndMode ) {
+        class PermissionsError ( extends => Throwable, with => MyApp::IO::FileInfo ) {
             method format_message ( $message ) {
                 my $type = do {
                     given ($self->mode ) {
