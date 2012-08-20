@@ -9,6 +9,8 @@ class GuardedAttribute (extends => $::Attribute) {
     method guard { $guard }
 }
 
+# TODO: GuardedAttributeRole
+
 class GuardedAttributeClass (extends => $::Class) {
 
     method attribute_class { GuardedAttribute }

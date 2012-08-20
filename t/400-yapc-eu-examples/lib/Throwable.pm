@@ -6,7 +6,7 @@ use Devel::StackTrace;
 
 class Throwable {
 
-    has $message     = '';
+    has $message     = 'Error';
     has $stack_trace = Devel::StackTrace->new(
         frame_filter => sub {
             $_[0]->{'caller'}->[3] !~ /^mop\:\:/ &&
