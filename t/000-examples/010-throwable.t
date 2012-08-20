@@ -41,6 +41,8 @@ is( $e->message, 'HELLO', '... got the exception' );
 isa_ok( $e->stack_trace, 'Devel::StackTrace' );
 
 my $file = __FILE__;
+$file =~ s/^\.\///;
+
 is(
     $e->stack_trace->as_string,
     qq[Trace begun at $file line 32
