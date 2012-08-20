@@ -12,21 +12,9 @@ BEGIN {
 
 use mop;
 
-class Throwable {
+use lib 't/lib';
 
-    has $message     = '';
-    has $stack_trace = Devel::StackTrace->new(
-        frame_filter => sub {
-            $_[0]->{'caller'}->[3] !~ /^mop\:\:/ &&
-            $_[0]->{'caller'}->[0] !~ /^mop\:\:/
-        }
-    );
-
-    method message     { $message     }
-    method stack_trace { $stack_trace }
-    method throw       { die $self    }
-    method as_string   { $message . "\n\n" . $stack_trace->as_string }
-}
+use Throwable;
 
 sub foo { Throwable->new( message => "HELLO" )->throw }
 sub bar { foo() }
@@ -41,11 +29,13 @@ is( $e->message, 'HELLO', '... got the exception' );
 isa_ok( $e->stack_trace, 'Devel::StackTrace' );
 
 my $file = __FILE__;
+$file =~ s/^\.\///;
+
 is(
     $e->stack_trace->as_string,
-    qq[Trace begun at $file line 32
-main::bar at $file line 34
-eval {...} at $file line 34
+    qq[Trace begun at $file line 20
+main::bar at $file line 22
+eval {...} at $file line 22
 ],
     '... got the exception'
 );
