@@ -12,7 +12,7 @@ BEGIN {
 
 use mop;
 
-use lib 't/lib';
+use lib 't/400-yapc-eu-examples/lib/';
 
 use Throwable;
 
