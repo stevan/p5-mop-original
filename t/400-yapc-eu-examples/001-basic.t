@@ -63,13 +63,13 @@ package MyApp::IO {
 
         use Throwable;
 
-        class FileNotFound ( extends => Throwable, with => MyApp::IO::FileInfo ) {
+        class FileNotFound ( with => [Throwable, MyApp::IO::FileInfo] ) {
             method format_message ( $message ) {
                 "File '" . $self->filename . "' not found" . ($message ? ": $message" : '')
             }
         }
 
-        class PermissionsError ( extends => Throwable, with => MyApp::IO::FileInfo ) {
+        class PermissionsError ( with => [Throwable, MyApp::IO::FileInfo] ) {
             method format_message ( $message ) {
                 my $type = do {
                     given ($self->mode ) {

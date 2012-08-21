@@ -16,13 +16,16 @@ use lib 't/400-yapc-eu-examples/lib/';
 
 use Throwable;
 
-sub foo { Throwable->new( message => "HELLO" )->throw }
+class MyError ( with => Throwable ) {}
+
+sub foo { MyError->new( message => "HELLO" )->throw }
 sub bar { foo() }
 
 eval { bar };
 my $e = $@;
 
-ok( $e->isa( Throwable ), '... the exception is a Throwable object' );
+ok( $e->does( Throwable ), '... the exception does the Throwable role' );
+ok( $e->isa( MyError ), '... the exception is a MyError object' );
 
 is( $e->message, 'HELLO', '... got the exception' );
 
@@ -33,9 +36,9 @@ $file =~ s/^\.\///;
 
 is(
     $e->stack_trace->as_string,
-    qq[Trace begun at $file line 20
-main::bar at $file line 22
-eval {...} at $file line 22
+    qq[Trace begun at $file line 22
+main::bar at $file line 24
+eval {...} at $file line 24
 ],
     '... got the exception'
 );

@@ -4,7 +4,7 @@ use mop;
 
 use Devel::StackTrace;
 
-class Throwable {
+role Throwable {
 
     has $message     = 'Error';
     has $stack_trace = Devel::StackTrace->new(
