@@ -27,6 +27,8 @@ class GuardedAttributeClass (extends => $::Class) {
                 warn Dumper [ $attr_name, $guard, $data ];
             }
         }
+
+        $instance;
     }
 }
 
