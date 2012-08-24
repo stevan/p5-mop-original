@@ -283,6 +283,12 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     return newOP(OP_NULL, 0);
 }
 
+static OP *check_class(pTHX_ OP *entersubop, GV *namegv, SV *ckobj)
+{
+    op_free(entersubop);
+    return newOP(OP_NULL, 0);
+}
+
 static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 {
     SV *name;
@@ -501,6 +507,7 @@ PROTOTYPES: DISABLE
 BOOT:
 {
     cv_set_call_parser(get_cv("mop::syntax::class", 0), parse_class, &PL_sv_undef);
+    cv_set_call_checker(get_cv("mop::syntax::class", 0), check_class, &PL_sv_undef);
     cv_set_call_parser(get_cv("mop::syntax::has", 0), parse_has, &PL_sv_undef);
     cv_set_call_parser(get_cv("mop::syntax::method", 0), parse_method, &PL_sv_yes);
     cv_set_call_parser(get_cv("mop::syntax::BUILD", 0), parse_method, &PL_sv_no);
