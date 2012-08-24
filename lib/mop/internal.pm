@@ -9,8 +9,10 @@ our $AUTHORITY = 'cpan:STEVAN';
 
 use mop::internal::instance;
 
+use overload ();
 use Package::Anon;
 use PadWalker ();
+use Scalar::Util ();
 use Scope::Guard 'guard';
 use version ();
 
@@ -77,13 +79,43 @@ sub create_method {
 
 ## ...
 
+sub _apply_overloading {
+    my ($stash) = @_;
+
+    # enable overloading
+    {
+        no strict 'refs';
+        local *__ANON__ = $stash;
+        *{ "__ANON__::OVERLOAD" }{HASH}->{dummy}++;
+    }
+    $stash->add_method('()' => \&overload::nil);
+
+    # fallback => 1
+    *{ $stash->{'()'} } = \1;
+
+    # overloaded operations
+    $stash->add_method('(bool' => sub { 1 });
+    $stash->add_method('(~~' => sub {
+        my $self = shift;
+        my ($other) = @_;
+        return $other->DOES($self);
+    });
+    $stash->add_method('(""' => sub { overload::StrVal($_[0]) });
+    $stash->add_method('(0+' => sub { Scalar::Util::refaddr($_[0]) });
+}
+
+sub create_stash_for {
+    my ($class) = @_;
+    my $stash = Package::Anon->new( mop::internal::instance::get_slot_at( $class, '$name' ) );
+    _apply_overloading($stash);
+    return $stash;
+}
 
 sub get_stash_for {
     state $VTABLES = {};
     my $class = shift;
     my $uuid  = mop::internal::instance::get_uuid( $class );
-    $VTABLES->{ $uuid } //= Package::Anon->new( mop::internal::instance::get_slot_at( $class, '$name' ) );
-    return $VTABLES->{ $uuid };
+    $VTABLES->{ $uuid } //= create_stash_for( $class );
 }
 
 sub execute_method {
