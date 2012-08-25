@@ -628,24 +628,6 @@ Below is an illustration of goal of the bootstrapping process
 defined in the pr-5mop syntax itself. This is purely for
 illustrative purposes and it not meant to be executable.
 
-  # maybe?
-  role HasComponent[$type, $name] (metaclass => Role) {
-      $r->add_attribute('$' . $name . 's', default => sub { {} });
-
-      $r->add_method('get_local_' . $name . 's' => sub { ... });
-
-      $r->add_method($name . '_class'           => sub { $type });
-
-      $r->add_method('find_' . $name            => sub { ... });
-      $r->add_method('get_all_' . $name . 's'   => sub { ... });
-
-      $r->add_method('add_' . $name             => sub { ... });
-  }
-
-  class Class (with => [HasComponent(Method, 'method'), HasComponent(Attribute, 'attribute'], extends => Object) { }
-
-###########
-
   role HasMethods (metaclass => Role) {
       has $methods      = {};
 
@@ -672,61 +654,56 @@ illustrative purposes and it not meant to be executable.
       method add_attribute        ($attribute) { ... }
   }
 
-  role ClassPart (with => [HasMethods, HasAttributes], metaclass => Role) {
-      has $name;
-      has $version;
-      has $authority;
-
+  role HasRoles (metaclass => Role) {
       has $roles = [];
 
-      requires get_mro;
+      method get_local_roles      ()           { ... }
+      method get_all_roles        ()           { ... }
+  }
+
+  role HasName (metaclass => Role) {
+      has $name;
+
+      method get_name             ()           { ... }
+  }
+
+  role HasVersion (metaclass => Role) {
+      has $version;
+      has $authority;
 
       BUILD {
           # coerce $version to a version object
           ...
       }
 
-      method get_name             ()           { ... }
       method get_version          ()           { ... }
       method get_authority        ()           { ... }
 
-      method get_local_roles      ()           { ... }
-      method get_all_roles        ()           { ... }
-
-      method get_dispatcher       ($type)      { ... }
-
-      method equals               ($class)     { ... }
-
       method set_version          ($version)   { ... }
-
-      method FINALIZE             ()           { ... }
 
       method VERSION              ()           { ... }
   }
 
-  class Role (with => [ClassPart], extends => Object, metaclass => Class) {
+  # XXX handwavy
+  role HasRequiredMethods (metaclass => Role) {
       has $required_methods = {};
+  }
 
-      method get_mro              ()           { ... }
-
+  # XXX handwavy
+  role Composable (metaclass => Role) {
       method apply                ()           { ... }
   }
 
-  class Class (with => [ClassPart], extends => Object, metaclass => Class) {
+  role HasSuperclasses (metaclass => Role) {
       has $superclass;
-      has $constructor;
-      has $destructor;
 
       BUILD {
           # set default base object
           # metaclass compatibility checking
-          # validate roles
           ...
       }
 
       method get_superclass       ()           { ... }
-      method get_constructor      ()           { ... }
-      method get_destructor       ()           { ... }
 
       method base_object_class    ()           { ... }
 
@@ -734,13 +711,32 @@ illustrative purposes and it not meant to be executable.
       method is_subclass_of       ($class)     { ... }
 
       method set_superclass       ($class)     { ... }
+  }
+
+  role Instantiatable (metaclass => Role) {
+      has $constructor;
+      has $destructor;
+
+      method get_constructor      ()           { ... }
+      method get_destructor       ()           { ... }
       method set_constructor      ($method)    { ... }
       method set_destructor       ($method)    { ... }
 
-      method get_mro              ()           { ... }
-
       method create_instance      ($params)    { ... }
       method new                  (%params)    { ... }
+  }
+
+  role Dispatchable (metaclass => Role) {
+      method get_mro              ()           { ... }
+      method get_dispatcher       ($type)      { ... }
+  }
+
+  class Role (with => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion, HasRequiredMethods, Composable], extends => Object, metaclass => Class) {
+      method FINALIZE             ()           { ... }
+  }
+
+  class Class (with => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion, HasSuperclasses, Instantiatable, Dispatchable], extends => Object, metaclass => Class) {
+      method FINALIZE             ()           { ... }
   }
 
   class Object (metaclass => Class) {
