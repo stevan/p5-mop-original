@@ -30,8 +30,12 @@ BEGIN {
 
     # these are some of the classes that are also created
     # in the bootstrap and are part of the MOP
-    $::Method     = undef;
-    $::Attribute  = undef;
+    $::Method        = undef;
+    $::Attribute     = undef;
+    $::Role          = undef;
+    $::ClassPart     = undef;
+    $::HasMethods    = undef;
+    $::HasAttributes = undef;
 }
 
 use mop::bootstrap;
