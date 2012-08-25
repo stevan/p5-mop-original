@@ -628,60 +628,119 @@ Below is an illustration of goal of the bootstrapping process
 defined in the pr-5mop syntax itself. This is purely for
 illustrative purposes and it not meant to be executable.
 
-  class Class (extends => Object, metaclass => Class) {
+  # maybe?
+  role HasComponent[$type, $name] (metaclass => Role) {
+      $r->add_attribute('$' . $name . 's', default => sub { {} });
+
+      $r->add_method('get_local_' . $name . 's' => sub { ... });
+
+      $r->add_method($name . '_class'           => sub { $type });
+
+      $r->add_method('find_' . $name            => sub { ... });
+      $r->add_method('get_all_' . $name . 's'   => sub { ... });
+
+      $r->add_method('add_' . $name             => sub { ... });
+  }
+
+  class Class (with => [HasComponent(Method, 'method'), HasComponent(Attribute, 'attribute'], extends => Object) { }
+
+###########
+
+  role HasMethods (metaclass => Role) {
+      has $methods      = {};
+
+      method get_local_methods    ()           { ... }
+
+      method method_class         ()           { ... }
+
+      method find_method          ($name)      { ... }
+      method get_all_methods      ()           { ... }
+
+      method add_method           ($method)    { ... }
+  }
+
+  role HasAttributes (metaclass => Role) {
+      has $attributes   = {};
+
+      method get_local_attributes ()           { ... }
+
+      method attribute_class      ()           { ... }
+
+      method find_attribute       ($name)      { ... }
+      method get_all_attributes   ()           { ... }
+
+      method add_attribute        ($attribute) { ... }
+  }
+
+  role ClassPart (with => [HasMethods, HasAttributes], metaclass => Role) {
       has $name;
       has $version;
       has $authority;
-      has $superclass;
-      has $attributes   = {};
-      has $methods      = {};
-      has $constructor;
-      has $destructor;
+
+      has $roles = [];
+
+      requires get_mro;
 
       BUILD {
-          # set default base object
           # coerce $version to a version object
-          # metaclass compatibility checking
           ...
       }
 
       method get_name             ()           { ... }
       method get_version          ()           { ... }
       method get_authority        ()           { ... }
-      method get_superclass       ()           { ... }
-      method get_local_attributes ()           { ... }
-      method get_local_methods    ()           { ... }
-      method get_constructor      ()           { ... }
-      method get_destructor       ()           { ... }
 
-      method attribute_class      ()           { ... }
-      method method_class         ()           { ... }
-      method base_object_class    ()           { ... }
+      method get_local_roles      ()           { ... }
+      method get_all_roles        ()           { ... }
+
+      method get_dispatcher       ($type)      { ... }
 
       method equals               ($class)     { ... }
-      method find_attribute       ($name)      { ... }
-      method get_all_attributes   ()           { ... }
-      method find_method          ($name)      { ... }
-      method get_all_methods      ()           { ... }
-      method get_compatible_class ($class)     { ... }
-      method get_dispatcher       ($type)      { ... }
-      method get_mro              ()           { ... }
-      method is_subclass_of       ($class)     { ... }
-
-      method add_method           ($method)    { ... }
-      method add_attribute        ($attribute) { ... }
 
       method set_version          ($version)   { ... }
-      method set_superclass       ($class)     { ... }
-      method set_constructor      ($method)    { ... }
-      method set_destructor       ($method)    { ... }
-
-      method create_instance      ($params)    { ... }
-      method new                  (%params)    { ... }
 
       method FINALIZE             ()           { ... }
 
       method VERSION              ()           { ... }
+  }
+
+  class Role (with => [ClassPart], extends => Object, metaclass => Class) {
+      has $required_methods = {};
+
+      method get_mro              ()           { ... }
+
+      method apply                ()           { ... }
+  }
+
+  class Class (with => [ClassPart], extends => Object, metaclass => Class) {
+      has $superclass;
+      has $constructor;
+      has $destructor;
+
+      BUILD {
+          # set default base object
+          # metaclass compatibility checking
+          # validate roles
+          ...
+      }
+
+      method get_superclass       ()           { ... }
+      method get_constructor      ()           { ... }
+      method get_destructor       ()           { ... }
+
+      method base_object_class    ()           { ... }
+
+      method get_compatible_class ($class)     { ... }
+      method is_subclass_of       ($class)     { ... }
+
+      method set_superclass       ($class)     { ... }
+      method set_constructor      ($method)    { ... }
+      method set_destructor       ($method)    { ... }
+
+      method get_mro              ()           { ... }
+
+      method create_instance      ($params)    { ... }
+      method new                  (%params)    { ... }
   }
 
   class Object (metaclass => Class) {
