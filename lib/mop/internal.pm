@@ -16,6 +16,35 @@ use Scalar::Util ();
 use Scope::Guard 'guard';
 use version ();
 
+sub create_role {
+    my %params = @_;
+
+    my $class            = $params{'class'}            || die "A class must have a (meta) class";
+    my $name             = $params{'name'}             || die "A class must have a name";
+    my $version          = $params{'version'}          || undef;
+    my $authority        = $params{'authority'}        || '';
+    my $roles            = $params{'roles'}            || [];
+    my $attributes       = $params{'attributes'}       || {};
+    my $methods          = $params{'methods'}          || {};
+    my $required_methods = $params{'required_methods'} || {};
+
+    $version = version->parse($version)
+        if defined $version;
+
+    mop::internal::instance::create(
+        $class,
+        {
+            '$name'             => \$name,
+            '$version'          => \$version,
+            '$authority'        => \$authority,
+            '$roles'            => \$roles,
+            '$attributes'       => \$attributes,
+            '$methods'          => \$methods,
+            '$required_methods' => \$required_methods,
+        }
+    );
+}
+
 sub create_class {
     my %params = @_;
 
@@ -23,9 +52,10 @@ sub create_class {
     my $name        = $params{'name'}        || die "A class must have a name";
     my $version     = $params{'version'}     || undef;
     my $authority   = $params{'authority'}   || '';
-    my $superclass  = $params{'superclass'}  || undef;
+    my $roles       = $params{'roles'}       || [];
     my $attributes  = $params{'attributes'}  || {};
     my $methods     = $params{'methods'}     || {};
+    my $superclass  = $params{'superclass'}  || undef;
     my $constructor = $params{'constructor'} || undef;
     my $destructor  = $params{'destructor'}  || undef;
 
@@ -38,9 +68,10 @@ sub create_class {
             '$name'        => \$name,
             '$version'     => \$version,
             '$authority'   => \$authority,
-            '$superclass'  => \$superclass,
+            '$roles'       => \$roles,
             '$attributes'  => \$attributes,
             '$methods'     => \$methods,
+            '$superclass'  => \$superclass,
             '$constructor' => \$constructor,
             '$destructor'  => \$destructor,
         }
