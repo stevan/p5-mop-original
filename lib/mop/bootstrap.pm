@@ -18,11 +18,11 @@ sub init {
     ## Phase 1 : Construct the core classes
     ## ------------------------------------------
 
-    $::Class = mop::internal::create_class(
-        class      => \$::Class,
-        name       => 'Class',
-        version    => $VERSION,
-        authority  => $AUTHORITY,
+    $::HasMethods = mop::internal::create_role(
+        class     => \$::Role,
+        name      => 'HasMethods',
+        version   => $VERSION,
+        authority => $AUTHORITY,
         methods    => {
             'add_method' => mop::internal::create_method(
                 name => 'add_method',
@@ -42,6 +42,83 @@ sub init {
                 }
             )
         }
+    );
+
+    $::HasAttributes = mop::internal::create_role(
+        class     => \$::Role,
+        name      => 'HasAttributes',
+        version   => $VERSION,
+        authority => $AUTHORITY,
+    );
+
+    $::HasRoles = mop::internal::create_role(
+        class     => \$::Role,
+        name      => 'HasRoles',
+        version   => $VERSION,
+        authority => $AUTHORITY,
+    );
+
+    $::HasName = mop::internal::create_role(
+        class     => \$::Role,
+        name      => 'HasName',
+        version   => $VERSION,
+        authority => $AUTHORITY,
+    );
+
+    $::HasVersion = mop::internal::create_role(
+        class     => \$::Role,
+        name      => 'HasVersion',
+        version   => $VERSION,
+        authority => $AUTHORITY,
+    );
+
+    $::HasRequiredMethods = mop::internal::create_role(
+        class     => \$::Role,
+        name      => 'HasRequiredMethods',
+        version   => $VERSION,
+        authority => $AUTHORITY,
+    );
+
+    $::Composable = mop::internal::create_role(
+        class     => \$::Role,
+        name      => 'Composable',
+        version   => $VERSION,
+        authority => $AUTHORITY,
+    );
+
+    $::HasSuperclass = mop::internal::create_role(
+        class     => \$::Role,
+        name      => 'HasSuperclass',
+        version   => $VERSION,
+        authority => $AUTHORITY,
+    );
+
+    $::Instantiable = mop::internal::create_role(
+        class     => \$::Role,
+        name      => 'Instantiable',
+        version   => $VERSION,
+        authority => $AUTHORITY,
+    );
+
+    $::Dispatchable = mop::internal::create_role(
+        class     => \$::Role,
+        name      => 'Dispatchable',
+        version   => $VERSION,
+        authority => $AUTHORITY,
+    );
+
+    $::Role = mop::internal::create_class(
+        class     => \$::Class,
+        name      => 'Role',
+        version   => $VERSION,
+        authority => $AUTHORITY,
+    );
+
+    $::Class = mop::internal::create_class(
+        class      => \$::Class,
+        name       => 'Class',
+        version    => $VERSION,
+        authority  => $AUTHORITY,
     );
 
     $::Object = mop::internal::create_class(
@@ -83,7 +160,11 @@ sub init {
     ## Phase 2 : Tie the knot
     ## ------------------------------------------
 
+    mop::internal::instance::set_slot_at( $::Role, '$superclass', \$::Object );
+    mop::internal::instance::set_slot_at( $::Role, '$roles', \[$::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasRequiredMethods, $::Composable] );
+
     mop::internal::instance::set_slot_at( $::Class, '$superclass', \$::Object );
+    mop::internal::instance::set_slot_at( $::Class, '$roles', \[$::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasSuperclass, $::Instantiable, $::Dispatchable] );
 
     ## ------------------------------------------
     ## Phase 3 : Setup stashes
@@ -93,16 +174,32 @@ sub init {
     mop::internal::get_stash_for( $::Class )->bless( $::Class,     );
     mop::internal::get_stash_for( $::Class )->bless( $::Method,    );
     mop::internal::get_stash_for( $::Class )->bless( $::Attribute  );
+    mop::internal::get_stash_for( $::Class )->bless( $::Role       );
+
+    mop::internal::get_stash_for( $::Role  )->bless( $::HasMethods    );
+    mop::internal::get_stash_for( $::Role  )->bless( $::HasAttributes );
+    mop::internal::get_stash_for( $::Role  )->bless( $::HasRoles );
+    mop::internal::get_stash_for( $::Role  )->bless( $::HasName );
+    mop::internal::get_stash_for( $::Role  )->bless( $::HasVersion );
+    mop::internal::get_stash_for( $::Role  )->bless( $::HasRequiredMethods );
+    mop::internal::get_stash_for( $::Role  )->bless( $::Composable );
+    mop::internal::get_stash_for( $::Role  )->bless( $::HasSuperclass );
+    mop::internal::get_stash_for( $::Role  )->bless( $::Instantiable );
+    mop::internal::get_stash_for( $::Role  )->bless( $::Dispatchable );
 
     # make sure to manually add the
-    # add_method method to the Class
-    # stash. This still uses the
+    # add_method method to the Class and
+    # Role stashes. This still uses the
     # internal method execution, but
     # we will fix that in the final
     # phase of the bootstrap.
     {
-        my $method = mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'add_method'};
+        my $method = mop::internal::instance::get_slot_at( $::HasMethods, '$methods' )->{'add_method'};
         mop::internal::get_stash_for( $::Class )->add_method(
+            'add_method',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+        mop::internal::get_stash_for( $::Role )->add_method(
             'add_method',
             sub { mop::internal::execute_method( $method, @_ ) }
         );
@@ -140,7 +237,7 @@ sub init {
     };
 
     # this method is needed for Class->get_mro
-    $::Class->add_method(mop::internal::create_method(
+    $::HasSuperclass->add_method(mop::internal::create_method(
         name => 'get_superclass',
         body => $reader->( '$superclass' ),
     ));
@@ -158,7 +255,7 @@ sub init {
     ));
 
     # this method is needed for Class->create_instance
-    $::Class->add_method(mop::internal::create_method(
+    $::Dispatchable->add_method(mop::internal::create_method(
         name => 'get_mro',
         body => sub {
             my $super = $::SELF->get_superclass;
@@ -167,13 +264,13 @@ sub init {
     ));
 
     # this method is needed for Class->get_all_attributes
-    $::Class->add_method(mop::internal::create_method(
+    $::HasAttributes->add_method(mop::internal::create_method(
         name => 'get_local_attributes',
         body => $reader->( '$attributes' ),
     ));
 
     # this method is needed for Class->create_instance
-    $::Class->add_method(mop::internal::create_method(
+    $::HasAttributes->add_method(mop::internal::create_method(
         name => 'get_all_attributes',
         body => sub {
             my %attrs;
@@ -220,7 +317,7 @@ sub init {
     ));
 
     # this method is needed for Object->new
-    $::Class->add_method(mop::internal::create_method(
+    $::Instantiable->add_method(mop::internal::create_method(
         name => 'create_instance',
         body => sub {
             my $args = shift;
@@ -248,13 +345,13 @@ sub init {
     ));
 
     # this method is needed for Object->new
-    $::Class->add_method(mop::internal::create_method(
+    $::Instantiable->add_method(mop::internal::create_method(
         name => 'get_constructor',
         body => $reader->( '$constructor' ),
     ));
 
     # this method is needed for Object->new
-    $::Class->add_method(mop::internal::create_method(
+    $::Dispatchable->add_method(mop::internal::create_method(
         name => 'get_dispatcher',
         body => sub {
             my $type  = shift;
@@ -264,7 +361,7 @@ sub init {
         }
     ));
 
-    $::Class->add_method(mop::internal::create_method(
+    $::Instantiable->add_method(mop::internal::create_method(
         name => 'new',
         body => sub {
             my %args = @_;
@@ -277,20 +374,109 @@ sub init {
         }
     ));
 
-    ## ------------------------------------------
-    ## Phase 5 : Some fixup to make the actual
-    ##           object construction work
-    ## ------------------------------------------
-
     # this method is needed to add the attributes
     # to Attribute and Method (SEE BELOW)
-    $::Class->add_method(mop::internal::create_method(
+    $::HasAttributes->add_method(mop::internal::create_method(
         name => 'add_attribute',
         body => sub {
             my $attr = shift;
             $::SELF->get_local_attributes->{ $attr->get_name } = $attr;
         },
     ));
+
+    ## ------------------------------------------
+    ## Phase 5 : Some fixup to make the actual
+    ##           object construction work
+    ## ------------------------------------------
+
+    ## Since most of the methods added above were
+    ## added to roles, we need to add those to the 
+    ## appropriate stashes in order to use them
+    ## right now
+
+    {
+        my $method = mop::internal::instance::get_slot_at( $::HasSuperclass, '$methods' )->{'get_superclass'};
+        mop::internal::get_stash_for( $::Class )->add_method(
+            'get_superclass',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+    }
+
+    {
+        my $method = mop::internal::instance::get_slot_at( $::Dispatchable, '$methods' )->{'get_mro'};
+        mop::internal::get_stash_for( $::Class )->add_method(
+            'get_mro',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+    }
+
+    {
+        my $method = mop::internal::instance::get_slot_at( $::HasAttributes, '$methods' )->{'get_local_attributes'};
+        mop::internal::get_stash_for( $::Class )->add_method(
+            'get_local_attributes',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+        mop::internal::get_stash_for( $::Role )->add_method(
+            'get_local_attributes',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+    }
+
+    {
+        my $method = mop::internal::instance::get_slot_at( $::HasAttributes, '$methods' )->{'get_all_attributes'};
+        mop::internal::get_stash_for( $::Class )->add_method(
+            'get_all_attributes',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+        mop::internal::get_stash_for( $::Role )->add_method(
+            'get_all_attributes',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+    }
+
+    {
+        my $method = mop::internal::instance::get_slot_at( $::Instantiable, '$methods' )->{'create_instance'};
+        mop::internal::get_stash_for( $::Class )->add_method(
+            'create_instance',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+    }
+
+    {
+        my $method = mop::internal::instance::get_slot_at( $::Instantiable, '$methods' )->{'get_constructor'};
+        mop::internal::get_stash_for( $::Class )->add_method(
+            'get_constructor',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+    }
+
+    {
+        my $method = mop::internal::instance::get_slot_at( $::Dispatchable, '$methods' )->{'get_dispatcher'};
+        mop::internal::get_stash_for( $::Class )->add_method(
+            'get_dispatcher',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+    }
+
+    {
+        my $method = mop::internal::instance::get_slot_at( $::Instantiable, '$methods' )->{'new'};
+        mop::internal::get_stash_for( $::Class )->add_method(
+            'new',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+    }
+
+    {
+        my $method = mop::internal::instance::get_slot_at( $::HasAttributes, '$methods' )->{'add_attribute'};
+        mop::internal::get_stash_for( $::Class )->add_method(
+            'add_attribute',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+        mop::internal::get_stash_for( $::Role )->add_method(
+            'add_attribute',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+    }
 
     ## ------------------------------------------
     ## NOTE:
@@ -325,17 +511,17 @@ sub init {
     ## ------------------------------------------
 
     ## accessors
-    $::Class->add_method( $::Method->new( name => 'attribute_class',   body => sub { $::Attribute } ) );
-    $::Class->add_method( $::Method->new( name => 'method_class',      body => sub { $::Method    } ) );
-    $::Class->add_method( $::Method->new( name => 'base_object_class', body => sub { $::Object    } ) );
+    $::HasAttributes->add_method( $::Method->new( name => 'attribute_class',   body => sub { $::Attribute } ) );
+    $::HasMethods->add_method( $::Method->new( name => 'method_class',      body => sub { $::Method    } ) );
+    $::HasSuperclass->add_method( $::Method->new( name => 'base_object_class', body => sub { $::Object    } ) );
 
-    $::Class->add_method( $::Method->new( name => 'get_name',          body => $reader->( '$name' )       ) );
-    $::Class->add_method( $::Method->new( name => 'get_version',       body => $reader->( '$version' )    ) );
-    $::Class->add_method( $::Method->new( name => 'get_authority',     body => $reader->( '$authority' )  ) );
-    $::Class->add_method( $::Method->new( name => 'get_local_methods', body => $reader->( '$methods' )    ) );
-    $::Class->add_method( $::Method->new( name => 'get_destructor',    body => $reader->( '$destructor' ) ) );
+    $::HasName->add_method( $::Method->new( name => 'get_name',          body => $reader->( '$name' )       ) );
+    $::HasVersion->add_method( $::Method->new( name => 'get_version',       body => $reader->( '$version' )    ) );
+    $::HasVersion->add_method( $::Method->new( name => 'get_authority',     body => $reader->( '$authority' )  ) );
+    $::HasMethods->add_method( $::Method->new( name => 'get_local_methods', body => $reader->( '$methods' )    ) );
+    $::Instantiable->add_method( $::Method->new( name => 'get_destructor',    body => $reader->( '$destructor' ) ) );
 
-    $::Class->add_method( $::Method->new(
+    $::HasMethods->add_method( $::Method->new(
         name => 'get_all_methods',
         body => sub {
             my %methods;
@@ -357,17 +543,18 @@ sub init {
     $::Method->add_method( $::Method->new( name => 'get_name', body => $reader->( '$name' ) ) );
     $::Method->add_method( $::Method->new( name => 'get_body', body => $reader->( '$body' ) ) );
 
-    $::Class->add_method( $::Method->new( name => 'find_attribute', body => sub { $::SELF->get_all_attributes->{ $_[0] } } ) );
-    $::Class->add_method( $::Method->new( name => 'find_method',    body => sub { $::SELF->get_all_methods->{ $_[0] } }    ) );
+    $::HasAttributes->add_method( $::Method->new( name => 'find_attribute', body => sub { $::SELF->get_all_attributes->{ $_[0] } } ) );
+    $::HasMethods->add_method( $::Method->new( name => 'find_method',    body => sub { $::SELF->get_all_methods->{ $_[0] } }    ) );
 
 
     ## mutators
-    $::Class->add_method( $::Method->new( name => 'set_version',     body => $writer->( '$version' )     ) );
-    $::Class->add_method( $::Method->new( name => 'set_constructor', body => $writer->( '$constructor' ) ) );
-    $::Class->add_method( $::Method->new( name => 'set_destructor',  body => $writer->( '$destructor'  ) ) );
-    $::Class->add_method( $::Method->new( name => 'set_superclass',  body => $writer->( '$superclass'  ) ) );
+    $::HasVersion->add_method( $::Method->new( name => 'set_version',     body => $writer->( '$version' )     ) );
+    $::Instantiable->add_method( $::Method->new( name => 'set_constructor', body => $writer->( '$constructor' ) ) );
+    $::Instantiable->add_method( $::Method->new( name => 'set_destructor',  body => $writer->( '$destructor'  ) ) );
+    $::HasSuperclass->add_method( $::Method->new( name => 'set_superclass',  body => $writer->( '$superclass'  ) ) );
 
     ## clone
+    # XXX clonable role
     $::Method->add_method( $::Method->new(
         name => 'clone',
         body => sub {
@@ -382,23 +569,29 @@ sub init {
             return $::CLASS->new(%params);
         },
     ) );
-    $::Attribute->add_method( $::Method->find_method('clone')->clone );
-
-    ## predicate methods for Class
-    $::Class->add_method( $::Method->new(
-        name => 'equals',
+    $::Attribute->add_method( $::Method->new(
+        name => 'clone',
         body => sub {
-            my $other = shift;
-            return mop::internal::instance::get_uuid( $::SELF ) eq mop::internal::instance::get_uuid( $other );
+            my %params = (
+                (map {
+                    $_->get_param_name => mop::internal::instance::get_slot_at(
+                        $::SELF, $_->get_name
+                    )
+                } values %{ $::CLASS->get_all_attributes }),
+                @_,
+            );
+            return $::CLASS->new(%params);
         },
     ) );
-    $::Class->add_method( $::Method->new(
+
+    ## predicate methods for Class
+    $::HasSuperclass->add_method( $::Method->new(
         name => 'is_subclass_of',
         body => sub {
             my $super = shift;
             my @mro = @{ $::SELF->get_mro };
             shift @mro;
-            return scalar grep { $super->equals( $_ ) } @mro;
+            return scalar grep { $super == $_ } @mro;
         },
     ) );
 
@@ -432,52 +625,35 @@ sub init {
         },
     ) );
 
+    $::Role->add_method( $::Method->new(
+        name => 'FINALIZE',
+        body => sub {
+        },
+    ) );
+
     ## check metaclass compat in Class->BUILD
-    $::Class->add_method( $::Method->new(
+    $::HasSuperclass->add_method( $::Method->new(
         name => 'get_compatible_class',
         body => sub {
             my $class = shift;
             # replace the class with a subclass of itself
             return $class  if $class->is_subclass_of( $::SELF );
             # it's already okay
-            return $::SELF if $::SELF->is_subclass_of( $class ) || $class->equals( $::SELF );
+            return $::SELF if $::SELF->is_subclass_of( $class ) || $class == $::SELF;
             # reconciling this group of metaclasses isn't possible
             return;
         },
     ) );
-    $::Class->set_constructor( $::Method->new(
-        name => 'BUILD',
-        body => sub {
-            $::SELF->set_superclass( $::SELF->base_object_class )
-                unless $::SELF->get_superclass;
-
-            my $v = $::SELF->get_version;
-            $::SELF->set_version(version->parse($v))
-                if defined $v;
-
-            my $superclass = $::SELF->get_superclass;
-            if ( $superclass ) {
-                my $superclass_class = mop::internal::instance::get_class( $superclass );
-                my $compatible       = $::CLASS->get_compatible_class( $superclass_class );
-                if ( !defined( $compatible ) ) {
-                    die "While creating class " . $::SELF->get_name . ": "
-                      . "Metaclass " . $::CLASS->get_name . " is not compatible "
-                      . "with the metaclass of its superclass: "
-                      . $superclass_class->get_name;
-                }
-            }
-        },
-    ) );
 
     ## add in the attributes
-    $::Class->add_attribute( $::Attribute->new( name => '$name',        initial_value => \(my $class_name)      ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$version',     initial_value => \(my $class_version)   ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$authority',   initial_value => \(my $class_authority) ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$superclass',  initial_value => \(my $superclass)      ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$attributes',  initial_value => \sub { +{} }           ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$methods',     initial_value => \sub { +{} }           ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$constructor', initial_value => \(my $constructor)     ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$destructor',  initial_value => \(my $destructor)      ) );
+    $::HasName->add_attribute( $::Attribute->new( name => '$name',        initial_value => \(my $class_name)      ) );
+    $::HasVersion->add_attribute( $::Attribute->new( name => '$version',     initial_value => \(my $class_version)   ) );
+    $::HasVersion->add_attribute( $::Attribute->new( name => '$authority',   initial_value => \(my $class_authority) ) );
+    $::HasSuperclass->add_attribute( $::Attribute->new( name => '$superclass',  initial_value => \(my $superclass)      ) );
+    $::HasAttributes->add_attribute( $::Attribute->new( name => '$attributes',  initial_value => \sub { +{} }           ) );
+    $::HasMethods->add_attribute( $::Attribute->new( name => '$methods',     initial_value => \sub { +{} }           ) );
+    $::Instantiable->add_attribute( $::Attribute->new( name => '$constructor', initial_value => \(my $constructor)     ) );
+    $::Instantiable->add_attribute( $::Attribute->new( name => '$destructor',  initial_value => \(my $destructor)      ) );
 
     ## --------------------------------
     ## UNIVERSAL methods
@@ -486,7 +662,7 @@ sub init {
     # implement all of UNIVERSAL here, because the mop's dispatcher should
     # not be using UNIVERSAL at all
 
-    $::Object->add_method( $::Method->new( name => 'isa',  body => sub { ref( $_[0] ) && ( $::CLASS->equals( $_[0] ) || $::CLASS->is_subclass_of( $_[0] ) ) } ) );
+    $::Object->add_method( $::Method->new( name => 'isa',  body => sub { ref( $_[0] ) && ( $::CLASS == $_[0] || $::CLASS->is_subclass_of( $_[0] ) ) } ) );
     # XXX ideally, ->can would return a method object, which would do the
     # right thing when used as a coderef (so that
     # if (my $foo = $obj->can('foo')) { $obj->$foo(...) }
@@ -499,7 +675,7 @@ sub init {
     # XXX this logic is not nearly right, it should really use the logic
     # used by the current UNIVERSAL::VERSION, but UNIVERSAL::VERSION looks
     # up the class's version in $VERSION, which isn't what we want
-    $::Class->add_method( $::Method->new(
+    $::HasVersion->add_method( $::Method->new(
         name => 'VERSION',
         body => sub {
             my $ver = $::SELF->get_version;
@@ -528,6 +704,7 @@ sub init {
 
     # grab a few useful stashes here ...
     my $Class_stash     = mop::internal::get_stash_for( $::Class );
+    my $Role_stash      = mop::internal::get_stash_for( $::Role );
     my $Method_stash    = mop::internal::get_stash_for( $::Method );
     my $Attribute_stash = mop::internal::get_stash_for( $::Attribute );
 
@@ -537,7 +714,7 @@ sub init {
     ## into the proper stashes as needed
     ## --------------------------------
 
-    foreach my $class ( $::Object, $::Class, $::Method, $::Attribute ) {
+    foreach my $class ( $::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasRequiredMethods, $::Composable, $::HasSuperclass, $::Instantiable, $::Dispatchable, $::Object, $::Class, $::Role, $::Method, $::Attribute ) {
         my $methods = mop::internal::instance::get_slot_at( $class, '$methods' );
         foreach my $method ( values %$methods ) {
             $Method_stash->bless( $method )
@@ -551,7 +728,35 @@ sub init {
     }
 
     ## --------------------------------
-    ## make sure Class, Method and
+    ## go through all of the roles and
+    ## compose their methods into the
+    ## appropriate classes
+    ## --------------------------------
+
+    foreach my $class ( $::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasRequiredMethods, $::Composable ) {
+        my $methods = mop::internal::instance::get_slot_at( $class, '$methods' );
+        foreach my $method ( values %$methods ) {
+            $::Role->add_method( $method->clone );
+        }
+        my $attributes = mop::internal::instance::get_slot_at( $class, '$attributes' );
+        foreach my $attribute ( values %$attributes ) {
+            $::Role->add_attribute( $attribute->clone );
+        }
+    }
+
+    foreach my $class ( $::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasSuperclass, $::Instantiable, $::Dispatchable ) {
+        my $methods = mop::internal::instance::get_slot_at( $class, '$methods' );
+        foreach my $method ( values %$methods ) {
+            $::Class->add_method( $method->clone );
+        }
+        my $attributes = mop::internal::instance::get_slot_at( $class, '$attributes' );
+        foreach my $attribute ( values %$attributes ) {
+            $::Class->add_attribute( $attribute->clone );
+        }
+    }
+
+    ## --------------------------------
+    ## make sure Class, Role, Method and
     ## Attribute has the Object
     ## methods in the stash too
     ## --------------------------------
@@ -572,8 +777,38 @@ sub init {
                 $method_name,
                 sub { $method->execute( @_ ) }
             );
+            $Role_stash->add_method(
+                $method_name,
+                sub { $method->execute( @_ ) }
+            );
         }
     }
+
+    # XXX move this stuff into the appropriate roles when we figure out what to
+    # do about BUILD in roles
+    $::Class->set_constructor( $::Method->new(
+        name => 'BUILD',
+        body => sub {
+            $::SELF->set_superclass( $::SELF->base_object_class )
+                unless $::SELF->get_superclass;
+
+            my $v = $::SELF->get_version;
+            $::SELF->set_version(version->parse($v))
+                if defined $v;
+
+            my $superclass = $::SELF->get_superclass;
+            if ( $superclass ) {
+                my $superclass_class = mop::internal::instance::get_class( $superclass );
+                my $compatible       = $::CLASS->get_compatible_class( $superclass_class );
+                if ( !defined( $compatible ) ) {
+                    die "While creating class " . $::SELF->get_name . ": "
+                      . "Metaclass " . $::CLASS->get_name . " is not compatible "
+                      . "with the metaclass of its superclass: "
+                      . $superclass_class->get_name;
+                }
+            }
+        },
+    ) );
 
     ## --------------------------------
     ## ensure that for actual classes,
@@ -694,7 +929,7 @@ illustrative purposes and it not meant to be executable.
       method apply                ()           { ... }
   }
 
-  role HasSuperclasses (metaclass => Role) {
+  role HasSuperclass (metaclass => Role) {
       has $superclass;
 
       BUILD {

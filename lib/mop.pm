@@ -33,9 +33,17 @@ BEGIN {
     $::Method        = undef;
     $::Attribute     = undef;
     $::Role          = undef;
-    $::ClassPart     = undef;
-    $::HasMethods    = undef;
-    $::HasAttributes = undef;
+
+    $::HasMethods         = undef;
+    $::HasAttributes      = undef;
+    $::HasRoles           = undef;
+    $::HasName            = undef;
+    $::HasVersion         = undef;
+    $::HasRequiredMethods = undef;
+    $::Composable         = undef;
+    $::HasSuperclass      = undef;
+    $::Instantiable       = undef;
+    $::Dispatchable       = undef;
 }
 
 use mop::bootstrap;

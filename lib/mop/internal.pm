@@ -133,6 +133,7 @@ sub _apply_overloading {
     });
     $stash->add_method('(""' => sub { overload::StrVal($_[0]) });
     $stash->add_method('(0+' => sub { Scalar::Util::refaddr($_[0]) });
+    $stash->add_method('(==' => sub { mop::internal::instance::get_uuid($_[0]) eq mop::internal::instance::get_uuid($_[1]) });
 }
 
 sub create_stash_for {
