@@ -520,6 +520,7 @@ sub init {
     $::HasVersion->add_method( $::Method->new( name => 'get_authority',     body => $reader->( '$authority' )  ) );
     $::HasMethods->add_method( $::Method->new( name => 'get_local_methods', body => $reader->( '$methods' )    ) );
     $::Instantiable->add_method( $::Method->new( name => 'get_destructor',    body => $reader->( '$destructor' ) ) );
+    $::HasRoles->add_method( $::Method->new( name => 'get_local_roles',     body => $reader->( '$roles' )      ) );
 
     $::HasMethods->add_method( $::Method->new(
         name => 'get_all_methods',
@@ -604,6 +605,22 @@ sub init {
 
             %$stash = ();
 
+            my $local_methods = $::SELF->get_local_methods;
+            my $local_attributes = $::SELF->get_local_attributes;
+            my $roles = $::SELF->get_local_roles; # XXX?
+            foreach my $role ( @$roles ) {
+                my $methods = $role->get_local_methods;
+                foreach my $name ( keys %$methods ) {
+                    $::SELF->add_method( $methods->{$name}->clone )
+                        unless exists $local_methods->{$name};
+                }
+                my $attributes = $role->get_local_attributes;
+                foreach my $name ( keys %$attributes ) {
+                    $::SELF->add_attribute( $attributes->{$name}->clone )
+                        unless exists $local_attributes->{$name};
+                }
+            }
+
             my $methods = $::SELF->get_all_methods;
             foreach my $name ( keys %$methods ) {
                 my $method = $methods->{ $name };
@@ -649,6 +666,7 @@ sub init {
     $::HasName->add_attribute( $::Attribute->new( name => '$name',        initial_value => \(my $class_name)      ) );
     $::HasVersion->add_attribute( $::Attribute->new( name => '$version',     initial_value => \(my $class_version)   ) );
     $::HasVersion->add_attribute( $::Attribute->new( name => '$authority',   initial_value => \(my $class_authority) ) );
+    $::HasRoles->add_attribute( $::Attribute->new( name => '$roles',         initial_value => \(my $roles)           ) );
     $::HasSuperclass->add_attribute( $::Attribute->new( name => '$superclass',  initial_value => \(my $superclass)      ) );
     $::HasAttributes->add_attribute( $::Attribute->new( name => '$attributes',  initial_value => \sub { +{} }           ) );
     $::HasMethods->add_attribute( $::Attribute->new( name => '$methods',     initial_value => \sub { +{} }           ) );

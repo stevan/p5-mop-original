@@ -15,6 +15,7 @@ sub setup_for {
     {
         no strict 'refs';
         *{ $pkg . '::class'    } = \&class;
+        *{ $pkg . '::role'     } = \&role;
         *{ $pkg . '::method'   } = \&method;
         *{ $pkg . '::has'      } = \&has;
         *{ $pkg . '::BUILD'    } = \&BUILD;
@@ -24,6 +25,8 @@ sub setup_for {
 }
 
 sub class { }
+
+sub role { }
 
 sub method {
     my ($name, $body) = @_;
@@ -95,6 +98,10 @@ sub build_class {
         $metadata{ 'superclass' } = delete $metadata{ 'extends' };
     }
 
+    if ( exists $metadata{ 'with' } ) {
+        $metadata{ 'roles' } = delete $metadata{ 'with' };
+    }
+
     my $superclass = $metadata{ 'superclass' };
 
     if ( $superclass ) {
@@ -111,6 +118,25 @@ sub build_class {
     );
 }
 
+sub build_role {
+    my ($name, $metadata, $caller) = @_;
+    my %metadata = %{ $metadata || {} };
+
+    my $role_Class = $^H{'mop/default_role_metaclass'} // $::Role;
+    if ( exists $metadata{ 'metaclass' } ) {
+        $role_Class = delete $metadata{ 'metaclass' };
+    }
+
+    if ( exists $metadata{ 'with' } ) {
+        $metadata{ 'roles' } = delete $metadata{ 'with' };
+    }
+
+    $role_Class->new(
+        name => ($caller eq 'main' ? $name : "${caller}::${name}"),
+        %metadata
+    );
+}
+
 sub finalize_class {
     my ($name, $class, $caller) = @_;
 
@@ -119,6 +145,17 @@ sub finalize_class {
     {
         no strict 'refs';
         *{"${caller}::${name}"} = Sub::Name::subname( $name, sub () { $class } );
+    }
+}
+
+sub finalize_role {
+    my ($name, $role, $caller) = @_;
+
+    $role->FINALIZE;
+
+    {
+        no strict 'refs';
+        *{"${caller}::${name}"} = Sub::Name::subname( $name, sub () { $role } );
     }
 }
 

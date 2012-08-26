@@ -213,7 +213,12 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
         PUSHs(metadata);
         PUSHs(caller);
         PUTBACK;
-        call_pv("mop::syntax::build_class", G_SCALAR);
+        if (SvTRUE(psobj)) {
+            call_pv("mop::syntax::build_role", G_SCALAR);
+        }
+        else {
+            call_pv("mop::syntax::build_class", G_SCALAR);
+        }
         SPAGAIN;
         class = POPs;
         PUTBACK;
@@ -274,7 +279,12 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
         PUSHs(class);
         PUSHs(caller);
         PUTBACK;
-        call_pv("mop::syntax::finalize_class", G_VOID);
+        if (SvTRUE(psobj)) {
+            call_pv("mop::syntax::finalize_role", G_VOID);
+        }
+        else {
+            call_pv("mop::syntax::finalize_class", G_VOID);
+        }
         PUTBACK;
     }
     LEAVE;
@@ -508,6 +518,8 @@ BOOT:
 {
     cv_set_call_parser(get_cv("mop::syntax::class", 0), parse_class, &PL_sv_undef);
     cv_set_call_checker(get_cv("mop::syntax::class", 0), check_class, &PL_sv_undef);
+    cv_set_call_parser(get_cv("mop::syntax::role", 0), parse_class, &PL_sv_yes);
+    cv_set_call_checker(get_cv("mop::syntax::role", 0), check_class, &PL_sv_yes);
     cv_set_call_parser(get_cv("mop::syntax::has", 0), parse_has, &PL_sv_undef);
     cv_set_call_parser(get_cv("mop::syntax::method", 0), parse_method, &PL_sv_yes);
     cv_set_call_parser(get_cv("mop::syntax::BUILD", 0), parse_method, &PL_sv_no);
