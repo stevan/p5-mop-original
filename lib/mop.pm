@@ -30,8 +30,20 @@ BEGIN {
 
     # these are some of the classes that are also created
     # in the bootstrap and are part of the MOP
-    $::Method     = undef;
-    $::Attribute  = undef;
+    $::Method        = undef;
+    $::Attribute     = undef;
+    $::Role          = undef;
+
+    $::HasMethods         = undef;
+    $::HasAttributes      = undef;
+    $::HasRoles           = undef;
+    $::HasName            = undef;
+    $::HasVersion         = undef;
+    $::HasRequiredMethods = undef;
+    $::Composable         = undef;
+    $::HasSuperclass      = undef;
+    $::Instantiable       = undef;
+    $::Dispatchable       = undef;
 }
 
 use mop::bootstrap;
@@ -48,6 +60,8 @@ sub import {
     my %options = @_;
     $^H{'mop/default_metaclass'} = $options{'-metaclass'}
         if $options{'-metaclass'};
+    $^H{'mop/default_role_metaclass'} = $options{'-role_metaclass'}
+        if $options{'-role_metaclass'};
     mop::syntax->setup_for( $options{'-into'} // caller )
 }
 

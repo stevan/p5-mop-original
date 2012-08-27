@@ -29,6 +29,8 @@ my $Foo = $::Class->new;
     }
 
     method empty ($foo, $bar) {}
+
+    method with_defaults ($foo, $bar = 10) { $foo + $bar }
 }
 
 my $foo_method = $Foo->find_method('foo');
@@ -54,6 +56,8 @@ is( $foo->bar, 'BAR', '... got the right value from ->bar' );
 is( $foo->baz, 'BAZ', '... got the right value from ->baz' );
 is( $foo->slurpy_array( "foo", 1, 2, 3 ), 'foo: 1, 2, 3');
 is( $foo->slurpy_hash( "bar", a => 1, b => 2 ), 'bar: a => 1, b => 2');
+is( $foo->with_defaults(1), 11, 'defaults are used properly' );
+is( $foo->with_defaults(1, 3), 4, 'defaults are used properly' );
 my @list_empty = $foo->empty;
 is_deeply( \@list_empty, [], "empty method returns nothing" );
 my $scalar_empty = $foo->empty;

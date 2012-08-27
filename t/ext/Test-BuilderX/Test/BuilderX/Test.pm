@@ -26,10 +26,10 @@ role Base {
     }
 }
 
-class Pass ( with => Base ) {}
-class Fail ( with => Base ) {}
+class Pass ( with => [Base] ) {}
+class Fail ( with => [Base] ) {}
 
-role WithReason ( with => Base ) {
+role WithReason ( with => [Base] ) {
     has $reason;
 
     method reason { $reason }
@@ -42,7 +42,7 @@ role WithReason ( with => Base ) {
     }
 }
 
-class Skip ( with => WithReason ) {
+class Skip ( with => [WithReason] ) {
 
     method report {
         return "not ok " . $self->number . " #skip " . $self->reason;
@@ -56,7 +56,7 @@ class Skip ( with => WithReason ) {
     }
 }
 
-class TODO ( with => WithReason ) {
+class TODO ( with => [WithReason] ) {
 
     method report {
         my $ok          = $self->passed ? 'ok' : 'not ok';

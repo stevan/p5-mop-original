@@ -12,7 +12,7 @@ role Foo {
     method bar { $bar }
 }
 
-role Baz ( with => Foo ) {
+role Baz ( with => [Foo] ) {
     method baz { join ", "  => $self->bar, 'baz' }
 }
 

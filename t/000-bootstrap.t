@@ -35,9 +35,6 @@ ok $::Object->isa( $::Class ), '... class Object is-a Class';
 is mop::class_of( $::Object ), $::Class, '... the class of Role is Class';
 ok $::Role->isa( $::Class ), '... class Role is a Class';
 
-ok $::Class->does_role( $::Role ), '... class Class does class Role';
-ok $::Role->does( $::Role ), '... class Role does class Role';
-
 # check the other elements
 
 is mop::class_of( $::Method ), $::Class, '... the class of Method is Class';

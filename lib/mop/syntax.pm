@@ -100,6 +100,14 @@ sub build_class {
         $metadata{ 'superclass' } = delete $metadata{ 'extends' };
     }
 
+    if ( exists $metadata{ 'with' } ) {
+        $metadata{ 'roles' } = delete $metadata{ 'with' };
+    }
+
+    if ( exists $metadata{ 'does' } ) {
+        $metadata{ 'roles' } = delete $metadata{ 'does' };
+    }
+
     my $superclass = $metadata{ 'superclass' };
 
     if ( $superclass ) {
@@ -108,10 +116,6 @@ sub build_class {
         );
         $class_Class = $compatible
             if defined $compatible;
-    }
-
-    if ( my $roles = delete $metadata{ 'with' } ) {
-        $metadata{ 'roles' } = ref $roles eq 'ARRAY' ? $roles : [ $roles ];
     }
 
     $class_Class->new(
@@ -124,16 +128,20 @@ sub build_role {
     my ($name, $metadata, $caller) = @_;
     my %metadata = %{ $metadata || {} };
 
-    my $class_Role = $^H{'mop/default_role_metaclass'} // $::Role;
+    my $role_Class = $^H{'mop/default_role_metaclass'} // $::Role;
     if ( exists $metadata{ 'metaclass' } ) {
-        $class_Role = delete $metadata{ 'metaclass' };
+        $role_Class = delete $metadata{ 'metaclass' };
     }
 
-    if ( my $roles = delete $metadata{ 'with' } ) {
-        $metadata{ 'roles' } = ref $roles eq 'ARRAY' ? $roles : [ $roles ];
+    if ( exists $metadata{ 'with' } ) {
+        $metadata{ 'roles' } = delete $metadata{ 'with' };
     }
 
-    $class_Role->new(
+    if ( exists $metadata{ 'does' } ) {
+        $metadata{ 'roles' } = delete $metadata{ 'does' };
+    }
+
+    $role_Class->new(
         name => ($caller eq 'main' ? $name : "${caller}::${name}"),
         %metadata
     );

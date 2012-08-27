@@ -9,10 +9,41 @@ our $AUTHORITY = 'cpan:STEVAN';
 
 use mop::internal::instance;
 
+use overload ();
 use Package::Anon;
 use PadWalker ();
+use Scalar::Util ();
 use Scope::Guard 'guard';
 use version ();
+
+sub create_role {
+    my %params = @_;
+
+    my $class            = $params{'class'}            || die "A class must have a (meta) class";
+    my $name             = $params{'name'}             || die "A class must have a name";
+    my $version          = $params{'version'}          || undef;
+    my $authority        = $params{'authority'}        || '';
+    my $roles            = $params{'roles'}            || [];
+    my $attributes       = $params{'attributes'}       || {};
+    my $methods          = $params{'methods'}          || {};
+    my $required_methods = $params{'required_methods'} || {};
+
+    $version = version->parse($version)
+        if defined $version;
+
+    mop::internal::instance::create(
+        $class,
+        {
+            '$name'             => \$name,
+            '$version'          => \$version,
+            '$authority'        => \$authority,
+            '$roles'            => \$roles,
+            '$attributes'       => \$attributes,
+            '$methods'          => \$methods,
+            '$required_methods' => \$required_methods,
+        }
+    );
+}
 
 sub create_class {
     my %params = @_;
@@ -21,9 +52,10 @@ sub create_class {
     my $name        = $params{'name'}        || die "A class must have a name";
     my $version     = $params{'version'}     || undef;
     my $authority   = $params{'authority'}   || '';
-    my $superclass  = $params{'superclass'}  || undef;
+    my $roles       = $params{'roles'}       || [];
     my $attributes  = $params{'attributes'}  || {};
     my $methods     = $params{'methods'}     || {};
+    my $superclass  = $params{'superclass'}  || undef;
     my $constructor = $params{'constructor'} || undef;
     my $destructor  = $params{'destructor'}  || undef;
 
@@ -36,9 +68,10 @@ sub create_class {
             '$name'        => \$name,
             '$version'     => \$version,
             '$authority'   => \$authority,
-            '$superclass'  => \$superclass,
+            '$roles'       => \$roles,
             '$attributes'  => \$attributes,
             '$methods'     => \$methods,
+            '$superclass'  => \$superclass,
             '$constructor' => \$constructor,
             '$destructor'  => \$destructor,
         }
@@ -77,13 +110,44 @@ sub create_method {
 
 ## ...
 
+sub _apply_overloading {
+    my ($stash) = @_;
+
+    # enable overloading
+    {
+        no strict 'refs';
+        local *__ANON__ = $stash;
+        *{ "__ANON__::OVERLOAD" }{HASH}->{dummy}++;
+    }
+    $stash->add_method('()' => \&overload::nil);
+
+    # fallback => 1
+    *{ $stash->{'()'} } = \1;
+
+    # overloaded operations
+    $stash->add_method('(bool' => sub { 1 });
+    $stash->add_method('(~~' => sub {
+        my $self = shift;
+        my ($other) = @_;
+        return $other->DOES($self);
+    });
+    $stash->add_method('(""' => sub { overload::StrVal($_[0]) });
+    $stash->add_method('(0+' => sub { Scalar::Util::refaddr($_[0]) });
+    $stash->add_method('(==' => sub { mop::internal::instance::get_uuid($_[0]) eq mop::internal::instance::get_uuid($_[1]) });
+}
+
+sub create_stash_for {
+    my ($class) = @_;
+    my $stash = Package::Anon->new( mop::internal::instance::get_slot_at( $class, '$name' ) );
+    _apply_overloading($stash);
+    return $stash;
+}
 
 sub get_stash_for {
     state $VTABLES = {};
     my $class = shift;
     my $uuid  = mop::internal::instance::get_uuid( $class );
-    $VTABLES->{ $uuid } //= Package::Anon->new( mop::internal::instance::get_slot_at( $class, '$name' ) );
-    return $VTABLES->{ $uuid };
+    $VTABLES->{ $uuid } //= create_stash_for( $class );
 }
 
 sub execute_method {

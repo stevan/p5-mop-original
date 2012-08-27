@@ -142,7 +142,6 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     CV *metadata_cv;
     OP *metadata_op, *local_class, *self_class_lexicals, *block;
     int floor;
-    bool is_role = !SvTRUE(psobj);
 
     *flagsp |= CALLPARSER_STATEMENT;
 
@@ -214,10 +213,12 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
         PUSHs(metadata);
         PUSHs(caller);
         PUTBACK;
-        if (is_role)
+        if (SvTRUE(psobj)) {
             call_pv("mop::syntax::build_role", G_SCALAR);
-        else
+        }
+        else {
             call_pv("mop::syntax::build_class", G_SCALAR);
+        }
         SPAGAIN;
         class = POPs;
         PUTBACK;
@@ -235,9 +236,7 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
         var_self = newOP(OP_PADSV, (OPpLVAL_INTRO << 8)|OPf_MOD);
         var_self->op_targ = pad_add_my_scalar_pvn("$self", 5);
         var_class = newOP(OP_PADSV, (OPpLVAL_INTRO << 8)|OPf_MOD);
-        var_class->op_targ = is_role
-            ? pad_add_my_scalar_pvn("$role", 5)
-            : pad_add_my_scalar_pvn("$class", 6);
+        var_class->op_targ = pad_add_my_scalar_pvn("$class", 6);
         self_class_lexicals = newLISTOP(OP_LIST, 0, var_self, var_class);
     }
 
@@ -280,15 +279,23 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
         PUSHs(class);
         PUSHs(caller);
         PUTBACK;
-        if (is_role)
+        if (SvTRUE(psobj)) {
             call_pv("mop::syntax::finalize_role", G_VOID);
-        else
+        }
+        else {
             call_pv("mop::syntax::finalize_class", G_VOID);
+        }
         PUTBACK;
     }
     LEAVE;
 
     /* the class keyword has no runtime component */
+    return newOP(OP_NULL, 0);
+}
+
+static OP *check_class(pTHX_ OP *entersubop, GV *namegv, SV *ckobj)
+{
+    op_free(entersubop);
     return newOP(OP_NULL, 0);
 }
 
@@ -339,10 +346,44 @@ static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     return ret;
 }
 
+#define parse_parameter_default(i, padoffset) THX_parse_parameter_default(aTHX_ i, padoffset)
+static OP *THX_parse_parameter_default(pTHX_ IV i, PADOFFSET padoffset)
+{
+    SV *name;
+    OP *default_expr, *check_args, *get_var, *assign_default;
+    char sigil;
+
+    lex_read_space(0);
+
+    default_expr = parse_arithexpr(0);
+
+    check_args = newBINOP(OP_LE, 0, newUNOP(OP_RV2AV, 0, newGVOP(OP_GV, 0, gv_fetchpv("_", 0, SVt_PVAV))), newSVOP(OP_CONST, 0, newSViv(i)));
+
+    name = newSVsv(*av_fetch(PL_comppad_name, padoffset, 0));
+    sigil = SvPVX(name)[0];
+    if (sigil == '$') {
+        get_var = newOP(OP_PADSV, (OPpLVAL_INTRO<<8)|OPf_WANT_LIST);
+    }
+    else if (sigil == '@') {
+        get_var = newOP(OP_PADAV, (OPpLVAL_INTRO<<8)|OPf_WANT_LIST);
+    }
+    else if (sigil == '%') {
+        get_var = newOP(OP_PADHV, (OPpLVAL_INTRO<<8)|OPf_WANT_LIST);
+    }
+    else {
+        croak("weird pad entry %"SVf, name);
+    }
+    get_var->op_targ = padoffset;
+    assign_default = newASSIGNOP(OPf_STACKED, get_var, 0, default_expr);
+
+    return newLOGOP(OP_AND, 0, check_args, assign_default);
+}
+
 #define parse_method_prototype() THX_parse_method_prototype(aTHX)
 static OP *THX_parse_method_prototype(pTHX)
 {
-    OP *myvars, *get_args;
+    OP *myvars, *defaults, *get_args, *arg_assign;
+    IV i = 0;
 
     demand_unichar('(', DEMAND_IMMEDIATE);
 
@@ -355,24 +396,30 @@ static OP *THX_parse_method_prototype(pTHX)
     myvars = newLISTOP(OP_LIST, 0, NULL, NULL);
     myvars->op_private |= OPpLVAL_INTRO;
 
+    defaults = newLISTOP(OP_LINESEQ, 0, NULL, NULL);
+
     for (;;) {
         OP *pad_op;
         char next;
         I32 type;
+        SV *name;
 
         lex_read_space(0);
         next = lex_peek_unichar(0);
         if (next == '$') {
             pad_op = newOP(OP_PADSV, (OPpLVAL_INTRO<<8)|OPf_WANT_LIST);
-            pad_op->op_targ = pad_add_my_scalar_sv(parse_scalar_varname());
+            name = parse_scalar_varname();
+            pad_op->op_targ = pad_add_my_scalar_sv(name);
         }
         else if (next == '@') {
             pad_op = newOP(OP_PADAV, (OPpLVAL_INTRO<<8)|OPf_WANT_LIST);
-            pad_op->op_targ = pad_add_my_array_sv(parse_array_varname());
+            name = parse_array_varname();
+            pad_op->op_targ = pad_add_my_array_sv(name);
         }
         else if (next == '%') {
             pad_op = newOP(OP_PADHV, (OPpLVAL_INTRO<<8)|OPf_WANT_LIST);
-            pad_op->op_targ = pad_add_my_hash_sv(parse_hash_varname());
+            name = parse_hash_varname();
+            pad_op->op_targ = pad_add_my_hash_sv(name);
         }
         else {
             croak("syntax error");
@@ -382,6 +429,22 @@ static OP *THX_parse_method_prototype(pTHX)
 
         lex_read_space(0);
         next = lex_peek_unichar(0);
+
+        if (next == '=') {
+            OP *set_default;
+
+            lex_read_unichar(0);
+            set_default = parse_parameter_default(i, pad_op->op_targ);
+            op_append_elem(OP_LINESEQ,
+                           defaults,
+                           newSTATEOP(0, NULL, set_default));
+
+            lex_read_space(0);
+            next = lex_peek_unichar(0);
+        }
+
+        i++;
+
         if (next == ',') {
             lex_read_unichar(0);
         }
@@ -397,8 +460,11 @@ static OP *THX_parse_method_prototype(pTHX)
     myvars->op_flags |= OPf_PARENS;
 
     get_args = newUNOP(OP_RV2AV, 0, newGVOP(OP_GV, 0, gv_fetchpv("_", 0, SVt_PVAV)));
+    arg_assign = newASSIGNOP(OPf_STACKED, myvars, 0, get_args);
 
-    return newASSIGNOP(OPf_STACKED, myvars, 0, get_args);
+    return op_prepend_elem(OP_LINESEQ,
+                           newSTATEOP(0, NULL, arg_assign),
+                           defaults);
 }
 
 static OP *parse_method(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
@@ -454,8 +520,10 @@ PROTOTYPES: DISABLE
 
 BOOT:
 {
-    cv_set_call_parser(get_cv("mop::syntax::class", 0), parse_class, &PL_sv_yes);
-    cv_set_call_parser(get_cv("mop::syntax::role", 0), parse_class, &PL_sv_no);
+    cv_set_call_parser(get_cv("mop::syntax::class", 0), parse_class, &PL_sv_undef);
+    cv_set_call_checker(get_cv("mop::syntax::class", 0), check_class, &PL_sv_undef);
+    cv_set_call_parser(get_cv("mop::syntax::role", 0), parse_class, &PL_sv_yes);
+    cv_set_call_checker(get_cv("mop::syntax::role", 0), check_class, &PL_sv_yes);
     cv_set_call_parser(get_cv("mop::syntax::has", 0), parse_has, &PL_sv_undef);
     cv_set_call_parser(get_cv("mop::syntax::method", 0), parse_method, &PL_sv_yes);
     cv_set_call_parser(get_cv("mop::syntax::BUILD", 0), parse_method, &PL_sv_no);
