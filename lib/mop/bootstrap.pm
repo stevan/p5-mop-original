@@ -272,6 +272,10 @@ sub init {
     # this method is needed for Class->create_instance
     $::HasAttributes->add_method(mop::internal::create_method(
         name => 'get_all_attributes',
+        body => sub { $::SELF->get_local_attributes },
+    ));
+    $::Class->add_method(mop::internal::create_method(
+        name => 'get_all_attributes',
         body => sub {
             my %attrs;
             mop::WALKCLASS(
@@ -423,11 +427,15 @@ sub init {
     }
 
     {
-        my $method = mop::internal::instance::get_slot_at( $::HasAttributes, '$methods' )->{'get_all_attributes'};
+        my $method = mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'get_all_attributes'};
         mop::internal::get_stash_for( $::Class )->add_method(
             'get_all_attributes',
             sub { mop::internal::execute_method( $method, @_ ) }
         );
+    }
+
+    {
+        my $method = mop::internal::instance::get_slot_at( $::HasAttributes, '$methods' )->{'get_all_attributes'};
         mop::internal::get_stash_for( $::Role )->add_method(
             'get_all_attributes',
             sub { mop::internal::execute_method( $method, @_ ) }
@@ -522,7 +530,8 @@ sub init {
     $::Instantiable->add_method( $::Method->new( name => 'get_destructor',    body => $reader->( '$destructor' ) ) );
     $::HasRoles->add_method( $::Method->new( name => 'get_local_roles',     body => $reader->( '$roles' )      ) );
     $::HasRoles->add_method( $::Method->new( name => 'get_roles_for_composition',       body => sub { [ map { $_, @{ $_->get_local_roles } } @{ $::SELF->get_local_roles } ] } ) );
-    $::HasRoles->add_method( $::Method->new( name => 'get_all_roles',       body => sub {
+    $::HasRoles->add_method( $::Method->new( name => 'get_all_roles',    body => sub { [ map { $_, @{ $_->get_local_roles } } @{ $::SELF->get_local_roles } ] } ) );
+    $::Class->add_method( $::Method->new( name => 'get_all_roles',       body => sub {
         my @roles;
         mop::WALKCLASS(
             $::SELF->get_dispatcher('reverse'),
@@ -539,6 +548,10 @@ sub init {
     $::HasRoles->add_method( $::Method->new( name => 'does_role',           body => sub { scalar grep { $_ == $_[0] } @{ $::SELF->get_all_roles } } ) );
 
     $::HasMethods->add_method( $::Method->new(
+        name => 'get_all_methods',
+        body => sub { $::SELF->get_local_methods },
+    ) );
+    $::Class->add_method( $::Method->new(
         name => 'get_all_methods',
         body => sub {
             my %methods;
@@ -771,25 +784,53 @@ sub init {
     ## appropriate classes
     ## --------------------------------
 
+    {
+        my $method = mop::internal::instance::get_slot_at( $::HasMethods, '$methods' )->{'get_local_methods'};
+        mop::internal::get_stash_for( $::Class )->add_method(
+            'get_local_methods',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+        mop::internal::get_stash_for( $::Role )->add_method(
+            'get_local_methods',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+    }
+
+    {
+        my $method = mop::internal::instance::get_slot_at( $::HasAttributes, '$methods' )->{'get_local_attributes'};
+        mop::internal::get_stash_for( $::Class )->add_method(
+            'get_local_attributes',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+        mop::internal::get_stash_for( $::Role )->add_method(
+            'get_local_attributes',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+    }
+
     foreach my $class ( $::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasRequiredMethods, $::Composable ) {
         my $methods = mop::internal::instance::get_slot_at( $class, '$methods' );
         foreach my $method ( values %$methods ) {
-            $::Role->add_method( $method->clone );
+            $::Role->add_method( $method->clone )
+                unless $::Role->get_local_methods->{$method->get_name};
         }
         my $attributes = mop::internal::instance::get_slot_at( $class, '$attributes' );
         foreach my $attribute ( values %$attributes ) {
-            $::Role->add_attribute( $attribute->clone );
+            $::Role->add_attribute( $attribute->clone )
+                unless $::Role->get_local_attributes->{$attribute->get_name};
         }
     }
 
     foreach my $class ( $::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasSuperclass, $::Instantiable, $::Dispatchable ) {
         my $methods = mop::internal::instance::get_slot_at( $class, '$methods' );
         foreach my $method ( values %$methods ) {
-            $::Class->add_method( $method->clone );
+            $::Class->add_method( $method->clone )
+                unless $::Class->get_local_methods->{$method->get_name};
         }
         my $attributes = mop::internal::instance::get_slot_at( $class, '$attributes' );
         foreach my $attribute ( values %$attributes ) {
-            $::Class->add_attribute( $attribute->clone );
+            $::Class->add_attribute( $attribute->clone )
+                unless $::Class->get_local_attributes->{$attribute->get_name};
         }
     }
 
