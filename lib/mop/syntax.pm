@@ -33,7 +33,9 @@ sub method {
     $::CLASS->add_method(
         $::CLASS->method_class->new(
             name => $name,
-            body => Sub::Name::subname( $name, $body )
+            ($body
+                ? (body => Sub::Name::subname( $name, $body ))
+                : ()),
         )
     )
 }

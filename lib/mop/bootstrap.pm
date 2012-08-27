@@ -543,6 +543,9 @@ sub init {
 
     $::Method->add_method( $::Method->new( name => 'get_name', body => $reader->( '$name' ) ) );
     $::Method->add_method( $::Method->new( name => 'get_body', body => $reader->( '$body' ) ) );
+    $::Method->add_method( $::Method->new( name => 'is_stub',  body => sub { !defined $::SELF->get_body } ) );
+
+    $::HasRequiredMethods->add_method( $::Method->new( name => 'get_required_methods', body => sub { [ grep { $_->is_stub } @{ $::SELF->get_all_methods } ] } ) );
 
     $::HasAttributes->add_method( $::Method->new( name => 'find_attribute', body => sub { $::SELF->get_all_attributes->{ $_[0] } } ) );
     $::HasMethods->add_method( $::Method->new( name => 'find_method',    body => sub { $::SELF->get_all_methods->{ $_[0] } }    ) );
