@@ -44,6 +44,7 @@ BEGIN {
     $::HasSuperclass      = undef;
     $::Instantiable       = undef;
     $::Dispatchable       = undef;
+    $::Cloneable          = undef;
 }
 
 use mop::bootstrap;

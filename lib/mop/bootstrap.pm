@@ -107,6 +107,13 @@ sub init {
         authority => $AUTHORITY,
     );
 
+    $::Cloneable = mop::internal::create_role(
+        class     => \$::Role,
+        name      => 'Cloneable',
+        version   => $VERSION,
+        authority => $AUTHORITY,
+    );
+
     $::Role = mop::internal::create_class(
         class     => \$::Class,
         name      => 'Role',
@@ -161,10 +168,13 @@ sub init {
     ## ------------------------------------------
 
     mop::internal::instance::set_slot_at( $::Role, '$superclass', \$::Object );
-    mop::internal::instance::set_slot_at( $::Role, '$roles', \[$::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasRequiredMethods, $::Composable] );
+    mop::internal::instance::set_slot_at( $::Role, '$roles', \[$::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasRequiredMethods, $::Composable, $::Cloneable] );
 
     mop::internal::instance::set_slot_at( $::Class, '$superclass', \$::Object );
-    mop::internal::instance::set_slot_at( $::Class, '$roles', \[$::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasSuperclass, $::Instantiable, $::Dispatchable] );
+    mop::internal::instance::set_slot_at( $::Class, '$roles', \[$::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasSuperclass, $::Instantiable, $::Dispatchable, $::Cloneable] );
+
+    mop::internal::instance::set_slot_at( $::Method, '$roles', \[$::Cloneable] );
+    mop::internal::instance::set_slot_at( $::Attribute, '$roles', \[$::Cloneable] );
 
     ## ------------------------------------------
     ## Phase 3 : Setup stashes
@@ -186,6 +196,7 @@ sub init {
     mop::internal::get_stash_for( $::Role  )->bless( $::HasSuperclass );
     mop::internal::get_stash_for( $::Role  )->bless( $::Instantiable );
     mop::internal::get_stash_for( $::Role  )->bless( $::Dispatchable );
+    mop::internal::get_stash_for( $::Role  )->bless( $::Cloneable );
 
     # make sure to manually add the
     # add_method method to the Class and
@@ -598,22 +609,7 @@ sub init {
     $::HasSuperclass->add_method( $::Method->new( name => 'set_superclass',  body => $writer->( '$superclass'  ) ) );
 
     ## clone
-    # XXX clonable role
-    $::Method->add_method( $::Method->new(
-        name => 'clone',
-        body => sub {
-            my %params = (
-                (map {
-                    $_->get_param_name => mop::internal::instance::get_slot_at(
-                        $::SELF, $_->get_name
-                    )
-                } values %{ $::CLASS->get_all_attributes }),
-                @_,
-            );
-            return $::CLASS->new(%params);
-        },
-    ) );
-    $::Attribute->add_method( $::Method->new(
+    $::Cloneable->add_method( $::Method->new(
         name => 'clone',
         body => sub {
             my %params = (
@@ -835,7 +831,19 @@ sub init {
         );
     }
 
-    foreach my $class ( $::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasRequiredMethods, $::Composable ) {
+    {
+        my $method = mop::internal::instance::get_slot_at( $::Cloneable, '$methods' )->{'clone'};
+        mop::internal::get_stash_for( $::Method )->add_method(
+            'clone',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+        mop::internal::get_stash_for( $::Attribute )->add_method(
+            'clone',
+            sub { mop::internal::execute_method( $method, @_ ) }
+        );
+    }
+
+    foreach my $class ( $::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasRequiredMethods, $::Composable, $::Cloneable ) {
         my $methods = mop::internal::instance::get_slot_at( $class, '$methods' );
         foreach my $method ( values %$methods ) {
             $::Role->add_method( $method->clone )
@@ -848,7 +856,7 @@ sub init {
         }
     }
 
-    foreach my $class ( $::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasSuperclass, $::Instantiable, $::Dispatchable ) {
+    foreach my $class ( $::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasSuperclass, $::Instantiable, $::Dispatchable, $::Cloneable ) {
         my $methods = mop::internal::instance::get_slot_at( $class, '$methods' );
         foreach my $method ( values %$methods ) {
             $::Class->add_method( $method->clone )
@@ -858,6 +866,32 @@ sub init {
         foreach my $attribute ( values %$attributes ) {
             $::Class->add_attribute( $attribute->clone )
                 unless $::Class->get_local_attributes->{$attribute->get_name};
+        }
+    }
+
+    foreach my $class ( $::Cloneable ) {
+        my $methods = mop::internal::instance::get_slot_at( $class, '$methods' );
+        foreach my $method ( values %$methods ) {
+            $::Method->add_method( $method->clone )
+                unless $::Method->get_local_methods->{$method->get_name};
+        }
+        my $attributes = mop::internal::instance::get_slot_at( $class, '$attributes' );
+        foreach my $attribute ( values %$attributes ) {
+            $::Method->add_attribute( $attribute->clone )
+                unless $::Method->get_local_attributes->{$attribute->get_name};
+        }
+    }
+
+    foreach my $class ( $::Cloneable ) {
+        my $methods = mop::internal::instance::get_slot_at( $class, '$methods' );
+        foreach my $method ( values %$methods ) {
+            $::Attribute->add_method( $method->clone )
+                unless $::Attribute->get_local_methods->{$method->get_name};
+        }
+        my $attributes = mop::internal::instance::get_slot_at( $class, '$attributes' );
+        foreach my $attribute ( values %$attributes ) {
+            $::Attribute->add_attribute( $attribute->clone )
+                unless $::Attribute->get_local_attributes->{$attribute->get_name};
         }
     }
 
