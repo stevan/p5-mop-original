@@ -1106,11 +1106,15 @@ illustrative purposes and it not meant to be executable.
       method get_dispatcher       ($type)      { ... }
   }
 
-  class Role (with => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion, HasRequiredMethods, Composable], extends => Object, metaclass => Class) {
+  role Cloneable (metaclass => Role) {
+      method clone                (%params)    { ... }
+  }
+
+  class Role (with => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion, HasRequiredMethods, Composable, Cloneable], extends => Object, metaclass => Class) {
       method FINALIZE             ()           { ... }
   }
 
-  class Class (with => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion, HasSuperclasses, Instantiatable, Dispatchable], extends => Object, metaclass => Class) {
+  class Class (with => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion, HasSuperclasses, Instantiatable, Dispatchable, Cloneable], extends => Object, metaclass => Class) {
       method FINALIZE             ()           { ... }
   }
 
@@ -1120,19 +1124,17 @@ illustrative purposes and it not meant to be executable.
       method DOES ($class) { ... }
   }
 
-  class Method (extends => Object, metaclass => Class) {
+  class Method (extends => Object, metaclass => Class, with => [Cloneable]) {
       has $name;
       has $body;
 
       method get_name ()        { ... }
       method get_body ()        { ... }
 
-      method clone    (%params) { ... }
-
       method execute  (@args)   { ... }
   }
 
-  class Attribute (extends => Object, metaclass => Class) {
+  class Attribute (extends => Object, metaclass => Class, with => [Cloneable]) {
       has $name;
       has $initial_value;
 
@@ -1141,8 +1143,6 @@ illustrative purposes and it not meant to be executable.
 
       method get_initial_value_for_instance ()        { ... }
       method get_param_name                 ()        { ... }
-
-      method clone                          (%params) { ... }
   }
 
 =head1 AUTHORS
