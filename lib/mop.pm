@@ -54,6 +54,7 @@ BEGIN { XSLoader::load(__PACKAGE__, our $VERSION) }
 
 use mop::bootstrap;
 use mop::syntax;
+use mop::util;
 
 mop::bootstrap::init();
 
@@ -67,18 +68,12 @@ sub import {
     mop::syntax->setup_for( $options{'-into'} // caller )
 }
 
-sub WALKCLASS {
-    my ($dispatcher, $solver) = @_;
-    { $solver->( $dispatcher->() || return ); redo }
+BEGIN {
+    *WALKCLASS = \&mop::util::WALKCLASS;
+    *WALKMETH  = \&mop::util::WALKMETH;
+    *class_of  = \&mop::util::class_of;
+    *uuid_of   = \&mop::util::uuid_of;
 }
-
-sub WALKMETH {
-    my ($dispatcher, $method_name) = @_;
-    { ( $dispatcher->() || return )->get_local_methods->{ $method_name } || redo }
-}
-
-sub class_of ($) { mop::internal::instance::get_class( shift ) }
-sub uuid_of  ($) { mop::internal::instance::get_uuid( shift )  }
 
 1;
 
