@@ -104,6 +104,10 @@ sub build_class {
         $metadata{ 'roles' } = delete $metadata{ 'with' };
     }
 
+    if ( exists $metadata{ 'does' } ) {
+        $metadata{ 'roles' } = delete $metadata{ 'does' };
+    }
+
     my $superclass = $metadata{ 'superclass' };
 
     if ( $superclass ) {
@@ -131,6 +135,10 @@ sub build_role {
 
     if ( exists $metadata{ 'with' } ) {
         $metadata{ 'roles' } = delete $metadata{ 'with' };
+    }
+
+    if ( exists $metadata{ 'does' } ) {
+        $metadata{ 'roles' } = delete $metadata{ 'does' };
     }
 
     $role_Class->new(
