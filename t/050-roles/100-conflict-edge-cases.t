@@ -19,164 +19,41 @@ role Role::Derived2 (with => [Role::Base]) {
 }
 
 is(exception {
-    class Test (with => [Role::Derived1, Role::Derived2]) {
+    class Class::Test (with => [Role::Derived1, Role::Derived2]) {
     }
 }, undef, 'consuming two roles that had consumed the same method is not a conflict');
 
 ok(Role::Base->find_method('foo'), 'Role::Base has method foo');
 ok(Role::Derived1->find_method('foo'), 'Role::Derived1 has method foo');
 ok(Role::Derived2->find_method('foo'), 'Role::Derived2 has method foo');
-ok(Test->find_method('foo'),'Test class has method foo');
-is(Test->new->foo, 'Role::Base::foo', 'got the right value from the method foo');
+ok(Class::Test->find_method('foo'),'Class::Test has method foo');
+is(Class::Test->new->foo, 'Role::Base::foo', 'got the right value from the method foo');
 
-done_testing;
+# now the same but for attributes
 
-# XXX: To port!
+role Role::Base2 {
+    has $foo = 'Role::Base2::foo';
 
-__END__
-
-
-=pod
-
-Check for repeated inheritance causing
-a method conflict with method modifiers
-(which is not really a conflict)
-
-=cut
-
-{
-    package Role::Base2;
-    use Moose::Role;
-
-    override 'foo' => sub { super() . ' -> Role::Base::foo' };
-
-    package Role::Derived3;
-    use Moose::Role;
-
-    with 'Role::Base2';
-
-    package Role::Derived4;
-    use Moose::Role;
-
-    with 'Role::Base2';
-
-    package My::Test::Class2::Base;
-    use Moose;
-
-    sub foo { 'My::Test::Class2::Base' }
-
-    package My::Test::Class2;
-    use Moose;
-
-    extends 'My::Test::Class2::Base';
-
-    ::is( ::exception {
-        with 'Role::Derived3', 'Role::Derived4';
-    }, undef, '... roles composed okay (no conflicts)' );
+    method foo { $foo }
 }
 
-ok(Role::Base2->meta->has_override_method_modifier('foo'), '... have the method foo as expected');
-ok(Role::Derived3->meta->has_override_method_modifier('foo'), '... have the method foo as expected');
-ok(Role::Derived4->meta->has_override_method_modifier('foo'), '... have the method foo as expected');
-ok(My::Test::Class2->meta->has_method('foo'), '... have the method foo as expected');
-isa_ok(My::Test::Class2->meta->get_method('foo'), 'Moose::Meta::Method::Overridden');
-ok(My::Test::Class2::Base->meta->has_method('foo'), '... have the method foo as expected');
-isa_ok(My::Test::Class2::Base->meta->get_method('foo'), 'Class::MOP::Method');
-
-is(My::Test::Class2::Base->foo, 'My::Test::Class2::Base', '... got the right value from method');
-is(My::Test::Class2->foo, 'My::Test::Class2::Base -> Role::Base::foo', '... got the right value from method');
-
-=pod
-
-Check for repeated inheritance of the
-same code. There are no conflicts with
-before/around/after method modifiers.
-
-This tests around, but should work the
-same for before/afters as well
-
-=cut
-
-{
-    package Role::Base3;
-    use Moose::Role;
-
-    around 'foo' => sub { 'Role::Base::foo(' . (shift)->() . ')' };
-
-    package Role::Derived5;
-    use Moose::Role;
-
-    with 'Role::Base3';
-
-    package Role::Derived6;
-    use Moose::Role;
-
-    with 'Role::Base3';
-
-    package My::Test::Class3::Base;
-    use Moose;
-
-    sub foo { 'My::Test::Class3::Base' }
-
-    package My::Test::Class3;
-    use Moose;
-
-    extends 'My::Test::Class3::Base';
-
-    ::is( ::exception {
-        with 'Role::Derived5', 'Role::Derived6';
-    }, undef, '... roles composed okay (no conflicts)' );
+role Role::Derived3 (with => [Role::Base2]) {
 }
 
-ok(Role::Base3->meta->has_around_method_modifiers('foo'), '... have the method foo as expected');
-ok(Role::Derived5->meta->has_around_method_modifiers('foo'), '... have the method foo as expected');
-ok(Role::Derived6->meta->has_around_method_modifiers('foo'), '... have the method foo as expected');
-ok(My::Test::Class3->meta->has_method('foo'), '... have the method foo as expected');
-isa_ok(My::Test::Class3->meta->get_method('foo'), 'Class::MOP::Method::Wrapped');
-ok(My::Test::Class3::Base->meta->has_method('foo'), '... have the method foo as expected');
-isa_ok(My::Test::Class3::Base->meta->get_method('foo'), 'Class::MOP::Method');
-
-is(My::Test::Class3::Base->foo, 'My::Test::Class3::Base', '... got the right value from method');
-is(My::Test::Class3->foo, 'Role::Base::foo(My::Test::Class3::Base)', '... got the right value from method');
-
-=pod
-
-Check for repeated inheritance causing
-a attr conflict (which is not really
-a conflict)
-
-=cut
-
-{
-    package Role::Base4;
-    use Moose::Role;
-
-    has 'foo' => (is => 'ro', default => 'Role::Base::foo');
-
-    package Role::Derived7;
-    use Moose::Role;
-
-    with 'Role::Base4';
-
-    package Role::Derived8;
-    use Moose::Role;
-
-    with 'Role::Base4';
-
-    package My::Test::Class4;
-    use Moose;
-
-    ::is( ::exception {
-        with 'Role::Derived7', 'Role::Derived8';
-    }, undef, '... roles composed okay (no conflicts)' );
+role Role::Derived4 (with => [Role::Base2]) {
 }
 
-ok(Role::Base4->meta->has_attribute('foo'), '... have the attribute foo as expected');
-ok(Role::Derived7->meta->has_attribute('foo'), '... have the attribute foo as expected');
-ok(Role::Derived8->meta->has_attribute('foo'), '... have the attribute foo as expected');
-ok(My::Test::Class4->meta->has_attribute('foo'), '... have the attribute foo as expected');
+is(exception {
+    class Class::Test2 (with => [Role::Derived3, Role::Derived4]) {
+    }
+}, undef, 'consuming two roles that had consumed the same attribute is not a conflict');
 
-is(My::Test::Class4->new->foo, 'Role::Base::foo', '... got the right value from method');
+ok(Role::Base2->find_attribute('$foo'), 'Role::Base2 has method foo');
+ok(Role::Derived3->find_attribute('$foo'), 'Role::Derived3 has method foo');
+ok(Role::Derived4->find_attribute('$foo'), 'Role::Derived4 has method foo');
+ok(Class::Test2->find_attribute('$foo'), 'Class::Test2 has method foo');
+
+is(Class::Test2->new->foo, 'Role::Base2::foo', 'got the right value from the method foo');
 
 done_testing;
 
