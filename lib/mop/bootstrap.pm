@@ -677,6 +677,22 @@ sub init {
     $::Role->add_method( $::Method->new(
         name => 'FINALIZE',
         body => sub {
+            # XXX factor this out
+            my $local_methods = $::SELF->get_local_methods;
+            my $local_attributes = $::SELF->get_local_attributes;
+            my $roles = $::SELF->get_roles_for_composition; # XXX?
+            foreach my $role ( @$roles ) {
+                my $methods = $role->get_local_methods;
+                foreach my $name ( keys %$methods ) {
+                    $::SELF->add_method( $methods->{$name}->clone )
+                        unless exists $local_methods->{$name};
+                }
+                my $attributes = $role->get_local_attributes;
+                foreach my $name ( keys %$attributes ) {
+                    $::SELF->add_attribute( $attributes->{$name}->clone )
+                        unless exists $local_attributes->{$name};
+                }
+            }
         },
     ) );
 
