@@ -9,6 +9,8 @@ our $AUTHORITY = 'cpan:STEVAN';
 
 use Sub::Name ();
 
+mop::init_parser_for(__PACKAGE__);
+
 sub setup_for {
     my $class = shift;
     my $pkg   = shift;

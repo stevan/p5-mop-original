@@ -3,6 +3,11 @@
 #include "callparser1.h"
 #include "XSUB.h"
 
+struct data {
+    SV *indicator;
+    char *package;
+};
+
 /* stolen (with modifications) from Scope::Escape::Sugar */
 
 #define SVt_PADNAME SVt_PVMG
@@ -142,8 +147,11 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     CV *metadata_cv;
     OP *metadata_op, *local_class, *self_class_lexicals, *block;
     int floor;
+    struct data *data;
 
     *flagsp |= CALLPARSER_STATEMENT;
+
+    data = (struct data *)SvIVX(psobj);
 
     /* parse class name and package */
     lex_read_space(0);
@@ -207,17 +215,20 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     ENTER;
     {
         dSP;
+        char buf[128];
         PUSHMARK(SP);
         EXTEND(SP, 3);
         PUSHs(class_name);
         PUSHs(metadata);
         PUSHs(caller);
         PUTBACK;
-        if (SvTRUE(psobj)) {
-            call_pv("mop::syntax::build_role", G_SCALAR);
+        if (SvTRUE(data->indicator)) {
+            snprintf(buf, 127, "%s::build_role", data->package);
+            call_pv(buf, G_SCALAR);
         }
         else {
-            call_pv("mop::syntax::build_class", G_SCALAR);
+            snprintf(buf, 127, "%s::build_class", data->package);
+            call_pv(buf, G_SCALAR);
         }
         SPAGAIN;
         class = POPs;
@@ -273,17 +284,20 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     ENTER;
     {
         dSP;
+        char buf[128];
         PUSHMARK(SP);
         EXTEND(SP, 3);
         PUSHs(class_name);
         PUSHs(class);
         PUSHs(caller);
         PUTBACK;
-        if (SvTRUE(psobj)) {
-            call_pv("mop::syntax::finalize_role", G_VOID);
+        if (SvTRUE(data->indicator)) {
+            snprintf(buf, 127, "%s::finalize_role", data->package);
+            call_pv(buf, G_VOID);
         }
         else {
-            call_pv("mop::syntax::finalize_class", G_VOID);
+            snprintf(buf, 127, "%s::finalize_class", data->package);
+            call_pv(buf, G_VOID);
         }
         PUTBACK;
     }
@@ -518,14 +532,41 @@ MODULE = mop  PACKAGE = mop
 
 PROTOTYPES: DISABLE
 
-BOOT:
-{
-    cv_set_call_parser(get_cv("mop::syntax::class", 0), parse_class, &PL_sv_undef);
-    cv_set_call_checker(get_cv("mop::syntax::class", 0), check_class, &PL_sv_undef);
-    cv_set_call_parser(get_cv("mop::syntax::role", 0), parse_class, &PL_sv_yes);
-    cv_set_call_checker(get_cv("mop::syntax::role", 0), check_class, &PL_sv_yes);
-    cv_set_call_parser(get_cv("mop::syntax::has", 0), parse_has, &PL_sv_undef);
-    cv_set_call_parser(get_cv("mop::syntax::method", 0), parse_method, &PL_sv_yes);
-    cv_set_call_parser(get_cv("mop::syntax::BUILD", 0), parse_method, &PL_sv_no);
-    cv_set_call_parser(get_cv("mop::syntax::DEMOLISH", 0), parse_method, &PL_sv_no);
-}
+void
+init_parser_for(package)
+    const char *package
+  PREINIT:
+    char buf[128];
+    char *package_copy;
+    struct data *data;
+    SV *psobj;
+  CODE:
+    package_copy = strdup(package);
+
+    snprintf(buf, 127, "%s::class", package);
+    data = malloc(sizeof(struct data));
+    data->indicator = &PL_sv_no;
+    data->package   = package_copy;
+    psobj = newSViv((IV)data);
+    cv_set_call_parser(get_cv(buf, 0), parse_class, psobj);
+    cv_set_call_checker(get_cv(buf, 0), check_class, &PL_sv_undef);
+
+    snprintf(buf, 127, "%s::role", package);
+    data = malloc(sizeof(struct data));
+    data->indicator = &PL_sv_yes;
+    data->package   = package_copy;
+    psobj = newSViv((IV)data);
+    cv_set_call_parser(get_cv(buf, 0), parse_class, psobj);
+    cv_set_call_checker(get_cv(buf, 0), check_class, &PL_sv_undef);
+
+    snprintf(buf, 127, "%s::has", package);
+    cv_set_call_parser(get_cv(buf, 0), parse_has, &PL_sv_undef);
+
+    snprintf(buf, 127, "%s::method", package);
+    cv_set_call_parser(get_cv(buf, 0), parse_method, &PL_sv_yes);
+
+    snprintf(buf, 127, "%s::BUILD", package);
+    cv_set_call_parser(get_cv(buf, 0), parse_method, &PL_sv_no);
+
+    snprintf(buf, 127, "%s::DEMOLISH", package);
+    cv_set_call_parser(get_cv(buf, 0), parse_method, &PL_sv_no);
