@@ -669,7 +669,7 @@ sub init {
     $::HasName->add_attribute( $::Attribute->new( name => '$name',        initial_value => \(my $class_name)      ) );
     $::HasVersion->add_attribute( $::Attribute->new( name => '$version',     initial_value => \(my $class_version)   ) );
     $::HasVersion->add_attribute( $::Attribute->new( name => '$authority',   initial_value => \(my $class_authority) ) );
-    $::HasRoles->add_attribute( $::Attribute->new( name => '$roles',         initial_value => \(my $roles)           ) );
+    $::HasRoles->add_attribute( $::Attribute->new( name => '$roles',         initial_value => \sub { +[] }           ) );
     $::HasSuperclass->add_attribute( $::Attribute->new( name => '$superclass',  initial_value => \(my $superclass)      ) );
     $::HasAttributes->add_attribute( $::Attribute->new( name => '$attributes',  initial_value => \sub { +{} }           ) );
     $::HasMethods->add_attribute( $::Attribute->new( name => '$methods',     initial_value => \sub { +{} }           ) );
