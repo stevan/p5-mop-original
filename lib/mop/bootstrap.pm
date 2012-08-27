@@ -521,6 +521,22 @@ sub init {
     $::HasMethods->add_method( $::Method->new( name => 'get_local_methods', body => $reader->( '$methods' )    ) );
     $::Instantiable->add_method( $::Method->new( name => 'get_destructor',    body => $reader->( '$destructor' ) ) );
     $::HasRoles->add_method( $::Method->new( name => 'get_local_roles',     body => $reader->( '$roles' )      ) );
+    $::HasRoles->add_method( $::Method->new( name => 'get_roles_for_composition',       body => sub { [ map { $_, @{ $_->get_local_roles } } @{ $::SELF->get_local_roles } ] } ) );
+    $::HasRoles->add_method( $::Method->new( name => 'get_all_roles',       body => sub {
+        my @roles;
+        mop::WALKCLASS(
+            $::SELF->get_dispatcher('reverse'),
+            sub {
+                my $class = shift;
+                push @roles, (
+                    map { $_, @{ $_->get_local_roles } }
+                        @{ $class->get_local_roles },
+                );
+            }
+        );
+        return \@roles;
+    } ) );
+    $::HasRoles->add_method( $::Method->new( name => 'does_role',           body => sub { scalar grep { $_ == $_[0] } @{ $::SELF->get_all_roles } } ) );
 
     $::HasMethods->add_method( $::Method->new(
         name => 'get_all_methods',
@@ -610,7 +626,7 @@ sub init {
 
             my $local_methods = $::SELF->get_local_methods;
             my $local_attributes = $::SELF->get_local_attributes;
-            my $roles = $::SELF->get_local_roles; # XXX?
+            my $roles = $::SELF->get_roles_for_composition; # XXX?
             foreach my $role ( @$roles ) {
                 my $methods = $role->get_local_methods;
                 foreach my $name ( keys %$methods ) {
@@ -684,6 +700,7 @@ sub init {
     # not be using UNIVERSAL at all
 
     $::Object->add_method( $::Method->new( name => 'isa',  body => sub { ref( $_[0] ) && ( $::CLASS == $_[0] || $::CLASS->is_subclass_of( $_[0] ) ) } ) );
+    $::Object->add_method( $::Method->new( name => 'does', body => sub { ref( $_[0] ) && ( $::CLASS->does_role( $_[0] ) ) } ) );
     # XXX ideally, ->can would return a method object, which would do the
     # right thing when used as a coderef (so that
     # if (my $foo = $obj->can('foo')) { $obj->$foo(...) }
