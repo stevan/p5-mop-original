@@ -220,6 +220,17 @@ sub init {
 
     # this method is needed for Class->create_instance
     $::Attribute->add_method(mop::internal::create_method(
+        name => 'prepare_constructor_value_for_instance',
+        body => sub { $_[0] }
+        # NOTE:
+        # this basically takes a SCALAR ref and returns
+        # the value, this is most here to allow Attribute
+        # subclasses to hook into this operation.
+        # - SL
+    ));
+
+    # this method is needed for Class->create_instance
+    $::Attribute->add_method(mop::internal::create_method(
         name => 'get_param_name',
         body => sub {
             my $name = $::SELF->get_name;
@@ -241,7 +252,7 @@ sub init {
                     my $param_name = $attrs->{ $attr_name }->get_param_name;
                     if ( exists $args->{ $param_name } ) {
                         my $value = $args->{ $param_name };
-                        $data->{ $attr_name } = \$value;
+                        $data->{ $attr_name } = $attrs->{$attr_name}->prepare_constructor_value_for_instance( \$value );
                     }
                     else {
                         $data->{ $attr_name } = $attrs->{$attr_name}->get_initial_value_for_instance;
