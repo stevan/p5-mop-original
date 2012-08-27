@@ -5,6 +5,8 @@ use v5.14;
 use strict;
 use warnings;
 
+use Test::More;
+
 BEGIN {
     eval { require Devel::StackTrace; 1 }
     or plan skip_all => "Devel::StackTrace is required for this test";
@@ -22,7 +24,6 @@ BEGIN {
     or plan skip_all => "Perl6::Junction is required for this test";
 }
 
-use Test::More;
 use Scalar::Util 'blessed';
 use Fun; use Try;
 
@@ -43,7 +44,7 @@ package MyApp::IO {
         method filename { $filename }
     }
 
-    class FileHandle ( with => FileInfo ) {
+    class FileHandle ( with => [FileInfo] ) {
         has $fh;
 
         BUILD ($params) {
@@ -130,7 +131,9 @@ try {
     my $r = MyApp::IO::FileHandle->new( filename => 'foo', mode =>'r' );
     my $x = 0;
     $r->iter_lines( fun ( $line ) {  chomp $line && say join ' ' => $x++, ':',  $line } );
+    pass("... this worked");
 } catch {
+    fail("... this failed");
     when ( blessed $_ ) {
         warn $_->as_string;
     }

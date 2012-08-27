@@ -62,7 +62,7 @@ role Bar (metaclass => GuardedAttributeRole) {
     }
 }
 
-class Baz ( with => Bar ) {}
+class Baz ( with => [Bar] ) {}
 
 my $baz = Baz->new;
 

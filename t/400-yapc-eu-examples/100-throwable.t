@@ -16,7 +16,7 @@ use lib 't/400-yapc-eu-examples/lib/';
 
 use Throwable;
 
-class MyError ( with => Throwable ) {}
+class MyError ( with => [Throwable] ) {}
 
 sub foo { MyError->new( message => "HELLO" )->throw }
 sub bar { foo() }
