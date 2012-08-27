@@ -24,9 +24,9 @@ sub setup_for {
     }
 }
 
-sub class { }
+sub class { $_[0] }
 
-sub role { }
+sub role { $_[0] }
 
 sub method {
     my ($name, $body) = @_;
@@ -119,7 +119,9 @@ sub build_class {
     }
 
     $class_Class->new(
-        name => ($caller eq 'main' ? $name : "${caller}::${name}"),
+        (defined($name)
+            ? (name => ($caller eq 'main' ? $name : "${caller}::${name}"))
+            : ()),
         %metadata
     );
 }
@@ -142,7 +144,9 @@ sub build_role {
     }
 
     $role_Class->new(
-        name => ($caller eq 'main' ? $name : "${caller}::${name}"),
+        (defined($name)
+            ? (name => ($caller eq 'main' ? $name : "${caller}::${name}"))
+            : ()),
         %metadata
     );
 }
@@ -152,9 +156,12 @@ sub finalize_class {
 
     $class->FINALIZE;
 
-    {
+    if (defined $caller) {
         no strict 'refs';
         *{"${caller}::${name}"} = Sub::Name::subname( $name, sub () { $class } );
+    }
+    else {
+        return $class;
     }
 }
 
@@ -163,9 +170,12 @@ sub finalize_role {
 
     $role->FINALIZE;
 
-    {
+    if (defined $caller) {
         no strict 'refs';
         *{"${caller}::${name}"} = Sub::Name::subname( $name, sub () { $role } );
+    }
+    else {
+        return $role;
     }
 }
 

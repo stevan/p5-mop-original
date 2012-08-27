@@ -138,37 +138,46 @@ static OP *THX_parse_metadata(pTHX)
 
 static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 {
-    SV *caller = NULL, *class_name, *metadata, *class;
+    SV *caller = NULL, *class_name = NULL, *metadata, *class;
     CV *metadata_cv;
     OP *metadata_op, *local_class, *self_class_lexicals, *block;
     int floor;
-
-    *flagsp |= CALLPARSER_STATEMENT;
+    I32 next;
 
     /* parse class name and package */
     lex_read_space(0);
-    if (lex_peek_unichar(0) == ':') {
-        demand_unichar(':', DEMAND_IMMEDIATE);
-        demand_unichar(':', DEMAND_IMMEDIATE);
-        caller = sv_2mortal(newSVpvs("main"));
-    }
-    class_name = parse_idword("");
-    while (lex_peek_unichar(0) == ':') {
-        demand_unichar(':', DEMAND_IMMEDIATE);
-        demand_unichar(':', DEMAND_IMMEDIATE);
-        if (caller) {
-            sv_catpvs(caller, "::");
-            sv_catsv(caller, class_name);
-        }
-        else {
-            caller = class_name;
+
+    next = lex_peek_unichar(0);
+    if (next != '(' && next != '{') {
+        if (next == ':') {
+            demand_unichar(':', DEMAND_IMMEDIATE);
+            demand_unichar(':', DEMAND_IMMEDIATE);
+            caller = sv_2mortal(newSVpvs("main"));
         }
         class_name = parse_idword("");
-    }
+        while (lex_peek_unichar(0) == ':') {
+            demand_unichar(':', DEMAND_IMMEDIATE);
+            demand_unichar(':', DEMAND_IMMEDIATE);
+            if (caller) {
+                sv_catpvs(caller, "::");
+                sv_catsv(caller, class_name);
+            }
+            else {
+                caller = class_name;
+            }
+            class_name = parse_idword("");
+        }
 
-    /* get caller */
-    if (!caller) {
-        caller = caller_package();
+        /* get caller */
+        if (!caller) {
+            caller = caller_package();
+        }
+
+        *flagsp |= CALLPARSER_STATEMENT;
+    }
+    else {
+        class_name = sv_2mortal(newSV(0));
+        caller     = sv_2mortal(newSV(0));
     }
 
     /* parse metadata */
@@ -289,14 +298,28 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     }
     LEAVE;
 
-    /* the class keyword has no runtime component */
-    return newOP(OP_NULL, 0);
+    if (SvOK(caller)) {
+        /* the class keyword has no runtime component */
+        return newOP(OP_NULL, 0);
+    }
+    else {
+        return newLISTOP(OP_LIST, 0, newSVOP(OP_CONST, 0, class), NULL);
+    }
 }
 
 static OP *check_class(pTHX_ OP *entersubop, GV *namegv, SV *ckobj)
 {
-    op_free(entersubop);
-    return newOP(OP_NULL, 0);
+    OP *kids, *args;
+
+    kids = cUNOPx(entersubop)->op_first;
+    args = cLISTOPx(kids)->op_first->op_sibling;
+    if (args->op_type == OP_NULL) {
+        op_free(entersubop);
+        return newOP(OP_NULL, 0);
+    }
+    else {
+        return entersubop;
+    }
 }
 
 static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
