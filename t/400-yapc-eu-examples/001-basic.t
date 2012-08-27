@@ -5,6 +5,23 @@ use v5.14;
 use strict;
 use warnings;
 
+BEGIN {
+    eval { require Devel::StackTrace; 1 }
+    or plan skip_all => "Devel::StackTrace is required for this test";
+
+    eval { require Try; 1 }
+    or plan skip_all => "Try is required for this test";
+
+    eval { require Fun; 1 }
+    or plan skip_all => "Fun is required for this test";
+
+    eval { require Variable::Magic; 1 }
+    or plan skip_all => "Variable::Magic is required for this test";
+
+    eval { require Perl6::Junction; 1 }
+    or plan skip_all => "Perl6::Junction is required for this test";
+}
+
 use Test::More;
 use Scalar::Util 'blessed';
 use Fun; use Try;

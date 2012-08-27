@@ -6,6 +6,14 @@ use warnings;
 use Test::More;
 use Test::Fatal;
 
+BEGIN {
+    eval { require Fun; 1 }
+    or plan skip_all => "Fun is required for this test";
+
+    eval { require Variable::Magic; 1 }
+    or plan skip_all => "Variable::Magic is required for this test";
+}
+
 use mop;
 use Fun;
 
