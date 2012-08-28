@@ -10,9 +10,9 @@ BEGIN {
 }
 
 use mop;
-use mopx::instance::tracking::role;
+use mopx::instance::tracking::role ();
 
-class Foo {
+class Foo (metaroles => [mopx::instance::tracking::role::InstanceTrackingRole]) {
 }
 
 sub is_instances {
@@ -34,7 +34,7 @@ do {
 
 is_instances(Foo, $foo);
 
-class Person {
+class Person (metaroles => [mopx::instance::tracking::role::InstanceTrackingRole]) {
     has $name;
 }
 

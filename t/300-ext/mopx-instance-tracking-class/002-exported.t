@@ -10,9 +10,9 @@ BEGIN {
 }
 
 use mop;
-use mopx::instance::tracking::class ();
+use mopx::instance::tracking::class;
 
-class Foo (metaclass => mopx::instance::tracking::class::InstanceTrackingClass) {
+class Foo {
 }
 
 sub is_instances {
@@ -34,7 +34,7 @@ do {
 
 is_instances(Foo, $foo);
 
-class Person (metaclass => mopx::instance::tracking::class::InstanceTrackingClass) {
+class Person {
     has $name;
 }
 

@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use Test::More;
-use lib 't/ext/mopx-instance-tracking-class';
+use lib 't/ext/mopx-instance-tracking-role';
 
 BEGIN {
     eval { require Set::Object::Weak; 1 }
@@ -10,9 +10,9 @@ BEGIN {
 }
 
 use mop;
-use mopx::instance::tracking::class ();
+use mopx::instance::tracking::role;
 
-class Foo (metaclass => mopx::instance::tracking::class::InstanceTrackingClass) {
+class Foo {
 }
 
 sub is_instances {
@@ -34,7 +34,7 @@ do {
 
 is_instances(Foo, $foo);
 
-class Person (metaclass => mopx::instance::tracking::class::InstanceTrackingClass) {
+class Person {
     has $name;
 }
 
