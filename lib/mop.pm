@@ -59,10 +59,20 @@ mop::bootstrap::init();
 sub import {
     shift;
     my %options = @_;
+
     $^H{'mop/default_metaclass'} = $options{'-metaclass'}
         if $options{'-metaclass'};
     $^H{'mop/default_role_metaclass'} = $options{'-role_metaclass'}
         if $options{'-role_metaclass'};
+
+    if ($options{'-metaroles'}) {
+        $^H{'mop/default_metaroles'} = [
+            @{ $^H{'mop/default_metaroles'} || [] },
+            $options{'-metaroles'}
+        ],
+    }
+
+
     mop::syntax->setup_for( $options{'-into'} // caller )
 }
 
