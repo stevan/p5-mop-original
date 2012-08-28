@@ -158,6 +158,7 @@ sub finalize_class {
 
     {
         no strict 'refs';
+        no warnings 'redefine';
         *{"${caller}::${name}"} = Sub::Name::subname( $name, sub { $class } );
     }
 }
@@ -169,6 +170,7 @@ sub finalize_role {
 
     {
         no strict 'refs';
+        no warnings 'redefine';
         *{"${caller}::${name}"} = Sub::Name::subname( $name, sub { $role } );
     }
 }

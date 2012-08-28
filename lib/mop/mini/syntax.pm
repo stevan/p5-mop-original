@@ -58,6 +58,7 @@ sub finalize_class {
     $class->finalize;
     {
         no strict 'refs';
+        no warnings 'redefine';
         *{"${caller}::${name}"} = Sub::Name::subname( $name, sub { $class } );
     }
 }
