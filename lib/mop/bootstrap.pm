@@ -189,8 +189,55 @@ sub init {
 
     # and replace some methods that we hardcoded in the initial mop, with some
     # better variants that actually use the full mop
-    # $::Cloneable->add_method($::Method->new(
-    # ));
+    {
+        my $clone = sub {
+            my %params = (
+                (map {
+                    $_->get_param_name => mop::internal::instance::get_slot_at(
+                        $::SELF, $_->get_name
+                    )
+                } values %{ $::CLASS->get_all_attributes }),
+                @_,
+            );
+            return $::CLASS->new(%params);
+        };
+        my $method = $::Method->new(
+            name => 'clone',
+            body => $clone,
+        );
+        $::Cloneable->add_method($method);
+        local $::SELF = $method;
+        local $::CLASS = $::Method;
+        $::Role->add_method($clone->());
+        $::Class->add_method($clone->());
+        $::Method->add_method($clone->());
+        $::Attribute->add_method($clone->());
+    }
+    {
+        my $method = mop::internal::instance::get_slot_at($::Role, '$methods')->{clone};
+        mop::internal::get_stash_for($::Role)->add_method(clone => sub {
+            $method->execute(@_)
+        });
+    }
+    {
+        my $method = mop::internal::instance::get_slot_at($::Class, '$methods')->{clone};
+        mop::internal::get_stash_for($::Class)->add_method(clone => sub {
+            $method->execute(@_)
+        });
+    }
+    {
+        my $method = mop::internal::instance::get_slot_at($::Method, '$methods')->{clone};
+        mop::internal::get_stash_for($::Method)->add_method(clone => sub {
+            $method->execute(@_)
+        });
+    }
+    {
+        my $method = mop::internal::instance::get_slot_at($::Attribute, '$methods')->{clone};
+        mop::internal::get_stash_for($::Attribute)->add_method(clone => sub {
+            $method->execute(@_)
+        });
+    }
+
     $::Class->set_constructor($::Method->new(
         name => 'BUILD',
         body => sub {
