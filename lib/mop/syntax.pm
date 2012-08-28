@@ -118,6 +118,11 @@ sub build_class {
             if defined $compatible;
     }
 
+    my @class_roles = @{ $^H{'mop/default_metaroles'} || [] };
+    if (@class_roles) {
+        $class_Class = $class_Class; # anonymous subclass + @class_roles
+    }
+
     $class_Class->new(
         name => ($caller eq 'main' ? $name : "${caller}::${name}"),
         %metadata
@@ -139,6 +144,11 @@ sub build_role {
 
     if ( exists $metadata{ 'does' } ) {
         $metadata{ 'roles' } = delete $metadata{ 'does' };
+    }
+
+    my @role_roles = @{ $^H{'mop/default_metaroles'} || [] };
+    if (@role_roles) {
+        $role_Class = $role_Class; # anonymous subclass + @role_roles
     }
 
     $role_Class->new(
