@@ -57,7 +57,7 @@ sub new {
     }
     else {
         my ($pkg, $name) = @_;
-        my $class = $pkg->_new_anon_stash( $name );
+        my $class = $pkg->SUPER::new( $name );
         $class->set_name( $name );
         $class;
     }
