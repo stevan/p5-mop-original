@@ -128,6 +128,20 @@ sub init {
     for my $role (@roles) {
         mop::internal::instance::set_class($role, $::Role);
         mop::internal::get_stash_for($::Role)->bless($role);
+
+        mop::internal::instance::set_slot_at($role, '$version', \$mop::VERSION);
+        mop::internal::instance::set_slot_at($role, '$authority', \$mop::AUTHORITY);
+        mop::internal::instance::set_slot_at($role, '$name', \($role->get_name =~ s/.*:://r));
+
+        for my $attribute (values %{ mop::internal::instance::get_slot_at($role, '$attributes') }) {
+            mop::internal::instance::set_class($attribute, $::Attribute);
+            mop::internal::get_stash_for($::Attribute)->bless($attribute);
+        }
+
+        for my $method (values %{ mop::internal::instance::get_slot_at($role, '$methods') }) {
+            mop::internal::instance::set_class($method, $::Method);
+            mop::internal::get_stash_for($::Method)->bless($method);
+        }
     }
     for my $class (@classes) {
         mop::internal::instance::set_class($class, $::Class);
@@ -135,6 +149,19 @@ sub init {
             mop::internal::instance::set_slot_at($class, '$superclass', \$::Object);
         }
         mop::internal::get_stash_for($::Class)->bless($class);
+        mop::internal::instance::set_slot_at($class, '$version', \$mop::VERSION);
+        mop::internal::instance::set_slot_at($class, '$authority', \$mop::AUTHORITY);
+        mop::internal::instance::set_slot_at($class, '$name', \($class->get_name =~ s/.*:://r));
+
+        for my $attribute (values %{ mop::internal::instance::get_slot_at($class, '$attributes') }) {
+            mop::internal::instance::set_class($attribute, $::Attribute);
+            mop::internal::get_stash_for($::Attribute)->bless($attribute);
+        }
+
+        for my $method (values %{ mop::internal::instance::get_slot_at($class, '$methods') }) {
+            mop::internal::instance::set_class($method, $::Method);
+            mop::internal::get_stash_for($::Method)->bless($method);
+        }
     }
 
     return;
