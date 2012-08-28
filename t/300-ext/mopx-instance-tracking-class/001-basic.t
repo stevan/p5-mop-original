@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use Test::More;
-use lib 't/ext/mopx-instance-tracking';
+use lib 't/ext/mopx-instance-tracking-class';
 
 BEGIN {
     eval { require Set::Object::Weak; 1 }
@@ -10,7 +10,7 @@ BEGIN {
 }
 
 use mop;
-use mopx::instance::tracking;
+use mopx::instance::tracking::class;
 
 class Foo {
 }

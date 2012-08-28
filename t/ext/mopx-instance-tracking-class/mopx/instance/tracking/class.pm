@@ -1,11 +1,11 @@
-package mopx::instance::tracking;
+package mopx::instance::tracking::class;
 use strict;
 use warnings;
 
 use mop;
 use Set::Object::Weak 'weak_set';
 
-class InstanceTracking (extends => $::Class) {
+class InstanceTrackingClass (extends => $::Class) {
     has $instances = weak_set();
 
     method instances { return $instances->members }
@@ -30,7 +30,7 @@ class InstanceTracking (extends => $::Class) {
 
 sub import {
     my $caller = caller;
-    mop->import(-metaclass => InstanceTracking);
+    mop->import(-metaclass => InstanceTrackingClass);
 }
 
 1;
