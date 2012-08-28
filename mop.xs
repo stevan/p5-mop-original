@@ -32,7 +32,7 @@ static PADOFFSET THX_pad_add_my_pvn(pTHX_
 	myvar = *av_fetch(PL_comppad, AvFILLp(PL_comppad) + 1, 1);
 	offset = AvFILLp(PL_comppad);
 	SvPADMY_on(myvar);
-        SvUPGRADE(myvar, type);
+        (void)SvUPGRADE(myvar, type);
 	PL_curpad = AvARRAY(PL_comppad);
 	namesv = newSV_type(SVt_PADNAME);
 	sv_setpvn(namesv, namepv, namelen);
@@ -327,7 +327,7 @@ static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     pad_op = newOP(OP_PADSV, (OPpLVAL_INTRO<<8)|OPf_PARENS|OPf_WANT_LIST);
     pad_op->op_targ = pad_add_my_scalar_sv(name);
 
-    SvREFCNT_inc(name);
+    SvREFCNT_inc_simple_void_NN(name);
     ret = newLISTOP(OP_LIST, 0,
                     newSVOP(OP_CONST, 0, name),
                     newUNOP(OP_REFGEN, 0, pad_op));
@@ -504,7 +504,7 @@ static OP *parse_method(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     }
 
     if (SvTRUE(psobj)) {
-        SvREFCNT_inc(method_name);
+        SvREFCNT_inc_simple_void_NN(method_name);
         return newLISTOP(OP_LIST, 0,
                          newSVOP(OP_CONST, 0, method_name),
                          code);
