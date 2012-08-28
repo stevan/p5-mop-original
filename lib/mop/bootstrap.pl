@@ -81,6 +81,7 @@ class Attribute (extends => Object, roles => [Cloneable]) {
         }
         return \$value;
     }
+    method prepare_constructor_value_for_instance ($val) { $val }
     method get_param_name                 () { $self->get_name =~ s/^\$//r }
 }
 
