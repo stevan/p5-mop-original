@@ -125,13 +125,14 @@ sub init {
         $::Cloneable,
     );
 
+    # fix up the objects, which are still mini-mop objects at this point
     for my $role (@roles) {
         mop::internal::instance::set_class($role, $::Role);
         mop::internal::get_stash_for($::Role)->bless($role);
 
         mop::internal::instance::set_slot_at($role, '$version', \$mop::VERSION);
         mop::internal::instance::set_slot_at($role, '$authority', \$mop::AUTHORITY);
-        mop::internal::instance::set_slot_at($role, '$name', \($role->get_name =~ s/.*:://r));
+        mop::internal::instance::set_slot_at($role, '$name', \(mop::internal::instance::get_slot_at($role, '$name') =~ s/.*:://r));
 
         for my $attribute (values %{ mop::internal::instance::get_slot_at($role, '$attributes') }) {
             mop::internal::instance::set_class($attribute, $::Attribute);
@@ -151,7 +152,7 @@ sub init {
         mop::internal::get_stash_for($::Class)->bless($class);
         mop::internal::instance::set_slot_at($class, '$version', \$mop::VERSION);
         mop::internal::instance::set_slot_at($class, '$authority', \$mop::AUTHORITY);
-        mop::internal::instance::set_slot_at($class, '$name', \($class->get_name =~ s/.*:://r));
+        mop::internal::instance::set_slot_at($class, '$name', \(mop::internal::instance::get_slot_at($class, '$name') =~ s/.*:://r));
 
         for my $attribute (values %{ mop::internal::instance::get_slot_at($class, '$attributes') }) {
             mop::internal::instance::set_class($attribute, $::Attribute);
@@ -163,6 +164,56 @@ sub init {
             mop::internal::get_stash_for($::Method)->bless($method);
         }
     }
+
+    # now reconstruct the stashes
+    for my $class (@classes) {
+        my $stash = mop::internal::get_stash_for($class);
+        my $methods = {
+            %{ mop::internal::instance::get_slot_at($class, '$methods') },
+            map { %{ mop::internal::instance::get_slot_at($_, '$methods') } }
+                (mop::internal::instance::get_slot_at($class, '$superclass') || ()),
+                @{ mop::internal::instance::get_slot_at($class, '$roles') }
+        };
+        %$stash = ();
+        for my $name (keys %$methods) {
+            my $method = $methods->{$name};
+            $stash->add_method($name => sub { $method->execute(@_) });
+        }
+    }
+
+    # break the cycle with Method->execute, since we just regenerated its stash
+    # entry to call itself recursively
+    mop::internal::get_stash_for($::Method)->add_method(execute => sub {
+        mop::internal::execute_method(@_)
+    });
+
+    # and replace some methods that we hardcoded in the initial mop, with some
+    # better variants that actually use the full mop
+    # $::Cloneable->add_method($::Method->new(
+    # ));
+    $::Class->set_constructor($::Method->new(
+        name => 'BUILD',
+        body => sub {
+            $::SELF->set_superclass($::SELF->base_object_class)
+                unless $::SELF->get_superclass;
+
+            my $v = $::SELF->get_version;
+            $::SELF->set_version(version->parse($v))
+                if defined $v;
+
+            my $superclass = $::SELF->get_superclass;
+            if ($superclass) {
+                my $superclass_class = mop::class_of($superclass);
+                my $compatible = $::CLASS->get_compatible_class($superclass_class);
+                if (!defined($compatible)) {
+                    die "While creating class " . $::SELF->get_name . ": "
+                    . "Metaclass " . $::CLASS->get_name . " is not compatible "
+                    . "with the metaclass of its superclass: "
+                    . $superclass_class->get_name;
+                }
+            }
+        },
+    ));
 
     return;
 }

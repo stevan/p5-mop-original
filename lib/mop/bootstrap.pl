@@ -299,10 +299,14 @@ class Role (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion, 
 }
 
 class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion, HasSuperclass, Instantiable, Dispatchable, Cloneable], extends => Object) {
+
+    # NOTE: this is added afterwards
+    # BUILD { }
+
     method get_all_methods () {
         my %methods;
         mop::WALKCLASS(
-            $::SELF->get_dispatcher('reverse'),
+            $self->get_dispatcher('reverse'),
             sub {
                 %methods = (
                     %methods,
@@ -343,11 +347,11 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
         my $stash      = mop::internal::get_stash_for( $self );
         my $dispatcher = $self->get_dispatcher;
 
-        %$stash = ();
-
         my $local_methods = $self->get_local_methods;
         my $local_attributes = $self->get_local_attributes;
         my $roles = $self->get_roles_for_composition; # XXX?
+        my $methods = $self->get_all_methods;
+
         foreach my $role ( @$roles ) {
             my $methods = $role->get_local_methods;
             foreach my $name ( keys %$methods ) {
@@ -361,14 +365,13 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
             }
         }
 
-        my $methods = $self->get_all_methods;
+        %$stash = ();
+
         foreach my $name ( keys %$methods ) {
             my $method = $methods->{ $name };
             $stash->add_method(
                 $name,
-                # XXX
-                sub { mop::internal::execute_method($method, @_) },
-                # sub { $method->execute( @_ ) }
+                sub { $method->execute(@_) },
             ) unless exists $stash->{ $name };
         }
 
