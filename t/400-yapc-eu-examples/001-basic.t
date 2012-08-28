@@ -25,6 +25,7 @@ BEGIN {
 }
 
 use Scalar::Util 'blessed';
+use File::Temp 'tempfile';
 use Fun; use Try;
 
 use lib 't/400-yapc-eu-examples/lib/';
@@ -126,9 +127,10 @@ package MyApp::IO {
     }
 }
 
+my ($fh, $filename) = tempfile;
 
 try {
-    my $r = MyApp::IO::FileHandle->new( filename => 'foo', mode =>'r' );
+    my $r = MyApp::IO::FileHandle->new( filename => $filename, mode =>'r' );
     my $x = 0;
     $r->iter_lines( fun ( $line ) {  chomp $line && say join ' ' => $x++, ':',  $line } );
     pass("... this worked");
@@ -141,6 +143,8 @@ try {
         warn $_;
     }
 }
+
+#unlink $filename;
 
 done_testing;
 
