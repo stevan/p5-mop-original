@@ -34,8 +34,7 @@ WriteMakefile(
         TESTS => 't/*.t t/*/*.t t/*/*/*.t',
     },
     clean => {
-        FILES => 'callparser1.h',
+        FILES => 'callparser1.h parser$(OBJ_EXT)',
     },
-    # XXX: not sure if this is correct
-    OBJECT => join(' ', Devel::CallParser::callparser_linkable),
+    OBJECT => 'parser$(OBJ_EXT)',
 );

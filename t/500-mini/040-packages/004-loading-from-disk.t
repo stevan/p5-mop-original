@@ -5,7 +5,7 @@ use warnings;
 
 use Test::More;
 
-use lib 't/lib';
+use lib 't/500-mini/lib';
 
 use Foo::Bar;
 

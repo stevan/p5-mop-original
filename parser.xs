@@ -528,7 +528,7 @@ static OP *parse_method(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     }
 }
 
-MODULE = mop  PACKAGE = mop
+MODULE = mop  PACKAGE = mop::parser
 
 PROTOTYPES: DISABLE
 

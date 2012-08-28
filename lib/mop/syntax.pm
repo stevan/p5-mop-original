@@ -9,7 +9,9 @@ our $AUTHORITY = 'cpan:STEVAN';
 
 use Sub::Name ();
 
-mop::init_parser_for(__PACKAGE__);
+use mop::parser;
+
+mop::parser::init_parser_for(__PACKAGE__);
 
 sub setup_for {
     my $class = shift;
@@ -112,7 +114,7 @@ sub build_class {
 
     my $superclass = $metadata{ 'superclass' };
 
-    if ( $superclass ) {
+    if ( $superclass && ref($class_Class) ne 'mop::mini::class' ) {
         my $compatible = $class_Class->get_compatible_class(
             mop::internal::instance::get_class( $superclass )
         );
@@ -156,7 +158,7 @@ sub finalize_class {
 
     {
         no strict 'refs';
-        *{"${caller}::${name}"} = Sub::Name::subname( $name, sub () { $class } );
+        *{"${caller}::${name}"} = Sub::Name::subname( $name, sub { $class } );
     }
 }
 
@@ -167,7 +169,7 @@ sub finalize_role {
 
     {
         no strict 'refs';
-        *{"${caller}::${name}"} = Sub::Name::subname( $name, sub () { $role } );
+        *{"${caller}::${name}"} = Sub::Name::subname( $name, sub { $role } );
     }
 }
 

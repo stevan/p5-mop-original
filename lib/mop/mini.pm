@@ -15,9 +15,6 @@ BEGIN {
 
 use Devel::CallParser;
 
-use XSLoader;
-BEGIN { XSLoader::load('mop', our $VERSION) }
-
 use mop::mini::class;
 use mop::mini::syntax;
 use mop::util;

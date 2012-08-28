@@ -12,6 +12,8 @@ use Sub::Name             qw[ subname ];
 use PadWalker             qw[ set_closed_over ];
 use Scope::Guard          qw[ guard ];
 
+use mop::internal::instance;
+
 use parent 'Package::Anon';
 
 fieldhashes \ my (
@@ -35,14 +37,14 @@ sub new {
             %{ $class->get_all_attributes || {} },
         );
 
-        my $instance = {};
+        my $instance = mop::internal::instance::create(\$class, {});
         foreach my $attr ( keys %attrs ) {
             my ($plain_attr) = ($attr =~ /^\$(.*)/);
             if ( exists $args{ $plain_attr } ) {
-                $instance->{ $attr } = \($args{ $plain_attr });
+                mop::internal::instance::set_slot_at($instance, $attr, \($args{ $plain_attr }));
             }
             else {
-                $instance->{ $attr } = \(ref $attrs{ $attr } ? $attrs{ $attr }->() : $attrs{ $attr });
+                mop::internal::instance::set_slot_at($instance, $attr, \(ref $attrs{ $attr } ? $attrs{ $attr }->() : $attrs{ $attr }));
             }
         }
 
@@ -196,8 +198,9 @@ sub _create_method {
             state $STACK = [];
 
             my $invocant = shift;
+            my $instance = mop::internal::instance::get_slots( $invocant );
             my $env      = {
-                %$invocant,
+                %$instance,
                 '$self'  => \$invocant,
                 '$class' => \$class
             };

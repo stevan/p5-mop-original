@@ -49,9 +49,6 @@ BEGIN {
 
 use Devel::CallParser;
 
-use XSLoader;
-BEGIN { XSLoader::load(__PACKAGE__, our $VERSION) }
-
 use mop::bootstrap;
 use mop::syntax;
 use mop::util;

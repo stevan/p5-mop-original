@@ -7,7 +7,10 @@ use warnings;
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
-mop::init_parser_for(__PACKAGE__);
+use mop::mini::class;
+use mop::parser;
+
+mop::parser::init_parser_for(__PACKAGE__);
 
 sub setup_for {
     my $class = shift;
@@ -55,7 +58,7 @@ sub finalize_class {
     $class->finalize;
     {
         no strict 'refs';
-        *{"${caller}::${name}"} = Sub::Name::subname( $name, sub () { $class } );
+        *{"${caller}::${name}"} = Sub::Name::subname( $name, sub { $class } );
     }
 }
 

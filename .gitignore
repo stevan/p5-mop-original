@@ -15,7 +15,7 @@ MANIFEST.bak
 .build
 *.bs
 *.o
-mop.c
+parser.c
 callparser0.h
 callparser1.h
 env.sh

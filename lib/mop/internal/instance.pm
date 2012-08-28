@@ -22,6 +22,11 @@ sub get_uuid  { (shift)->{'uuid'}     }
 sub get_class { ${(shift)->{'class'}} }
 sub get_slots { (shift)->{'slots'}    }
 
+sub set_class {
+    my ($instance, $class) = @_;
+    $instance->{'class'} = \$class;
+}
+
 sub get_slot_at {
     my ($instance, $name) = @_;
     ${ $instance->{'slots'}->{ $name } || \undef }
