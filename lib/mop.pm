@@ -52,8 +52,6 @@ use mop::syntax;
 
 use Devel::CallParser;
 
-BEGIN { XSLoader::load(__PACKAGE__, our $VERSION) }
-
 mop::bootstrap::init();
 
 sub import {

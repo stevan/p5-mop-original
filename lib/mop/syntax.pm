@@ -7,6 +7,9 @@ use warnings;
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
+use mop::parser;
+mop::parser::init_parser_for(__PACKAGE__);
+
 use Sub::Name ();
 
 sub setup_for {
