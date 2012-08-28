@@ -106,12 +106,14 @@ sub init {
         $::Cloneable     = Cloneable;
     }
 
-    my @metas = (
+    my @classes = (
         $::Object,
         $::Class,
         $::Role,
         $::Method,
         $::Attribute,
+    );
+    my @roles = (
         $::HasMethods,
         $::HasAttributes,
         $::HasRoles,
@@ -123,13 +125,16 @@ sub init {
         $::Cloneable,
     );
 
-    for my $obj (@metas) {
-        if ($obj->isa(mop::bootstrap::mini::Role)) {
-            mop::internal::instance::set_class($obj, $::Role);
+    for my $role (@roles) {
+        mop::internal::instance::set_class($role, $::Role);
+        mop::internal::get_stash_for($::Role)->bless($role);
+    }
+    for my $class (@classes) {
+        mop::internal::instance::set_class($class, $::Class);
+        if ($class->get_superclass) {
+            mop::internal::instance::set_slot_at($class, '$superclass', \$::Object);
         }
-        else {
-            mop::internal::instance::set_class($obj, $::Class);
-        }
+        mop::internal::get_stash_for($::Class)->bless($class);
     }
 
     return;

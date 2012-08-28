@@ -365,7 +365,9 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
             my $method = $methods->{ $name };
             $stash->add_method(
                 $name,
-                sub { $method->execute( @_ ) }
+                # XXX
+                sub { mop::internal::execute_method($method, @_) },
+                # sub { $method->execute( @_ ) }
             ) unless exists $stash->{ $name };
         }
 
