@@ -169,10 +169,10 @@ sub init {
     for my $class (@classes) {
         my $stash = mop::internal::get_stash_for($class);
         my $methods = {
-            %{ mop::internal::instance::get_slot_at($class, '$methods') },
-            map { %{ mop::internal::instance::get_slot_at($_, '$methods') } }
+            (map { %{ mop::internal::instance::get_slot_at($_, '$methods') } }
                 (mop::internal::instance::get_slot_at($class, '$superclass') || ()),
-                @{ mop::internal::instance::get_slot_at($class, '$roles') }
+                @{ mop::internal::instance::get_slot_at($class, '$roles') }),
+            %{ mop::internal::instance::get_slot_at($class, '$methods') },
         };
         %$stash = ();
         for my $name (keys %$methods) {
