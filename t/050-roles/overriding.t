@@ -8,8 +8,6 @@ use Test::More;
 use Test::Fatal;
 use mop;
 
-BEGIN { $SIG{__DIE__} = \&Carp::confess }
-
 sub apply_roles_to {
     my($target, @roles) = @_;
     my $roles = mop::internal::instance::get_slot_at( $target, '$roles' );
