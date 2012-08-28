@@ -4,6 +4,11 @@ use warnings;
 use Test::More;
 use lib 't/ext/mopx-instance-tracking';
 
+BEGIN {
+    eval { require Set::Object::Weak; 1 }
+        or plan skip_all => "Set::Object::Weak is required for this test";
+}
+
 use mop;
 use mopx::instance::tracking;
 
