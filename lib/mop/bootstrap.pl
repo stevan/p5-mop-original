@@ -57,6 +57,8 @@ class Method (extends => Object, roles => [Cloneable]) {
     method get_name ()      { $name }
     method get_body ()      { $body }
 
+    method is_stub ()       { !defined $body }
+
     method execute  (@args) {
         mop::internal::execute_method( $self, @args )
     }
