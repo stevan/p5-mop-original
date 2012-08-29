@@ -82,21 +82,6 @@ sub init {
         require mop::syntax;
         mop::syntax->setup_for(__PACKAGE__);
 
-        *HasMethods    = \&mop::bootstrap::mini::HasMethods;
-        *HasAttributes = \&mop::bootstrap::mini::HasAttributes;
-        *HasRoles      = \&mop::bootstrap::mini::HasRoles;
-        *HasName       = \&mop::bootstrap::mini::HasName;
-        *HasVersion    = \&mop::bootstrap::mini::HasVersion;
-        *HasSuperclass = \&mop::bootstrap::mini::HasSuperclass;
-        *Instantiable  = \&mop::bootstrap::mini::Instantiable;
-        *Dispatchable  = \&mop::bootstrap::mini::Dispatchable;
-        *Cloneable     = \&mop::bootstrap::mini::Cloneable;
-        *Role          = \&mop::bootstrap::mini::Role;
-        *Object        = \&mop::bootstrap::mini::Object;
-        *Class         = \&mop::bootstrap::mini::Class;
-        *Method        = \&mop::bootstrap::mini::Method;
-        *Attribute     = \&mop::bootstrap::mini::Attribute;
-
         require 'mop/bootstrap.pl';
 
         $::Object    = Object;
