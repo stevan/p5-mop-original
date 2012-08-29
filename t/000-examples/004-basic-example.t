@@ -70,6 +70,9 @@ class MyBinaryTree ( extends => BinaryTree ) {}
 
     ok($t->left->isa(MyBinaryTree), '... left is a MyBinaryTree object');
     ok($t->right->isa(MyBinaryTree), '... right is a MyBinaryTree object');
+
+    ok($t->has_left, '... left node has now been created');
+    ok($t->has_right, '... right node has now been created');
 }
 
 done_testing;
