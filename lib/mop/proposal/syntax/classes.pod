@@ -226,9 +226,10 @@ scope mechanisms for strictures and warnings.
 
 =head2 Can I use C<my> or C<our> within a class?
 
-It is my opinion that no, this should not be allowed. That said,
-any variables declared with C<my> or C<our> in the enclosing package
-will be visible within the class definition.
+It is my opinion that no, this should not be allowed directly inside
+a class. That said, any variables declared with C<my> or C<our> in the 
+enclosing package will be visible within the class definition. You can
+of course use C<my> and C<our> inside your methods as well.
 
 =head2 Can I define a C<sub> within a class?
 

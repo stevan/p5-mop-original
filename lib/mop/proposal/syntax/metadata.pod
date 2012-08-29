@@ -36,6 +36,9 @@ is somewhat tricky since it will happen during compile-time.
 However this is not all that different in complexity from how
 C<BEGIN> and other compile time blocks are dealt with.
 
+This metadata will be available as parameters to your meta 
+classes and can be accessed by adding attributes.
+
 =head2 Metadata (noun)
 
 Metadata is the result of a metadata expression and simply a

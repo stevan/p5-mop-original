@@ -30,7 +30,7 @@ class LinkedList {
 
     method insert ($index, $node) {
         die "Index ($index) out of bounds"
-            if $index < 0 or $index > $count;
+            if $index < 0 or $index > $count - 1;
 
         my $tmp = $head;
         $tmp = $tmp->get_next while($index--);
@@ -43,7 +43,7 @@ class LinkedList {
 
     method remove ($index) {
         die "Index ($index) out of bounds"
-            if $index < 0 or $index > $count;
+            if $index < 0 or $index > $count - 1;
         
         my $tmp = $head;
         $tmp = $tmp->get_next while($index--);
