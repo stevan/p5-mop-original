@@ -5,7 +5,7 @@ use 5.014;
 # implement all of UNIVERSAL here, because the mop's dispatcher should
 # not be using UNIVERSAL at all
 class Object {
-    method isa  ($other) {
+    method isa ($other) {
         ref($other) && ( $class == $other || $class->is_subclass_of($other) )
     }
     method does ($other) {
@@ -16,7 +16,7 @@ class Object {
     # if (my $foo = $obj->can('foo')) { $obj->$foo(...) }
     # and similar things work as expected), but as far as i can tell,
     # overloading doesn't currently work with anonymous packages
-    method can  ($name)  {
+    method can ($name)  {
         my $method = $class->find_method( $name );
         return sub { $method->execute( @_ ) }
             if $method;
@@ -26,6 +26,9 @@ class Object {
 }
 
 role Cloneable {
+    # NOTE: the bootstrap needs to use this, so this implementation needs to
+    # handle mini-mop objects. after the bootstrap is done, this is replaced
+    # with a real implementation using full mop objects.
     method clone (%params) {
         my $new_instance = mop::internal::instance::create(
             \mop::internal::instance::get_class($self),
@@ -36,17 +39,6 @@ role Cloneable {
         );
         mop::internal::instance::get_class($self)->bless($new_instance);
         return $new_instance;
-
-        # XXX swap out later
-        # %params = (
-        #     (map {
-        #         $_->get_param_name => mop::internal::instance::get_slot_at(
-        #             $self, $_->get_name
-        #         )
-        #     } values %{ $class->get_all_attributes }),
-        #     %params,
-        # );
-        # return $class->new(%params);
     }
 }
 
@@ -54,12 +46,12 @@ class Method (extends => Object, roles => [Cloneable]) {
     has $name;
     has $body;
 
-    method get_name ()      { $name }
-    method get_body ()      { $body }
+    method get_name () { $name }
+    method get_body () { $body }
 
-    method is_stub ()       { !defined $body }
+    method is_stub () { !defined $body }
 
-    method execute  (@args) {
+    method execute (@args) {
         mop::internal::execute_method( $self, @args )
     }
 }
@@ -68,8 +60,8 @@ class Attribute (extends => Object, roles => [Cloneable]) {
     has $name;
     has $initial_value;
 
-    method get_name                       () { $name }
-    method get_initial_value              () { $initial_value }
+    method get_name ()          { $name }
+    method get_initial_value () { $initial_value }
 
     method get_initial_value_for_instance () {
         my $value = ${ $self->get_initial_value };
@@ -84,22 +76,26 @@ class Attribute (extends => Object, roles => [Cloneable]) {
         return \$value;
     }
     method prepare_constructor_value_for_instance ($val) { $val }
-    method get_param_name                 () { $self->get_name =~ s/^\$//r }
+
+    method get_param_name () { $self->get_name =~ s/^\$//r }
 }
 
 role HasMethods {
     has $methods = {};
 
-    method get_local_methods ()        { $methods }
+    method get_local_methods () { $methods }
 
-    method method_class      ()        { $::Method }
+    method method_class () { $::Method }
 
-    method find_method       ($name)   {
-        $self->get_all_methods->{$name}
+    method find_method ($name) {
+        $self->get_all_methods->{$name};
     }
-    method get_all_methods   ()        { $self->get_local_methods }
 
-    method add_method        ($method) {
+    method get_all_methods () {
+        $self->get_local_methods;
+    }
+
+    method add_method ($method) {
         $self->get_local_methods->{$method->get_name} = $method;
     }
 }
@@ -107,16 +103,19 @@ role HasMethods {
 role HasAttributes {
     has $attributes = {};
 
-    method get_local_attributes ()           { $attributes }
+    method get_local_attributes () { $attributes }
 
-    method attribute_class      ()           { $::Attribute }
+    method attribute_class () { $::Attribute }
 
-    method find_attribute       ($name)      {
-        $self->get_all_attributes->{$name}
+    method find_attribute ($name) {
+        $self->get_all_attributes->{$name};
     }
-    method get_all_attributes   ()           { $self->get_local_attributes }
 
-    method add_attribute        ($attribute) {
+    method get_all_attributes () {
+        $self->get_local_attributes;
+    }
+
+    method add_attribute ($attribute) {
         $self->get_local_attributes->{$attribute->get_name} = $attribute;
     }
 }
@@ -124,16 +123,18 @@ role HasAttributes {
 role HasRoles {
     has $roles = [];
 
-    method get_local_roles           ()       { $roles }
-    method get_roles_for_composition ()       {
-        [ map { $_, @{ $_->get_local_roles } } @{ $self->get_local_roles } ]
-    }
-    method get_all_roles             ()       {
-        [ map { $_, @{ $_->get_local_roles } } @{ $self->get_local_roles } ]
+    method get_local_roles () { $roles }
+
+    method get_roles_for_composition () {
+        [ map { $_, @{ $_->get_local_roles } } @{ $self->get_local_roles } ];
     }
 
-    method does_role                 ($role) {
-        scalar grep { $_ == $role } @{ $self->get_all_roles }
+    method get_all_roles () {
+        [ map { $_, @{ $_->get_local_roles } } @{ $self->get_local_roles } ];
+    }
+
+    method does_role ($role) {
+        scalar grep { $_ == $role } @{ $self->get_all_roles };
     }
 }
 
@@ -156,15 +157,15 @@ role HasVersion {
         # ...
     # }
 
-    method get_version   ()             { $version }
-    method get_authority ()             { $authority }
+    method get_version ()   { $version }
+    method get_authority () { $authority }
 
-    method set_version   ($new_version) { $version = $new_version }
+    method set_version ($new_version) { $version = $new_version }
 
     # XXX this logic is not nearly right, it should really use the logic
     # used by the current UNIVERSAL::VERSION, but UNIVERSAL::VERSION looks
     # up the class's version in $VERSION, which isn't what we want
-    method VERSION       ($new_version) {
+    method VERSION ($new_version) {
         my $ver = $self->get_version;
 
         if ( @_ ) {
@@ -189,17 +190,18 @@ role HasSuperclass {
     has $superclass;
 
     # XXX need to figure out what to do about BUILD in roles
-    # this logic is in BUILD for Class and Role directly for now
+    # this logic is in BUILD for Class directly for now
     # BUILD {
         # set default base object
         # metaclass compatibility checking
         # ...
     # }
 
-    method get_superclass       ()       { $superclass }
-    method set_superclass       ($new)   { $superclass = $new }
+    method get_superclass () { $superclass }
 
-    method base_object_class    ()       { Object }
+    method set_superclass ($new) { $superclass = $new }
+
+    method base_object_class () { $::Object }
 
     method get_compatible_class ($other) {
         # replace the class with a subclass of itself
@@ -209,7 +211,7 @@ role HasSuperclass {
         # reconciling this group of metaclasses isn't possible
         return;
     }
-    method is_subclass_of       ($super) {
+    method is_subclass_of ($super) {
         my @mro = @{ $self->get_mro };
         shift @mro;
         return scalar grep { $super == $_ } @mro;
@@ -250,7 +252,7 @@ role Instantiable {
         $stash->bless(mop::internal::instance::create( \$self, $data ));
     }
 
-    method new             (%params) {
+    method new (%params) {
         my $instance = $self->create_instance( \%params );
         mop::WALKCLASS(
             $self->get_dispatcher('reverse'),
@@ -266,14 +268,16 @@ role Instantiable {
     }
 }
 
+# XXX this should probably just require get_mro, not implement it
 role Dispatchable {
-    method get_mro        ()      {
+    method get_mro () {
         # XXX XXX XXX what in the world is this
         # warn "get_mro for " . $self->get_name . ' ' . $::SELF->get_name;
         my $super = $::SELF->get_superclass;
         # warn $super->get_name if $super;
         return [ $::SELF, $super ? @{ $super->get_mro } : () ]
     }
+
     method get_dispatcher ($type) {
         return sub { state $mro = $self->get_mro; shift @$mro }
             unless $type;
@@ -304,8 +308,9 @@ class Role (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion, 
 }
 
 class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion, HasSuperclass, Instantiable, Dispatchable, Cloneable], extends => Object) {
-
-    # NOTE: this is added afterwards
+    # NOTE: this is added afterwards, having it in place during bootstrapping
+    # is problematic, and we know the things we're creating at that point are
+    # consistent
     # BUILD { }
 
     method get_all_methods () {
@@ -321,6 +326,7 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
         );
         return \%methods;
     }
+
     method get_all_attributes () {
         my %attrs;
         mop::WALKCLASS(
@@ -334,6 +340,7 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
         );
         return \%attrs;
     }
+
     method get_all_roles () {
         my @roles;
         mop::WALKCLASS(
