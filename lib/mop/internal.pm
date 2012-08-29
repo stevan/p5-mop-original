@@ -16,6 +16,8 @@ use Scalar::Util ();
 use Scope::Guard 'guard';
 use version ();
 
+use Devel::STDERR::Indent;
+
 sub create_role {
     my %params = @_;
 
@@ -155,7 +157,20 @@ sub execute_method {
 
     my $method   = shift;
     my $invocant = shift;
+
+    warn sprintf '--> executing %s->%s',
+        ::_name($invocant),
+        (::_name($method) || sprintf '0x%x', $method)
+    if $::DEBUG;
+
+
+    my $h;
+    if ($::DEBUG) {
+        $h = Devel::STDERR::Indent::indent();
+    }
+
     my $class    = mop::internal::instance::get_class( $invocant );
+
     my $instance = mop::internal::instance::get_slots( $invocant );
     my $body     = mop::internal::instance::get_slot_at( $method, '$body' );
     my $env      = {
@@ -164,18 +179,62 @@ sub execute_method {
         '$class' => \$class
     };
 
+    if ($::DEBUG) {
+        warn "outer \$self:   " . ::_name(${ $env->{'$self'} });
+        warn "outer \$self:   " . sprintf '0x%x', $env->{'$self'};
+    }
+
     $STACKS->{ mop::uuid_of( $method ) } = []
         unless ref $STACKS->{ mop::uuid_of( $method ) };
 
     push @{ $STACKS->{ mop::uuid_of( $method ) } } => $env;
     PadWalker::set_closed_over( $body, $env );
 
+    if ($::DEBUG) {
+        warn "after close \$self:   " . ::_name(${ $env->{'$self'} });
+        warn "after close \$self:   " . sprintf '0x%x', $env->{'$self'};
+    }
+
+    # localize the global invocant,
+    # caller and class variables here
+    local $::SELF   = $invocant;
+    local $::CLASS  = $class;
+    local $::CALLER = $method;
+
+
+    use Hash::Util::FieldHash::Compat qw(fieldhash);
+    fieldhash our %guards;
+
+    if ( $::DEBUG ) {
+        my $self_name = ::_name($invocant);
+        my $addr = sprintf '0x%x', $env->{'$self'};
+
+        $guards{$env->{'$self'}} = guard {
+            warn "container of \$self=$addr ($self_name) is going away";
+        };
+    }
+
+
     my $g = guard {
         my $stack = $STACKS->{ mop::uuid_of( $method ) };
-        pop @$stack;
+        my $last_frame = pop @$stack;
+        if ($::DEBUG) {
+            warn "just popped \$self:   " . ::_name(${ $last_frame->{'$self'} });
+            warn "just popped \$self:   " . sprintf '0x%x', $last_frame->{'$self'};
+            warn "just popped \\\$self:   " . sprintf '0x%x', \ $last_frame->{'$self'};
+            warn "after popping \$::SELF:   " . ::_name($::SELF);
+        }
+        warn "popped stack of " . ::_name($method);
+        warn "we have " . @$stack . " frames left";
+        undef $h;
+        warn "<-- restoring lexicals if necessary";
         my $env = $stack->[-1];
         if ( $env ) {
             PadWalker::set_closed_over( $body, $env );
+            if ($::DEBUG) {
+                warn "after popping \$self:   " . ::_name(${ $env->{'$self'} });
+                warn "after popping \$self:   " . sprintf '0x%x', $env->{'$self'};
+            }
         }
         else {
             PadWalker::set_closed_over( $body, {
@@ -183,14 +242,19 @@ sub execute_method {
                 '$self'  => \undef,
                 '$class' => \undef,
             });
+            warn "\\undef";
         }
     };
 
-    # localize the global invocant,
-    # caller and class variables here
-    local $::SELF   = $invocant;
-    local $::CLASS  = $class;
-    local $::CALLER = $method;
+    use Sub::Identify;
+
+    if ($::DEBUG) {
+        warn "about to execute \$::SELF:   " . ::_name($::SELF);
+        warn "about to execute \$::CLASS:  " . ::_name($::CLASS);
+        warn "about to execute \$::CALLER: " . ::_name($::CALLER);
+        warn Sub::Identify::sub_fullname($body);
+        #warn Carp::longmess;
+    }
 
     $body->( @_ );
 }

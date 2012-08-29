@@ -268,6 +268,20 @@ role Instantiable {
 
 role Dispatchable {
     method get_mro        ()      {
+        if ($::DEBUG) {
+
+            warn "in get_mro \$_[0]:     " . ::_name($_[0]);
+            warn "in get_mro \$self:     " . ::_name($self);
+            warn "in get_mro \$self:     " . sprintf '0x%x', $self;
+            warn "in get_mro \\\$self:    " . sprintf '0x%x', \$self;
+            warn "in get_mro \$::SELF:   " . ::_name($::SELF);
+            warn "in get_mro \$::CLASS:  " . ::_name($::CLASS);
+            warn "in get_mro \$::CALLER: " . ::_name($::CALLER);
+            #warn Sub::Identify::sub_fullname($body);
+            #warn Carp::longmess;
+            warn "orz===="
+        }
+
         my $super = $self->get_superclass;
         return [ $self, $super ? @{ $super->get_mro } : () ]
     }
