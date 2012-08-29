@@ -199,6 +199,7 @@ sub _create_method {
 
             my $invocant = shift;
             my $instance = mop::internal::instance::get_slots( $invocant );
+            my $class    = mop::internal::instance::get_class( $invocant );
             my $env      = {
                 %$instance,
                 '$self'  => \$invocant,
