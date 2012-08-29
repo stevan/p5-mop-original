@@ -12,7 +12,7 @@ BEGIN {
 
 use mop;
 
-class Throwable {
+role Throwable {
 
     has $message     = '';
     has $stack_trace = Devel::StackTrace->new(
@@ -28,13 +28,16 @@ class Throwable {
     method as_string   { $message . "\n\n" . $stack_trace->as_string }
 }
 
-sub foo { Throwable->new( message => "HELLO" )->throw }
+class MyError ( with => [Throwable] ) {}
+
+sub foo { MyError->new( message => "HELLO" )->throw }
 sub bar { foo() }
 
 eval { bar };
 my $e = $@;
 
-ok( $e->isa( Throwable ), '... the exception is a Throwable object' );
+ok( $e->isa( MyError ), '... the exception is a Throwable object' );
+ok( $e->does( Throwable ), '... the exception does the Throwable role' );
 
 is( $e->message, 'HELLO', '... got the exception' );
 
@@ -45,9 +48,9 @@ $file =~ s/^\.\///;
 
 is(
     $e->stack_trace->as_string,
-    qq[Trace begun at $file line 32
-main::bar at $file line 34
-eval {...} at $file line 34
+    qq[Trace begun at $file line 34
+main::bar at $file line 36
+eval {...} at $file line 36
 ],
     '... got the exception'
 );
