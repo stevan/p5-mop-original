@@ -54,21 +54,10 @@ sub init {
 
         require 'mop/bootstrap.pl';
 
-        $::Object        = Object;
-        $::Class         = Class;
-        $::Role          = Role;
-        $::Method        = Method;
-        $::Attribute     = Attribute;
-
-        $::HasMethods    = HasMethods;
-        $::HasAttributes = HasAttributes;
-        $::HasRoles      = HasRoles;
-        $::HasName       = HasName;
-        $::HasVersion    = HasVersion;
-        $::HasSuperclass = HasSuperclass;
-        $::Instantiable  = Instantiable;
-        $::Dispatchable  = Dispatchable;
-        $::Cloneable     = Cloneable;
+        $::Class     = Class;
+        $::Role      = Role;
+        $::Method    = Method;
+        $::Attribute = Attribute;
     }
 
     delete $INC{'mop/bootstrap.pl'};
