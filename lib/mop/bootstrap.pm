@@ -156,9 +156,6 @@ sub init {
     }
     for my $class (@classes) {
         mop::internal::instance::set_class($class, $::Class);
-        if ($class->get_superclass) {
-            mop::internal::instance::set_slot_at($class, '$superclass', \$::Object);
-        }
         mop::internal::get_stash_for($::Class)->bless($class);
         mop::internal::instance::set_slot_at($class, '$version', \$mop::VERSION);
         mop::internal::instance::set_slot_at($class, '$authority', \$mop::AUTHORITY);
