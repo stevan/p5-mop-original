@@ -4,7 +4,7 @@ use mop;
 
 use Variable::Magic qw[ wizard cast ];
 
-class GuardedAttribute (extends => $::Attribute) {
+role MetaAttributeWithGuard {
     has $guard;
 
     method guard     { $guard }
@@ -30,6 +30,8 @@ class GuardedAttribute (extends => $::Attribute) {
         $value;
     }
 }
+
+class GuardedAttribute (extends => $::Attribute, with => [MetaAttributeWithGuard]) {}
 
 class GuardedAttributeClass (extends => $::Class) {
     method attribute_class { GuardedAttribute }
