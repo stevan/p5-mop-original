@@ -63,6 +63,16 @@ sub init {
         $::Role      = Role;
         $::Method    = Method;
         $::Attribute = Attribute;
+
+        $::HasMethods    = HasMethods;
+        $::HasAttributes = HasAttributes;
+        $::HasRoles      = HasRoles;
+        $::HasName       = HasName;
+        $::HasVersion    = HasVersion;
+        $::HasSuperclass = HasSuperclass;
+        $::Instantiable  = Instantiable;
+        $::Dispatchable  = Dispatchable;
+        $::Cloneable     = Cloneable;
     }
 
     delete $INC{'mop/bootstrap.pl'};
