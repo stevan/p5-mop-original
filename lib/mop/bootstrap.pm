@@ -11,10 +11,9 @@ use Scalar::Util ();
 use version ();
 
 use mop::internal;
+use mop::internal::instance;
 
-{
-    package mop::bootstrap::mini;
-
+package mop::bootstrap::mini {
     sub HasMethods;
     sub HasAttributes;
     sub HasRoles;
@@ -31,9 +30,7 @@ use mop::internal;
     sub Attribute;
 }
 
-{
-    package mop::bootstrap::full;
-
+package mop::bootstrap::full {
     sub HasMethods;
     sub HasAttributes;
     sub HasRoles;
@@ -51,18 +48,17 @@ use mop::internal;
 }
 
 sub init {
-    {
-        package mop::bootstrap::mini;
+    package mop::bootstrap::mini {
         require mop::mini::syntax;
         mop::mini::syntax->setup_for(__PACKAGE__);
 
         require 'mop/bootstrap.pl';
 
-        $::Object    = Object;
-        $::Class     = Class;
-        $::Role      = Role;
-        $::Method    = Method;
-        $::Attribute = Attribute;
+        $::Object        = Object;
+        $::Class         = Class;
+        $::Role          = Role;
+        $::Method        = Method;
+        $::Attribute     = Attribute;
 
         $::HasMethods    = HasMethods;
         $::HasAttributes = HasAttributes;
@@ -77,18 +73,17 @@ sub init {
 
     delete $INC{'mop/bootstrap.pl'};
 
-    {
-        package mop::bootstrap::full;
+    package mop::bootstrap::full {
         require mop::syntax;
         mop::syntax->setup_for(__PACKAGE__);
 
         require 'mop/bootstrap.pl';
 
-        $::Object    = Object;
-        $::Class     = Class;
-        $::Role      = Role;
-        $::Method    = Method;
-        $::Attribute = Attribute;
+        $::Object        = Object;
+        $::Class         = Class;
+        $::Role          = Role;
+        $::Method        = Method;
+        $::Attribute     = Attribute;
 
         $::HasMethods    = HasMethods;
         $::HasAttributes = HasAttributes;
@@ -101,14 +96,12 @@ sub init {
         $::Cloneable     = Cloneable;
     }
 
-    my @classes = (
+    my @metaobjects = (
         $::Object,
         $::Class,
         $::Role,
         $::Method,
         $::Attribute,
-    );
-    my @roles = (
         $::HasMethods,
         $::HasAttributes,
         $::HasRoles,
@@ -120,72 +113,85 @@ sub init {
         $::Cloneable,
     );
 
+    my @classes = grep {
+        get_class($_) == mop::bootstrap::mini::Class
+    } @metaobjects;
+    my @roles   = grep {
+        get_class($_) == mop::bootstrap::mini::Role
+    } @metaobjects;
+
     # fix up the objects, which are still mini-mop objects at this point
+    # this section intentionally doesn't call any methods, to avoid needing
+    # to use the mop when it's in a halfway transition state
     for my $role (@roles) {
-        mop::internal::instance::set_class($role, $::Role);
-        mop::internal::get_stash_for($::Role)->bless($role);
+        set_class($role, $::Role);
+        get_stash_for($::Role)->bless($role);
 
-        mop::internal::instance::set_slot_at($role, '$version', \$mop::VERSION);
-        mop::internal::instance::set_slot_at($role, '$authority', \$mop::AUTHORITY);
-        mop::internal::instance::set_slot_at($role, '$name', \(mop::internal::instance::get_slot_at($role, '$name') =~ s/.*:://r));
+        set_slot_at($role, '$version', \$mop::VERSION);
+        set_slot_at($role, '$authority', \$mop::AUTHORITY);
+        set_slot_at($role, '$name', \(get_slot_at($role, '$name') =~ s/.*:://r));
 
-        for my $attribute (values %{ mop::internal::instance::get_slot_at($role, '$attributes') }) {
-            mop::internal::instance::set_class($attribute, $::Attribute);
-            mop::internal::get_stash_for($::Attribute)->bless($attribute);
+        for my $attribute (values %{ get_slot_at($role, '$attributes') }) {
+            set_class($attribute, $::Attribute);
+            get_stash_for($::Attribute)->bless($attribute);
         }
 
-        for my $method (values %{ mop::internal::instance::get_slot_at($role, '$methods') }) {
-            mop::internal::instance::set_class($method, $::Method);
-            mop::internal::get_stash_for($::Method)->bless($method);
-        }
-    }
-    for my $class (@classes) {
-        mop::internal::instance::set_class($class, $::Class);
-        mop::internal::get_stash_for($::Class)->bless($class);
-        mop::internal::instance::set_slot_at($class, '$version', \$mop::VERSION);
-        mop::internal::instance::set_slot_at($class, '$authority', \$mop::AUTHORITY);
-        mop::internal::instance::set_slot_at($class, '$name', \(mop::internal::instance::get_slot_at($class, '$name') =~ s/.*:://r));
-
-        for my $attribute (values %{ mop::internal::instance::get_slot_at($class, '$attributes') }) {
-            mop::internal::instance::set_class($attribute, $::Attribute);
-            mop::internal::get_stash_for($::Attribute)->bless($attribute);
-        }
-
-        for my $method (values %{ mop::internal::instance::get_slot_at($class, '$methods') }) {
-            mop::internal::instance::set_class($method, $::Method);
-            mop::internal::get_stash_for($::Method)->bless($method);
+        for my $method (values %{ get_slot_at($role, '$methods') }) {
+            set_class($method, $::Method);
+            get_stash_for($::Method)->bless($method);
         }
     }
 
-    # now reconstruct the stashes
     for my $class (@classes) {
-        my $stash = mop::internal::get_stash_for($class);
+        set_class($class, $::Class);
+        get_stash_for($::Class)->bless($class);
+
+        set_slot_at($class, '$version', \$mop::VERSION);
+        set_slot_at($class, '$authority', \$mop::AUTHORITY);
+        set_slot_at($class, '$name', \(get_slot_at($class, '$name') =~ s/.*:://r));
+
+        for my $attribute (values %{ get_slot_at($class, '$attributes') }) {
+            set_class($attribute, $::Attribute);
+            get_stash_for($::Attribute)->bless($attribute);
+        }
+
+        for my $method (values %{ get_slot_at($class, '$methods') }) {
+            set_class($method, $::Method);
+            get_stash_for($::Method)->bless($method);
+        }
+    }
+
+    # now reconstruct the stashes (not using FINALIZE because we're still
+    # avoiding method calls)
+    for my $class (@classes) {
+        my $stash = get_stash_for($class);
         my $methods = {
-            (map { %{ mop::internal::instance::get_slot_at($_, '$methods') } }
-                (mop::internal::instance::get_slot_at($class, '$superclass') || ()),
-                @{ mop::internal::instance::get_slot_at($class, '$roles') }),
-            %{ mop::internal::instance::get_slot_at($class, '$methods') },
+            (map { %{ get_slot_at($_, '$methods') } }
+                (get_slot_at($class, '$superclass') || ()),
+                @{ get_slot_at($class, '$roles') }),
+            %{ get_slot_at($class, '$methods') },
         };
         %$stash = ();
         for my $name (keys %$methods) {
             my $method = $methods->{$name};
             $stash->add_method($name => sub { $method->execute(@_) });
         }
+        # XXX DESTROY?
     }
 
     # break the cycle with Method->execute, since we just regenerated its stash
     # entry to call itself recursively
-    mop::internal::get_stash_for($::Method)->add_method(execute => sub {
+    get_stash_for($::Method)->add_method(execute => sub {
         mop::internal::execute_method(@_)
     });
 
     # and replace some methods that we hardcoded in the initial mop, with some
-    # better variants that actually use the full mop
+    # working variants that actually use the full mop instead of the mini mop
     {
         my $clone = sub {
             my %params = (
                 (map {
-                    $_->get_param_name => mop::internal::instance::get_slot_at(
+                    $_->get_param_name => get_slot_at(
                         $::SELF, $_->get_name
                     )
                 } values %{ $::CLASS->get_all_attributes }),
@@ -193,11 +199,14 @@ sub init {
             );
             return $::CLASS->new(%params);
         };
+
         my $method = $::Method->new(
             name => 'clone',
             body => $clone,
         );
+
         $::Cloneable->add_method($method);
+
         local $::SELF = $method;
         local $::CLASS = $::Method;
         $::Role->add_method($clone->());
@@ -205,31 +214,14 @@ sub init {
         $::Method->add_method($clone->());
         $::Attribute->add_method($clone->());
     }
-    {
-        my $method = mop::internal::instance::get_slot_at($::Role, '$methods')->{clone};
-        mop::internal::get_stash_for($::Role)->add_method(clone => sub {
-            $method->execute(@_)
-        });
-    }
-    {
-        my $method = mop::internal::instance::get_slot_at($::Class, '$methods')->{clone};
-        mop::internal::get_stash_for($::Class)->add_method(clone => sub {
-            $method->execute(@_)
-        });
-    }
-    {
-        my $method = mop::internal::instance::get_slot_at($::Method, '$methods')->{clone};
-        mop::internal::get_stash_for($::Method)->add_method(clone => sub {
-            $method->execute(@_)
-        });
-    }
-    {
-        my $method = mop::internal::instance::get_slot_at($::Attribute, '$methods')->{clone};
-        mop::internal::get_stash_for($::Attribute)->add_method(clone => sub {
+    for my $cloneable ($::Role, $::Class, $::Method, $::Attribute) {
+        my $method = get_slot_at($cloneable, '$methods')->{clone};
+        get_stash_for($cloneable)->add_method(clone => sub {
             $method->execute(@_)
         });
     }
 
+    # and finally, install the constructor for classes
     $::Class->set_constructor($::Method->new(
         name => 'BUILD',
         body => sub {
@@ -256,6 +248,12 @@ sub init {
 
     return;
 }
+
+sub get_slot_at   { mop::internal::instance::get_slot_at(@_) }
+sub set_slot_at   { mop::internal::instance::set_slot_at(@_) }
+sub get_class     { mop::internal::instance::get_class(@_)   }
+sub set_class     { mop::internal::instance::set_class(@_)   }
+sub get_stash_for { mop::internal::get_stash_for(@_)         }
 
 1;
 
