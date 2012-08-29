@@ -268,11 +268,8 @@ role Instantiable {
 
 role Dispatchable {
     method get_mro        ()      {
-        # XXX XXX XXX what in the world is this
-        # warn "get_mro for " . $self->get_name . ' ' . $::SELF->get_name;
-        my $super = $::SELF->get_superclass;
-        # warn $super->get_name if $super;
-        return [ $::SELF, $super ? @{ $super->get_mro } : () ]
+        my $super = $self->get_superclass;
+        return [ $self, $super ? @{ $super->get_mro } : () ]
     }
     method get_dispatcher ($type) {
         return sub { state $mro = $self->get_mro; shift @$mro }
