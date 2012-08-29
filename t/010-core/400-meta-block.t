@@ -11,18 +11,33 @@ use mop;
 
 class Foo ( extends => Bar ) {
 
+    # without block
     meta ( extends => MetaFoo, with => [ Foo, Bar ] );
 
+    # with block
     meta ( with => [ Foo, Bar ] ) {
 
         method attribute_metaclass { SomeRandomAttribute }
 
         has $foo;
-        method BUILDARGS {
-            ...
+        method BUILDARGS ($params) {
+            # ...
         }
     }
+
 }
+
+# desugars to
+
+class Foo ( metaclass => class ( extends => $::Class ) {
+        method BUILDARGS ($params) {
+            # ...
+        }
+    }) {
+
+    # ...
+}
+
 
 =cut
 
