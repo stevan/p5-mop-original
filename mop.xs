@@ -74,8 +74,21 @@ static PADOFFSET THX_pad_add_my_sv(pTHX_ SV *namesv, svtype type)
 #define demand_unichar(c, f) THX_demand_unichar(aTHX_ c, f)
 static void THX_demand_unichar(pTHX_ I32 c, U32 flags)
 {
+    I32 next;
+    char *buf;
+    size_t i;
+
 	if(!(flags & DEMAND_IMMEDIATE)) lex_read_space(0);
-	if(lex_peek_unichar(0) != c) croak("syntax error");
+    next = lex_peek_unichar(0);
+	if(next != c) {
+        Newx(buf, strlen(PL_parser->bufptr), char);
+        strcpy(buf, PL_parser->bufptr);
+        for(i = strlen(buf); i > 0 ;i--) {
+            if(buf[i] == '\n') { buf[i] = '\0'; break; }
+        }
+        croak("syntax error: expected '%s', but found '%s' at \"%s\"",
+            (char *)&c, (char *)&next, buf );
+    }
 	if(!(flags & DEMAND_NOCONSUME)) lex_read_unichar(0);
 }
 
@@ -84,10 +97,18 @@ static SV *THX_parse_idword(pTHX_ char const *prefix)
 {
 	STRLEN prefixlen, idlen;
 	SV *sv;
-	char *start, *s, c;
+	char *buf, *start, *s, c;
+    size_t i;
 	s = start = PL_parser->bufptr;
 	c = *s;
-	if(!isIDFIRST(c)) croak("syntax error");
+	if(!isIDFIRST(c)) {
+        Newx(buf, strlen(s), char);
+        strcpy(buf, s);
+        for(i = strlen(buf); i > 0 ;i--) {
+            if(buf[i] == '\n') { buf[i] = '\0'; break; }
+        }
+        croak("syntax error: invalid identifier found at: \"%s\"", s);
+    }
 	do {
 		c = *++s;
 	} while(isALNUM(c));
@@ -371,7 +392,7 @@ static OP *THX_parse_parameter_default(pTHX_ IV i, PADOFFSET padoffset)
         get_var = newOP(OP_PADHV, (OPpLVAL_INTRO<<8)|OPf_WANT_LIST);
     }
     else {
-        croak("weird pad entry %"SVf, name);
+        croak("weird pad entry '%s'", name);
     }
     get_var->op_targ = padoffset;
     assign_default = newASSIGNOP(OPf_STACKED, get_var, 0, default_expr);
@@ -400,9 +421,11 @@ static OP *THX_parse_method_prototype(pTHX)
 
     for (;;) {
         OP *pad_op;
-        char next;
+        I32 next;
         I32 type;
         SV *name;
+        char *buf;
+        size_t q;
 
         lex_read_space(0);
         next = lex_peek_unichar(0);
@@ -422,7 +445,12 @@ static OP *THX_parse_method_prototype(pTHX)
             pad_op->op_targ = pad_add_my_hash_sv(name);
         }
         else {
-            croak("syntax error");
+            Newx(buf, strlen(PL_parser->bufptr), char);
+            strcpy(buf, PL_parser->bufptr);
+            for(q = strlen(buf); q > 0 ; q--) {
+                if(buf[q] == '\n') { buf[q] = '\0'; break; }
+            }
+            croak("syntax error: expected valid sigil, but found '%s' at \"%s\"", (char *)&next, buf);
         }
 
         op_append_elem(OP_LIST, myvars, pad_op);
@@ -453,7 +481,12 @@ static OP *THX_parse_method_prototype(pTHX)
             break;
         }
         else {
-            croak("syntax error");
+            Newx(buf, strlen(PL_parser->bufptr), char);
+            strcpy(buf, PL_parser->bufptr);
+            for(q = strlen(buf); q > 0 ; q--) {
+                if(buf[q] == '\n') { buf[q] = '\0'; break; }
+            }
+            croak("syntax error: expected comma or closing parenthesis, but found '%s' at \"%s\"", (char *)&next, buf);
         }
     }
 
