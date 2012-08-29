@@ -252,8 +252,10 @@ role Instantiable {
         $stash->bless(mop::internal::instance::create( \$self, $data ));
     }
 
+    method BUILDARGS ($params) { $params }
+
     method new (%params) {
-        my $instance = $self->create_instance( \%params );
+        my $instance = $self->create_instance( $self->BUILDARGS( \%params ) );
         mop::WALKCLASS(
             $self->get_dispatcher('reverse'),
             sub {
