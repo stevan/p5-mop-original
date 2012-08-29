@@ -53,53 +53,37 @@ sub init {
         mop::mini::syntax->setup_for(__PACKAGE__);
 
         require 'mop/bootstrap.pl';
-
-        $::Class     = Class;
-        $::Role      = Role;
-        $::Method    = Method;
-        $::Attribute = Attribute;
     }
 
     delete $INC{'mop/bootstrap.pl'};
+
+    $::Class     = mop::bootstrap::mini::Class;
+    $::Role      = mop::bootstrap::mini::Role;
+    $::Method    = mop::bootstrap::mini::Method;
+    $::Attribute = mop::bootstrap::mini::Attribute;
 
     package mop::bootstrap::full {
         require mop::syntax;
         mop::syntax->setup_for(__PACKAGE__);
 
         require 'mop/bootstrap.pl';
-
-        $::Object        = Object;
-        $::Class         = Class;
-        $::Role          = Role;
-        $::Method        = Method;
-        $::Attribute     = Attribute;
-
-        $::HasMethods    = HasMethods;
-        $::HasAttributes = HasAttributes;
-        $::HasRoles      = HasRoles;
-        $::HasName       = HasName;
-        $::HasVersion    = HasVersion;
-        $::HasSuperclass = HasSuperclass;
-        $::Instantiable  = Instantiable;
-        $::Dispatchable  = Dispatchable;
-        $::Cloneable     = Cloneable;
     }
 
     my @metaobjects = (
-        $::Object,
-        $::Class,
-        $::Role,
-        $::Method,
-        $::Attribute,
-        $::HasMethods,
-        $::HasAttributes,
-        $::HasRoles,
-        $::HasName,
-        $::HasVersion,
-        $::HasSuperclass,
-        $::Instantiable,
-        $::Dispatchable,
-        $::Cloneable,
+        ($::Object        = mop::bootstrap::full::Object       ),
+        ($::Class         = mop::bootstrap::full::Class        ),
+        ($::Role          = mop::bootstrap::full::Role         ),
+        ($::Method        = mop::bootstrap::full::Method       ),
+        ($::Attribute     = mop::bootstrap::full::Attribute    ),
+        ($::HasMethods    = mop::bootstrap::full::HasMethods   ),
+        ($::HasAttributes = mop::bootstrap::full::HasAttributes),
+        ($::HasRoles      = mop::bootstrap::full::HasRoles     ),
+        ($::HasName       = mop::bootstrap::full::HasName      ),
+        ($::HasVersion    = mop::bootstrap::full::HasVersion   ),
+        ($::HasSuperclass = mop::bootstrap::full::HasSuperclass),
+        ($::Instantiable  = mop::bootstrap::full::Instantiable ),
+        ($::Dispatchable  = mop::bootstrap::full::Dispatchable ),
+        ($::Cloneable     = mop::bootstrap::full::Cloneable    ),
     );
 
     my @classes = grep {
