@@ -352,7 +352,6 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
         my $local_methods = $self->get_local_methods;
         my $local_attributes = $self->get_local_attributes;
         my $roles = $self->get_roles_for_composition; # XXX?
-        my $methods = $self->get_all_methods;
 
         foreach my $role ( @$roles ) {
             my $methods = $role->get_local_methods;
@@ -366,6 +365,8 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
                     unless exists $local_attributes->{$name};
             }
         }
+
+        my $methods = $self->get_all_methods;
 
         %$stash = ();
 
