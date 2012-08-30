@@ -138,7 +138,7 @@ sub _apply_overloading {
 
 sub create_stash_for {
     my ($class) = @_;
-    my $stash = Package::Anon->new( mop::internal::instance::get_slot_at( $class, '$name' ) );
+    my $stash = Package::Anon->new( mop::internal::instance::get_slot_at( $class, '$name' ) || () );
     _apply_overloading($stash);
     return $stash;
 }
