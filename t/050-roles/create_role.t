@@ -45,9 +45,6 @@ my $composed_role = $::Role->new(
     roles => [ $role ],
 );
 
-TODO: {
-    todo_skip 'No idea if this works now... Got old code because of lack of internet :/', 1;
-    ok($composed_role->DOES('MyItem::Role::Equipment2'), "Role composed into role");
-}
+ok($composed_role->does_role($role), "Role composed into role");
 
 done_testing;
