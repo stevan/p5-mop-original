@@ -72,21 +72,57 @@ class Attribute (extends => Object, roles => [Cloneable]) {
     method get_name          { $name }
     method get_initial_value { $initial_value }
 
+    # XXX this works, but things break if i try to simplify it by returning
+    # temporaries - "return \@$value" for instance. not sure why.
     method get_initial_value_for_instance {
-        my $value = ${ $self->get_initial_value };
-        if ( ref $value ) {
-            if ( ref $value eq 'CODE' ) {
-                $value = $value->();
+        my $value = $self->get_initial_value;
+        my $sigil = $self->get_sigil;
+
+        if (ref($value) eq 'REF') {
+            if (ref($$value) eq 'CODE') {
+                if ($sigil eq '$') {
+                    $value = $$value->();
+                    return \$value;
+                }
+                elsif ($sigil eq '@') {
+                    my @value = $$value->();
+                    return \@value;
+                }
+                elsif ($sigil eq '%') {
+                    my %value = $$value->();
+                    return \%value;
+                }
+                else {
+                    die "Unknown sigil $sigil";
+                }
             }
             else {
-                die "References of type(" . ref $value . ") are not supported";
+                die "References of type " . ref($value) . " are not supported";
             }
         }
-        return \$value;
+        else {
+            if ($sigil eq '$') {
+                $value = $$value;
+                return \$value;
+            }
+            elsif ($sigil eq '@') {
+                my @value = @$value;
+                return \@value;
+            }
+            elsif ($sigil eq '%') {
+                my %value = %$value;
+                return \%value;
+            }
+            else {
+                die "Unknown sigil $sigil";
+            }
+        }
     }
+
     method prepare_constructor_value_for_instance ($val) { $val }
 
-    method get_param_name { $self->get_name =~ s/^\$//r }
+    method get_sigil { substr($self->get_name, 0, 1) }
+    method get_param_name { $self->get_name =~ s/^[\$\@\%]//r }
 }
 
 role HasMethods {

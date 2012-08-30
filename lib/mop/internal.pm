@@ -179,7 +179,7 @@ sub execute_method {
         }
         else {
             PadWalker::set_closed_over( $body, {
-                (map { $_ => \undef } keys %$instance),
+                (map { $_ => _undef_for_type($_) } keys %$instance),
                 '$self'  => \undef,
                 '$class' => \undef,
             });
@@ -193,6 +193,23 @@ sub execute_method {
     local $::CALLER = $method;
 
     $body->( @_ );
+}
+
+sub _undef_for_type {
+    my ($name) = @_;
+    my $sigil = substr($name, 0, 1);
+    if ($sigil eq '$') {
+        return \undef;
+    }
+    elsif ($sigil eq '@') {
+        return [];
+    }
+    elsif ($sigil eq '%') {
+        return {};
+    }
+    else {
+        die "Unknown sigil '$sigil' for name $name";
+    }
 }
 
 1;

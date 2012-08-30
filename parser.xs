@@ -338,11 +338,33 @@ static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 {
     SV *name;
     OP *ret, *pad_op, *metadata = NULL, *attr_default = NULL;
+    I32 sigil;
 
     *flagsp |= CALLPARSER_STATEMENT;
 
     lex_read_space(0);
-    name = parse_scalar_varname();
+    sigil = lex_peek_unichar(0);
+    if (sigil == '$') {
+        name = parse_scalar_varname();
+    }
+    else if (sigil == '@') {
+        name = parse_array_varname();
+    }
+    else if (sigil == '%') {
+        name = parse_hash_varname();
+    }
+    else {
+        char *buf;
+        STRLEN q;
+
+        Newx(buf, strlen(PL_parser->bufptr), char);
+        strcpy(buf, PL_parser->bufptr);
+        for(q = strlen(buf); q > 0 ; q--) {
+            if(buf[q] == '\n') { buf[q] = '\0'; break; }
+        }
+
+        croak("syntax error: expected valid sigil, but found '%c' at \"%s\"", (char)sigil, buf);
+    }
 
     lex_read_space(0);
     if (lex_peek_unichar(0) == '(') {
@@ -359,17 +381,28 @@ static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
         attr_default = newANONSUB(floor, NULL, parse_arithexpr(0));
     }
 
-    pad_op = newOP(OP_PADSV, 0);
-    pad_op->op_targ = pad_add_my_scalar_sv(name);
+    if (sigil == '$') {
+        pad_op = newOP(OP_PADSV, 0);
+        pad_op->op_targ = pad_add_my_scalar_sv(name);
+    }
+    else if (sigil == '@') {
+        pad_op = newOP(OP_PADAV, 0);
+        pad_op->op_targ = pad_add_my_array_sv(name);
+    }
+    else if (sigil == '%') {
+        pad_op = newOP(OP_PADHV, 0);
+        pad_op->op_targ = pad_add_my_hash_sv(name);
+    }
+    else {
+        croak("weird sigil '%c'???", sigil);
+    }
 
     pad_op = Perl_localize(aTHX_ pad_op, 1);
-    pad_op = Perl_sawparens(aTHX_ pad_op);
-    pad_op = op_lvalue(pad_op, OP_REFGEN);
 
     SvREFCNT_inc_simple_void_NN(name);
     ret = newLISTOP(OP_LIST, 0,
                     newSVOP(OP_CONST, 0, name),
-                    newUNOP(OP_REFGEN, 0, pad_op));
+                    newANONLIST(pad_op));
 
     if (metadata) {
         op_append_elem(OP_LIST, ret, metadata);
