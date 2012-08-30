@@ -51,8 +51,8 @@ class Method (extends => Object, roles => [Cloneable]) {
 
     method is_stub () { !defined $body }
 
-    method execute (@args) {
-        mop::internal::execute_method( $self, @args )
+    method execute ($invocant, @args) {
+        mop::internal::execute_method( $self, $invocant, @args )
     }
 
     method _generate_callable_sub {

@@ -141,8 +141,8 @@ sub init {
         my $methods = {
             (map { %{ get_slot_at($_, '$methods') } }
                 (get_slot_at($class, '$superclass') || ()),
-                @{ get_slot_at($class, '$roles') }),
-            %{ get_slot_at($class, '$methods') },
+                @{ get_slot_at($class, '$roles') },
+                $class),
         };
         %$stash = ();
         for my $name (keys %$methods) {
