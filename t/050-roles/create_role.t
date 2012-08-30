@@ -40,11 +40,6 @@ ok($visored->is_worn, "accessor was consumed");
 $visored->remove;
 ok(!$visored->is_worn, "method was consumed");
 
-TODO: {
-    todo_skip 'Is anon roles going to be implemented? Everything is anon..?', 1;
-    ok(!$role->is_anon_role, "the role is not anonymous");
-}
-
 my $composed_role = $::Role->new(
     name => 'MyItem::Role::Equipment2',
     roles => [ $role ],
