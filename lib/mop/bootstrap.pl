@@ -181,6 +181,26 @@ role HasRoles {
     method does_role ($role) {
         scalar grep { $_ == $role } @{ $self->get_all_roles };
     }
+
+    # XXX very simplistic for now, need a real implementation
+    method apply_roles (@roles) {
+        my $local_methods = $self->get_local_methods;
+        my $local_attributes = $self->get_local_attributes;
+
+        for my $role (@roles) {
+            my $methods = $role->get_local_methods;
+            for my $name (keys %$methods) {
+                $self->add_method($methods->{$name}->clone)
+                    unless exists $local_methods->{$name};
+            }
+            my $attributes = $role->get_local_attributes;
+            for my $name (keys %$attributes) {
+                $self->add_attribute($attributes->{$name}->clone)
+                    unless exists $local_attributes->{$name};
+            }
+        }
+    }
+
 }
 
 role HasName {
@@ -337,22 +357,7 @@ role Dispatchable {
 
 class Role (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion, Cloneable], extends => Object) {
     method FINALIZE {
-        # XXX factor this out
-        my $local_methods = $self->get_local_methods;
-        my $local_attributes = $self->get_local_attributes;
-        my $roles = $self->get_roles_for_composition; # XXX?
-        foreach my $role ( @$roles ) {
-            my $methods = $role->get_local_methods;
-            foreach my $name ( keys %$methods ) {
-                $self->add_method( $methods->{$name}->clone )
-                    unless exists $local_methods->{$name};
-            }
-            my $attributes = $role->get_local_attributes;
-            foreach my $name ( keys %$attributes ) {
-                $self->add_attribute( $attributes->{$name}->clone )
-                    unless exists $local_attributes->{$name};
-            }
-        }
+        $self->apply_roles(@{ $self->get_roles_for_composition });
     }
 }
 
@@ -408,22 +413,7 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
         my $stash      = mop::internal::get_stash_for( $self );
         my $dispatcher = $self->get_dispatcher;
 
-        my $local_methods = $self->get_local_methods;
-        my $local_attributes = $self->get_local_attributes;
-        my $roles = $self->get_roles_for_composition; # XXX?
-
-        foreach my $role ( @$roles ) {
-            my $methods = $role->get_local_methods;
-            foreach my $name ( keys %$methods ) {
-                $self->add_method( $methods->{$name}->clone )
-                    unless exists $local_methods->{$name};
-            }
-            my $attributes = $role->get_local_attributes;
-            foreach my $name ( keys %$attributes ) {
-                $self->add_attribute( $attributes->{$name}->clone )
-                    unless exists $local_attributes->{$name};
-            }
-        }
+        $self->apply_roles(@{ $self->get_roles_for_composition });
 
         my $methods = $self->get_all_methods;
 
