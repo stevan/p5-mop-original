@@ -54,6 +54,15 @@ class Method (extends => Object, roles => [Cloneable]) {
     method execute (@args) {
         mop::internal::execute_method( $self, @args )
     }
+
+    method _generate_callable_sub {
+        if ($class == $::Method) {
+            return sub { mop::internal::execute_method($self, @_) };
+        }
+        else {
+            return sub { $self->execute(@_) };
+        }
+    }
 }
 
 class Attribute (extends => Object, roles => [Cloneable]) {
@@ -387,7 +396,7 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
             my $method = $methods->{ $name };
             $stash->add_method(
                 $name,
-                sub { $method->execute(@_) },
+                $method->_generate_callable_sub,
             ) unless exists $stash->{ $name };
         }
 

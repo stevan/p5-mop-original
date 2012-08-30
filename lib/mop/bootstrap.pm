@@ -134,8 +134,8 @@ sub init {
         }
     }
 
-    # now reconstruct the stashes (not using FINALIZE because we're still
-    # avoiding method calls)
+    # now reconstruct the stashes (not using FINALIZE or _generate_callable_sub
+    # because we're still avoiding method calls)
     for my $class (@classes) {
         my $stash = get_stash_for($class);
         my $methods = {
