@@ -27,8 +27,9 @@ WriteMakefile(
         'Scalar::Util'  => 0,
     },
     BUILD_REQUIRES => {
-        'Test::More'    => 0,
-        'Test::Fatal'   => 0,
+        'Test::More'     => 0,
+        'Test::Fatal'    => 0,
+        'Test::Requires' => 0,
     },
     test           => {
         TESTS => 't/*.t t/*/*.t t/*/*/*.t',

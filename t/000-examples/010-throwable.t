@@ -5,10 +5,7 @@ use warnings;
 
 use Test::More;
 
-BEGIN {
-    eval { require Devel::StackTrace; 1 }
-    or plan skip_all => "Devel::StackTrace is required for this test";
-}
+use Test::Requires 'Devel::StackTrace';
 
 use mop;
 
@@ -28,6 +25,7 @@ class Throwable {
     method as_string   { $message . "\n\n" . $stack_trace->as_string }
 }
 
+my $line = __LINE__;
 sub foo { Throwable->new( message => "HELLO" )->throw }
 sub bar { foo() }
 
@@ -43,11 +41,14 @@ isa_ok( $e->stack_trace, 'Devel::StackTrace' );
 my $file = __FILE__;
 $file =~ s/^\.\///;
 
+my $line1 = $line + 2;
+my $line2 = $line + 4;
+my $line3 = $line + 4;
 is(
     $e->stack_trace->as_string,
-    qq[Trace begun at $file line 32
-main::bar at $file line 34
-eval {...} at $file line 34
+    qq[Trace begun at $file line $line1
+main::bar at $file line $line2
+eval {...} at $file line $line3
 ],
     '... got the exception'
 );

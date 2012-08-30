@@ -7,22 +7,11 @@ use warnings;
 
 use Test::More;
 
-BEGIN {
-    eval { require Devel::StackTrace; 1 }
-    or plan skip_all => "Devel::StackTrace is required for this test";
-
-    eval { require Try; 1 }
-    or plan skip_all => "Try is required for this test";
-
-    eval { require Fun; 1 }
-    or plan skip_all => "Fun is required for this test";
-
-    eval { require Variable::Magic; 1 }
-    or plan skip_all => "Variable::Magic is required for this test";
-
-    eval { require Perl6::Junction; 1 }
-    or plan skip_all => "Perl6::Junction is required for this test";
-}
+use Test::Requires 'Devel::StackTrace';
+use Test::Requires 'Try';
+use Test::Requires 'Fun';
+use Test::Requires 'Variable::Magic';
+use Test::Requires 'Perl6::Junction';
 
 use Scalar::Util 'blessed';
 use File::Temp 'tempfile';
