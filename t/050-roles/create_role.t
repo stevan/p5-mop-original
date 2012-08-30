@@ -8,7 +8,7 @@ use mop;
 my $role = $::Role->new(
     name => 'MyItem::Role::Equipment',
     attributes => {
-        is_worn => $::Attribute->new(name => 'is_worn'), # is => 'rw', isa => 'Bool',
+        is_worn => $::Attribute->new(name => '$is_worn'), # is => 'rw', isa => 'Bool',
     },
     methods => {
         is_worn => $::Method->new(name => 'is_worn', body => sub {
