@@ -182,6 +182,10 @@ role HasRoles {
         scalar grep { $_ == $role } @{ $self->get_all_roles };
     }
 
+    method add_roles (@roles) {
+        push @$roles, @roles;
+    }
+
     # XXX very simplistic for now, need a real implementation
     method apply_roles (@roles) {
         my $local_methods = $self->get_local_methods;
