@@ -168,9 +168,9 @@ class Class::C {
 
 TODO: {
     local $TODO = 'MOP does not detect conflicts yet';
-    ::like( ::exception {
+    ::like( (::exception {
         apply_roles_to Class::C, Role::I;
-    }, qr/Due to a method name conflict in roles 'Role::H' and 'Role::J', the method 'foo' must be implemented or excluded by 'Class::C'/, "defining class Class::C fails" );
+    }) // '', qr/Due to a method name conflict in roles 'Role::H' and 'Role::J', the method 'foo' must be implemented or excluded by 'Class::C'/, "defining class Class::C fails" );
 }
 
 class Class::E {

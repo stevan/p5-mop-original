@@ -7,6 +7,8 @@ use Test::More;
 
 use mop;
 
+BEGIN { plan skip_all => "hash attributes not yet implemented" }
+
 my $BAZ = [];
 
 class Foo {

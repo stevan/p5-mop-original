@@ -41,4 +41,7 @@ class Foo ( metaclass => class ( extends => $::Class ) {
 
 =cut
 
+local $TODO = "not yet implemented";
+fail;
+
 done_testing;

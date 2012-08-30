@@ -8,6 +8,9 @@ use Test::More;
 
 use mop;
 
+my @lexical;
+my @global;
+
 class Tree {
     has $node;
     has $parent;
@@ -30,9 +33,11 @@ class Tree {
         body => sub {
             my $indent = shift;
             $indent ||= '';
-            say $indent, $::SELF->node, ' => ', $self, ' => ', $::SELF;
+            # say $indent, $::SELF->node, ' => ', $self, ' => ', $::SELF;
+            push @lexical, $self;
+            push @global, $::SELF;
             foreach my $t ( @{ $::SELF->children } ) {
-                warn $t, ' => ', $t->node;
+                # warn $t, ' => ', $t->node;
                 $t->traverse( $indent . '  ' );
             }
         }
@@ -60,8 +65,8 @@ my $t = Tree->new( node => '0.0' )
 
 #use Data::Dumper; warn Dumper $t;
 
+local $TODO = "something in our pad munging is broken";
 $t->traverse;
-
-pass;
+is_deeply(\@lexical, \@global);
 
 done_testing;
