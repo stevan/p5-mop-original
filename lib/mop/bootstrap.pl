@@ -46,10 +46,10 @@ class Method (extends => Object, roles => [Cloneable]) {
     has $name;
     has $body;
 
-    method get_name () { $name }
-    method get_body () { $body }
+    method get_name { $name }
+    method get_body { $body }
 
-    method is_stub () { !defined $body }
+    method is_stub { !defined $body }
 
     method execute ($invocant, @args) {
         mop::internal::execute_method( $self, $invocant, @args )
@@ -69,10 +69,10 @@ class Attribute (extends => Object, roles => [Cloneable]) {
     has $name;
     has $initial_value;
 
-    method get_name ()          { $name }
-    method get_initial_value () { $initial_value }
+    method get_name          { $name }
+    method get_initial_value { $initial_value }
 
-    method get_initial_value_for_instance () {
+    method get_initial_value_for_instance {
         my $value = ${ $self->get_initial_value };
         if ( ref $value ) {
             if ( ref $value eq 'CODE' ) {
@@ -86,21 +86,21 @@ class Attribute (extends => Object, roles => [Cloneable]) {
     }
     method prepare_constructor_value_for_instance ($val) { $val }
 
-    method get_param_name () { $self->get_name =~ s/^\$//r }
+    method get_param_name { $self->get_name =~ s/^\$//r }
 }
 
 role HasMethods {
     has $methods = {};
 
-    method get_local_methods () { $methods }
+    method get_local_methods { $methods }
 
-    method method_class () { $::Method }
+    method method_class { $::Method }
 
     method find_method ($name) {
         $self->get_all_methods->{$name};
     }
 
-    method get_all_methods () {
+    method get_all_methods {
         $self->get_local_methods;
     }
 
@@ -112,15 +112,15 @@ role HasMethods {
 role HasAttributes {
     has $attributes = {};
 
-    method get_local_attributes () { $attributes }
+    method get_local_attributes { $attributes }
 
-    method attribute_class () { $::Attribute }
+    method attribute_class { $::Attribute }
 
     method find_attribute ($name) {
         $self->get_all_attributes->{$name};
     }
 
-    method get_all_attributes () {
+    method get_all_attributes {
         $self->get_local_attributes;
     }
 
@@ -132,13 +132,13 @@ role HasAttributes {
 role HasRoles {
     has $roles = [];
 
-    method get_local_roles () { $roles }
+    method get_local_roles { $roles }
 
-    method get_roles_for_composition () {
+    method get_roles_for_composition {
         [ map { $_, @{ $_->get_local_roles } } @{ $self->get_local_roles } ];
     }
 
-    method get_all_roles () {
+    method get_all_roles {
         [ map { $_, @{ $_->get_local_roles } } @{ $self->get_local_roles } ];
     }
 
@@ -150,7 +150,7 @@ role HasRoles {
 role HasName {
     has $name;
 
-    method get_name () { $name }
+    method get_name { $name }
 }
 
 # XXX splitting this from HasName probably doesn't make sense, since VERSION
@@ -166,8 +166,8 @@ role HasVersion {
         # ...
     # }
 
-    method get_version ()   { $version }
-    method get_authority () { $authority }
+    method get_version   { $version }
+    method get_authority { $authority }
 
     method set_version ($new_version) { $version = $new_version }
 
@@ -206,11 +206,11 @@ role HasSuperclass {
         # ...
     # }
 
-    method get_superclass () { $superclass }
+    method get_superclass { $superclass }
 
     method set_superclass ($new) { $superclass = $new }
 
-    method base_object_class () { $::Object }
+    method base_object_class { $::Object }
 
     method get_compatible_class ($other) {
         # replace the class with a subclass of itself
@@ -231,8 +231,9 @@ role Instantiable {
     has $constructor;
     has $destructor;
 
-    method get_constructor ()        { $constructor }
-    method get_destructor  ()        { $destructor }
+    method get_constructor { $constructor }
+    method get_destructor  { $destructor }
+
     method set_constructor ($method) { $constructor = $method }
     method set_destructor  ($method) { $destructor = $method }
 
@@ -282,7 +283,7 @@ role Instantiable {
 
 # XXX this should probably just require get_mro, not implement it
 role Dispatchable {
-    method get_mro () {
+    method get_mro {
         # XXX XXX XXX what in the world is this
         # warn "get_mro for " . $self->get_name . ' ' . $::SELF->get_name;
         my $super = $::SELF->get_superclass;
@@ -299,7 +300,7 @@ role Dispatchable {
 }
 
 class Role (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion, Cloneable], extends => Object) {
-    method FINALIZE () {
+    method FINALIZE {
         # XXX factor this out
         my $local_methods = $self->get_local_methods;
         my $local_attributes = $self->get_local_attributes;
@@ -325,7 +326,7 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
     # consistent
     # BUILD { }
 
-    method get_all_methods () {
+    method get_all_methods {
         my %methods;
         mop::WALKCLASS(
             $self->get_dispatcher('reverse'),
@@ -339,7 +340,7 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
         return \%methods;
     }
 
-    method get_all_attributes () {
+    method get_all_attributes {
         my %attrs;
         mop::WALKCLASS(
             $self->get_dispatcher('reverse'),
@@ -353,7 +354,7 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
         return \%attrs;
     }
 
-    method get_all_roles () {
+    method get_all_roles {
         my @roles;
         mop::WALKCLASS(
             $self->get_dispatcher('reverse'),
@@ -367,7 +368,7 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
         return \@roles;
     }
 
-    method FINALIZE () {
+    method FINALIZE {
         my $stash      = mop::internal::get_stash_for( $self );
         my $dispatcher = $self->get_dispatcher;
 
