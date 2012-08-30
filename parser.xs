@@ -464,7 +464,7 @@ static OP *THX_parse_method_prototype(pTHX)
             for(q = strlen(buf); q > 0 ; q--) {
                 if(buf[q] == '\n') { buf[q] = '\0'; break; }
             }
-            croak("syntax error: expected valid sigil, but found '%s' at \"%s\"", (char *)&next, buf);
+            croak("syntax error: expected valid sigil, but found '%c' at \"%s\"", (char)next, buf);
         }
 
         op_append_elem(OP_LIST, myvars, pad_op);
