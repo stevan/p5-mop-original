@@ -48,6 +48,10 @@ package mop::bootstrap::full {
 }
 
 sub init {
+    if (-e 'lib/mop/bootstrap.mop') {
+        deserialize();
+        return;
+    }
     package mop::bootstrap::mini {
         require mop::mini::syntax;
         mop::mini::syntax->setup_for(__PACKAGE__);
@@ -158,7 +162,101 @@ sub init {
         mop::internal::execute_method(@_)
     });
 
-    # and replace some methods that we hardcoded in the initial mop, with some
+    fixup_after_bootstrap();
+
+    return;
+}
+
+sub deserialize {
+    require Storable;
+    my $mop = Storable::retrieve('lib/mop/bootstrap.mop');
+
+    $::Object        = $mop->{Object};
+    $::Class         = $mop->{Class};
+    $::Role          = $mop->{Role};
+    $::Method        = $mop->{Method};
+    $::Attribute     = $mop->{Attribute};
+    $::HasMethods    = $mop->{HasMethods};
+    $::HasAttributes = $mop->{HasAttributes};
+    $::HasRoles      = $mop->{HasRoles};
+    $::HasName       = $mop->{HasName};
+    $::HasVersion    = $mop->{HasVersion};
+    $::HasSuperclass = $mop->{HasSuperclass};
+    $::Instantiable  = $mop->{Instantiable};
+    $::Dispatchable  = $mop->{Dispatchable};
+    $::Cloneable     = $mop->{Cloneable};
+
+    my $class_stash     = get_stash_for($::Class);
+    my $role_stash      = get_stash_for($::Role);
+    my $method_stash    = get_stash_for($::Method);
+    my $attribute_stash = get_stash_for($::Attribute);
+
+    $class_stash->bless($::Object);
+    $class_stash->bless($::Class);
+    $class_stash->bless($::Role);
+    $class_stash->bless($::Method);
+    $class_stash->bless($::Attribute);
+
+    $role_stash->bless($::HasMethods);
+    $role_stash->bless($::HasAttributes);
+    $role_stash->bless($::HasRoles);
+    $role_stash->bless($::HasName);
+    $role_stash->bless($::HasVersion);
+    $role_stash->bless($::HasSuperclass);
+    $role_stash->bless($::Instantiable);
+    $role_stash->bless($::Dispatchable);
+    $role_stash->bless($::Cloneable);
+
+    package mop::bootstrap::full {
+        require mop::deserialize::syntax;
+        mop::deserialize::syntax->setup_for(__PACKAGE__);
+
+        require 'mop/bootstrap.pl';
+    }
+
+    for my $class ($::Object, $::Method, $::Attribute, $::Class, $::Role) {
+        my $class_methods = get_slot_at($class, '$methods');
+        my $class_attrs = get_slot_at($class, '$attributes');
+        for my $method (values %$class_methods) {
+            $method_stash->bless($method);
+        }
+        for my $attr (values %$class_attrs) {
+            $attribute_stash->bless($attr);
+        }
+        for my $role (@{ get_slot_at($class, '$roles') }) {
+            for my $method (values %{ get_slot_at($role, '$methods') }) {
+                my $name = get_slot_at($method, '$name');
+                # XXX need to track sources
+                next if $class == $::Class && $name =~ /^get_all_/;
+                my $body = get_slot_at($method, '$body');
+                set_slot_at($class_methods->{$name}, '$body', \$body);
+            }
+            for my $attr (values %{ get_slot_at($role, '$attributes') }) {
+                my $name = get_slot_at($attr, '$name');
+                my $default = get_slot_at($attr, '$initial_value');
+                set_slot_at($class_attrs->{$name}, '$initial_value', \$default);
+            }
+        }
+    }
+
+    for my $role ($::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasSuperclass, $::Instantiable, $::Dispatchable, $::Cloneable) {
+        my $role_methods = get_slot_at($role, '$methods');
+        my $role_attrs = get_slot_at($role, '$attributes');
+        for my $method (values %$role_methods) {
+            $method_stash->bless($method);
+        }
+        for my $attr (values %$role_attrs) {
+            $attribute_stash->bless($attr);
+        }
+    }
+
+    fixup_after_bootstrap();
+
+    return;
+}
+
+sub fixup_after_bootstrap {
+    # replace some methods that we hardcoded in the initial mop, with some
     # working variants that actually use the full mop instead of the mini mop
     {
         my $clone = sub {
@@ -218,8 +316,6 @@ sub init {
             }
         },
     ));
-
-    return;
 }
 
 sub get_slot_at   { mop::internal::instance::get_slot_at(@_) }

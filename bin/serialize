@@ -1,0 +1,46 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+BEGIN { unlink 'lib/mop/bootstrap.mop' }
+
+use mop;
+
+use Storable;
+
+my $mop = {
+    Object        => $::Object,
+    Class         => $::Class,
+    Role          => $::Role,
+    Method        => $::Method,
+    Attribute     => $::Attribute,
+    HasMethods    => $::HasMethods,
+    HasAttributes => $::HasAttributes,
+    HasRoles      => $::HasRoles,
+    HasName       => $::HasName,
+    HasVersion    => $::HasVersion,
+    HasSuperclass => $::HasSuperclass,
+    Instantiable  => $::Instantiable,
+    Dispatchable  => $::Dispatchable,
+    Cloneable     => $::Cloneable,
+};
+
+my @methods;
+my @attrs;
+
+for my $thing (values %$mop) {
+    push @methods, values %{ $thing->get_local_methods };
+    push @attrs,   values %{ $thing->get_local_attributes };
+}
+
+push @methods, $::Class->get_constructor;
+
+for my $method (@methods) {
+    mop::internal::instance::set_slot_at($method, '$body', \'fix');
+}
+
+for my $attr (@attrs) {
+    mop::internal::instance::set_slot_at($attr, '$initial_value', \'fix');
+}
+
+Storable::store($mop, 'lib/mop/bootstrap.mop');
