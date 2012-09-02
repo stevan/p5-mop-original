@@ -29,7 +29,7 @@ sub set_class {
 
 sub get_slot_at {
     my ($instance, $name) = @_;
-    ${ $instance->{'slots'}->{ $name } || \undef }
+    $instance->{'slots'}->{ $name } || \undef
 }
 
 sub set_slot_at {

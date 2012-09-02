@@ -37,7 +37,7 @@ class ValidatedAccessorMeta (extends => $::Class) {
                                 unless $validator->($value);
                             mop::internal::instance::set_slot_at( $::SELF, $name, \$value );
                         }
-                        mop::internal::instance::get_slot_at( $::SELF, $name )
+                        ${ mop::internal::instance::get_slot_at( $::SELF, $name ) }
                     }
                 )
             );

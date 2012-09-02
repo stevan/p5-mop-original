@@ -33,12 +33,12 @@ use mop;
     my $foo = $Foo->new;
     can_ok($foo, 'foo');
     is($foo->foo, 'FOO');
-    is(mop::internal::instance::get_slot_at($foo, '$foo'), 'OOF');
+    is(${ mop::internal::instance::get_slot_at($foo, '$foo') }, 'OOF');
 
     my $bar = $Bar->new;
     can_ok($bar, 'foo');
     is($bar->foo, 'FOO');
-    is(mop::internal::instance::get_slot_at($bar, '$foo'), 'OOF');
+    is(${ mop::internal::instance::get_slot_at($bar, '$foo') }, 'OOF');
 
     is($Foo->find_method('foo')->get_body, $method->get_body);
     is($Bar->find_method('foo')->get_body, $method->get_body);
@@ -82,15 +82,15 @@ use mop;
     can_ok($foo, 'foo');
     ok(!$foo->can('bar'));
     is($foo->foo, 'FOO');
-    is(mop::internal::instance::get_slot_at($foo, '$foo'), 'OOF');
-    is(mop::internal::instance::get_slot_at($foo, '$bar'), undef);
+    is(${ mop::internal::instance::get_slot_at($foo, '$foo') }, 'OOF');
+    is(${ mop::internal::instance::get_slot_at($foo, '$bar') }, undef);
 
     my $bar = $Bar->new;
     ok(!$bar->can('foo'));
     can_ok($bar, 'bar');
     is($bar->bar, 'BAR');
-    is(mop::internal::instance::get_slot_at($bar, '$foo'), undef);
-    is(mop::internal::instance::get_slot_at($bar, '$bar'), 'RAB');
+    is(${ mop::internal::instance::get_slot_at($bar, '$foo') }, undef);
+    is(${ mop::internal::instance::get_slot_at($bar, '$bar') }, 'RAB');
 
     is($Foo->find_method('foo')->get_body, $method->get_body);
     isnt($Bar->find_method('bar')->get_body, $method->get_body);

@@ -105,9 +105,9 @@ class Attribute (extends => $::Attribute) {
             $self->accessor_class->new(
                 name => $self->reader,
                 body => sub {
-                    my $val = mop::internal::instance::get_slot_at(
+                    my $val = ${ mop::internal::instance::get_slot_at(
                         $::SELF, $slot
-                    );
+                    ) };
                     if (!defined($val)) {
                         $val = $get_default->($::SELF);
                         $validator->($val);
@@ -123,7 +123,7 @@ class Attribute (extends => $::Attribute) {
             $self->accessor_class->new(
                 name => $self->reader,
                 body => sub {
-                    mop::internal::instance::get_slot_at($::SELF, $slot);
+                    ${ mop::internal::instance::get_slot_at($::SELF, $slot) };
                 },
             );
         }
@@ -155,9 +155,9 @@ class Attribute (extends => $::Attribute) {
                             $::SELF, $slot, \$val
                         );
                     }
-                    my $val = mop::internal::instance::get_slot_at(
+                    my $val = ${ mop::internal::instance::get_slot_at(
                         $::SELF, $slot
-                    );
+                    ) };
                     if (!defined($val)) {
                         $val = $get_default->($::SELF);
                         $validator->($val);
@@ -180,7 +180,7 @@ class Attribute (extends => $::Attribute) {
                             $::SELF, $slot, \$val
                         );
                     }
-                    mop::internal::instance::get_slot_at($::SELF, $slot);
+                    ${ mop::internal::instance::get_slot_at($::SELF, $slot) };
                 },
             );
         }
@@ -190,7 +190,7 @@ class Attribute (extends => $::Attribute) {
         $self->accessor_class->new(
             name => $self->predicate,
             body => sub {
-                defined mop::internal::instance::get_slot_at($::SELF, $slot);
+                defined ${ mop::internal::instance::get_slot_at($::SELF, $slot) };
             },
         );
     }
@@ -273,9 +273,9 @@ class Class (extends => $::Class) {
                     next unless $attr->isa(Attribute);
                     next unless $attr->has_builder;
                     next if $attr->lazy;
-                    next if defined mop::internal::instance::get_slot_at(
+                    next if defined ${ mop::internal::instance::get_slot_at(
                         $instance, $attr->get_name
-                    );
+                    ) };
 
                     my $builder = $attr->builder;
                     my $initial_value = $instance->$builder;

@@ -34,13 +34,13 @@ sub role { }
 
 sub method {
     my ($name, $body) = @_;
-    my $methods = mop::internal::instance::get_slot_at($::CLASS, '$methods');
+    my $methods = ${ mop::internal::instance::get_slot_at($::CLASS, '$methods') };
     mop::internal::instance::set_slot_at($methods->{$name}, '$body', \Sub::Name::subname($name => $body));
 }
 
 sub has {
     my ($name, $ref, $metadata, $default) = @_;
-    my $attributes = mop::internal::instance::get_slot_at($::CLASS, '$attributes');
+    my $attributes = ${ mop::internal::instance::get_slot_at($::CLASS, '$attributes') };
     mop::internal::instance::set_slot_at($attributes->{$name}, '$initial_value', \\$default);
 }
 
@@ -75,9 +75,9 @@ sub finalize_class {
 
     my $stash = mop::internal::get_stash_for($class);
     my $methods = {
-        (map { %{ mop::internal::instance::get_slot_at($_, '$methods') } }
-            (mop::internal::instance::get_slot_at($class, '$superclass') || ()),
-            @{ mop::internal::instance::get_slot_at($class, '$roles') },
+        (map { %{ ${ mop::internal::instance::get_slot_at($_, '$methods') } } }
+            (${ mop::internal::instance::get_slot_at($class, '$superclass') } || ()),
+            @{ ${ mop::internal::instance::get_slot_at($class, '$roles') } },
             $class),
     };
     %$stash = ();
@@ -85,11 +85,11 @@ sub finalize_class {
         my $method = $methods->{$name};
         $stash->add_method($name => sub { $method->execute(@_) });
     }
-    for my $attribute (values %{ mop::internal::instance::get_slot_at($class, '$attributes') }) {
+    for my $attribute (values %{ ${ mop::internal::instance::get_slot_at($class, '$attributes') } }) {
         mop::internal::get_stash_for($::Attribute)->bless($attribute);
     }
 
-    for my $method (values %{ mop::internal::instance::get_slot_at($class, '$methods') }) {
+    for my $method (values %{ ${ mop::internal::instance::get_slot_at($class, '$methods') } }) {
         mop::internal::get_stash_for($::Method)->bless($method);
     }
     if ($name eq 'Method') {
@@ -109,11 +109,11 @@ sub finalize_class {
 sub finalize_role {
     my ($name, $role, $caller) = @_;
 
-    for my $attribute (values %{ mop::internal::instance::get_slot_at($role, '$attributes') }) {
+    for my $attribute (values %{ ${ mop::internal::instance::get_slot_at($role, '$attributes') } }) {
         mop::internal::get_stash_for($::Attribute)->bless($attribute);
     }
 
-    for my $method (values %{ mop::internal::instance::get_slot_at($role, '$methods') }) {
+    for my $method (values %{ ${ mop::internal::instance::get_slot_at($role, '$methods') } }) {
         mop::internal::get_stash_for($::Method)->bless($method);
     }
 

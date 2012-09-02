@@ -24,14 +24,14 @@ is(${$bar->get_initial_value}->(), 100, '... got the right initial value for bar
     my $foo = Foo->new;
     ok($foo->isa( Foo ), '... this is a Foo');
     is(mop::class_of( $foo ), Foo, '... this is a Foo');
-    is(mop::internal::instance::get_slot_at( $foo, '$bar' ), 100, '... got the expected initial value');
+    is(${ mop::internal::instance::get_slot_at( $foo, '$bar' ) }, 100, '... got the expected initial value');
 }
 
 {
     my $foo = Foo->new( bar => 200 );
     ok($foo->isa( Foo ), '... this is a Foo');
     is(mop::class_of( $foo ), Foo, '... this is a Foo');
-    is(mop::internal::instance::get_slot_at( $foo, '$bar' ), 200, '... got the expected initial value');
+    is(${ mop::internal::instance::get_slot_at( $foo, '$bar' ) }, 200, '... got the expected initial value');
 }
 
 done_testing;

@@ -138,7 +138,7 @@ sub _apply_overloading {
 
 sub create_stash_for {
     my ($class) = @_;
-    my $stash = Package::Anon->new( mop::internal::instance::get_slot_at( $class, '$name' ) || () );
+    my $stash = Package::Anon->new( ${ mop::internal::instance::get_slot_at( $class, '$name' ) } || () );
     _apply_overloading($stash);
     return $stash;
 }
@@ -157,7 +157,7 @@ sub execute_method {
     my $invocant = shift;
     my $class    = mop::internal::instance::get_class( $invocant );
     my $instance = mop::internal::instance::get_slots( $invocant );
-    my $body     = mop::internal::instance::get_slot_at( $method, '$body' );
+    my $body     = ${ mop::internal::instance::get_slot_at( $method, '$body' ) };
     my $env      = {
         %$instance,
         '$self'  => \$invocant,

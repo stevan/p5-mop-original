@@ -106,14 +106,14 @@ sub init {
 
         set_slot_at($role, '$version', \$mop::VERSION);
         set_slot_at($role, '$authority', \$mop::AUTHORITY);
-        set_slot_at($role, '$name', \(get_slot_at($role, '$name') =~ s/.*:://r));
+        set_slot_at($role, '$name', \(${ get_slot_at($role, '$name') } =~ s/.*:://r));
 
-        for my $attribute (values %{ get_slot_at($role, '$attributes') }) {
+        for my $attribute (values %{ ${ get_slot_at($role, '$attributes') } }) {
             set_class($attribute, $::Attribute);
             get_stash_for($::Attribute)->bless($attribute);
         }
 
-        for my $method (values %{ get_slot_at($role, '$methods') }) {
+        for my $method (values %{ ${ get_slot_at($role, '$methods') } }) {
             set_class($method, $::Method);
             get_stash_for($::Method)->bless($method);
         }
@@ -125,14 +125,14 @@ sub init {
 
         set_slot_at($class, '$version', \$mop::VERSION);
         set_slot_at($class, '$authority', \$mop::AUTHORITY);
-        set_slot_at($class, '$name', \(get_slot_at($class, '$name') =~ s/.*:://r));
+        set_slot_at($class, '$name', \(${ get_slot_at($class, '$name') } =~ s/.*:://r));
 
-        for my $attribute (values %{ get_slot_at($class, '$attributes') }) {
+        for my $attribute (values %{ ${ get_slot_at($class, '$attributes') } }) {
             set_class($attribute, $::Attribute);
             get_stash_for($::Attribute)->bless($attribute);
         }
 
-        for my $method (values %{ get_slot_at($class, '$methods') }) {
+        for my $method (values %{ ${ get_slot_at($class, '$methods') } }) {
             set_class($method, $::Method);
             get_stash_for($::Method)->bless($method);
         }
@@ -143,9 +143,9 @@ sub init {
     for my $class (@classes) {
         my $stash = get_stash_for($class);
         my $methods = {
-            (map { %{ get_slot_at($_, '$methods') } }
-                (get_slot_at($class, '$superclass') || ()),
-                @{ get_slot_at($class, '$roles') },
+            (map { %{ ${ get_slot_at($_, '$methods') } } }
+                (${ get_slot_at($class, '$superclass') } || ()),
+                @{ ${ get_slot_at($class, '$roles') } },
                 $class),
         };
         %$stash = ();
@@ -215,33 +215,33 @@ sub deserialize {
     }
 
     for my $class ($::Object, $::Method, $::Attribute, $::Class, $::Role) {
-        my $class_methods = get_slot_at($class, '$methods');
-        my $class_attrs = get_slot_at($class, '$attributes');
+        my $class_methods = ${ get_slot_at($class, '$methods') };
+        my $class_attrs = ${ get_slot_at($class, '$attributes') };
         for my $method (values %$class_methods) {
             $method_stash->bless($method);
         }
         for my $attr (values %$class_attrs) {
             $attribute_stash->bless($attr);
         }
-        for my $role (@{ get_slot_at($class, '$roles') }) {
-            for my $method (values %{ get_slot_at($role, '$methods') }) {
-                my $name = get_slot_at($method, '$name');
+        for my $role (@{ ${ get_slot_at($class, '$roles') } }) {
+            for my $method (values %{ ${ get_slot_at($role, '$methods') } }) {
+                my $name = ${ get_slot_at($method, '$name') };
                 # XXX need to track sources
                 next if $class == $::Class && $name =~ /^get_all_/;
-                my $body = get_slot_at($method, '$body');
+                my $body = ${ get_slot_at($method, '$body') };
                 set_slot_at($class_methods->{$name}, '$body', \$body);
             }
-            for my $attr (values %{ get_slot_at($role, '$attributes') }) {
-                my $name = get_slot_at($attr, '$name');
-                my $default = get_slot_at($attr, '$initial_value');
+            for my $attr (values %{ ${ get_slot_at($role, '$attributes') } }) {
+                my $name = ${ get_slot_at($attr, '$name') };
+                my $default = ${ get_slot_at($attr, '$initial_value') };
                 set_slot_at($class_attrs->{$name}, '$initial_value', \$default);
             }
         }
     }
 
     for my $role ($::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasSuperclass, $::Instantiable, $::Dispatchable, $::Cloneable) {
-        my $role_methods = get_slot_at($role, '$methods');
-        my $role_attrs = get_slot_at($role, '$attributes');
+        my $role_methods = ${ get_slot_at($role, '$methods') };
+        my $role_attrs = ${ get_slot_at($role, '$attributes') };
         for my $method (values %$role_methods) {
             $method_stash->bless($method);
         }
@@ -262,9 +262,9 @@ sub fixup_after_bootstrap {
         my $clone = sub {
             my %params = (
                 (map {
-                    $_->get_param_name => get_slot_at(
+                    $_->get_param_name => ${ get_slot_at(
                         $::SELF, $_->get_name
-                    )
+                    ) }
                 } values %{ $::CLASS->get_all_attributes }),
                 @_,
             );
@@ -286,7 +286,7 @@ sub fixup_after_bootstrap {
         $::Attribute->add_method($clone->());
     }
     for my $cloneable ($::Role, $::Class, $::Method, $::Attribute) {
-        my $method = get_slot_at($cloneable, '$methods')->{clone};
+        my $method = ${ get_slot_at($cloneable, '$methods') }->{clone};
         get_stash_for($cloneable)->add_method(clone => sub {
             $method->execute(@_)
         });

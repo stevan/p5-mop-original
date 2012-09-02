@@ -15,7 +15,7 @@ my $role = $::Role->new(
         is_worn => $::Method->new(name => 'is_worn', body => sub {
             mop::internal::instance::set_slot_at($::SELF, '$is_worn', \$_[0])
                 if @_;
-            return mop::internal::instance::get_slot_at($::SELF, '$is_worn');
+            return ${ mop::internal::instance::get_slot_at($::SELF, '$is_worn') };
         }),
         remove => $::Method->new(name => 'remove', body => sub {
             $::SELF->is_worn(0)

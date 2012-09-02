@@ -17,7 +17,7 @@ my $role = $::Role->new(
                 mop::internal::instance::set_slot_at($::SELF, '$is_worn', \ $value);
             }
             else {
-                mop::internal::instance::get_slot_at($::SELF, '$is_worn');
+                ${ mop::internal::instance::get_slot_at($::SELF, '$is_worn') };
             }
         }),
         remove => $::Method->new(name => 'remove', body => sub {

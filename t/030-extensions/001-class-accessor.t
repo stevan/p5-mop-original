@@ -21,7 +21,7 @@ class ClassAccessorMeta (extends => $::Class) {
                     name => $accessor_name,
                     body => sub {
                         mop::internal::instance::set_slot_at( $::SELF, $name, \(shift) ) if @_;
-                        mop::internal::instance::get_slot_at( $::SELF, $name )
+                        ${ mop::internal::instance::get_slot_at( $::SELF, $name ) }
                     }
                 )
             );

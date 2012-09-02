@@ -54,7 +54,7 @@ role FooRole {
     Foo->add_attribute($attribute->clone(name => '$foo_clone'));
     Foo->FINALIZE;
     my $foo = Foo->new(foo_clone => 21);
-    is(mop::internal::instance::get_slot_at($foo, '$foo_clone'), 21);
+    is(${ mop::internal::instance::get_slot_at($foo, '$foo_clone') }, 21);
 }
 
 done_testing;

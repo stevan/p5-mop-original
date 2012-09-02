@@ -12,7 +12,7 @@ BEGIN { $SIG{__DIE__} = \&Carp::confess }
 
 sub apply_roles_to {
     my($target, @roles) = @_;
-    my $roles = mop::internal::instance::get_slot_at( $target, '$roles' );
+    my $roles = ${ mop::internal::instance::get_slot_at( $target, '$roles' ) };
     mop::internal::instance::set_slot_at( $target, '$roles', \ [@$roles, @roles] );
     $target->FINALIZE;
 }
@@ -197,7 +197,7 @@ TODO: {
 }
 
 class Class::D {
-    has $foo = mop::internal::instance::get_slot_at(Class::D(), '$name') . "::foo"; # is => "rw"
+    has $foo = ${ mop::internal::instance::get_slot_at(Class::D(), '$name') } . "::foo"; # is => "rw"
     method foo {
         local $TODO = '$class->get_name does not seem to work at line 200';
         ok(0, 'Dummy test to make the TODO work...');
