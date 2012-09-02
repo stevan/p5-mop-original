@@ -102,6 +102,23 @@ class Attribute (extends => Object, roles => [Cloneable, HasName]) {
                 die "References of type " . ref($value) . " are not supported";
             }
         }
+        elsif (ref($value) eq 'SCALAR' && !defined($$value)) {
+            if ($sigil eq '$') {
+                $value = $$value;
+                return \$value;
+            }
+            elsif ($sigil eq '@') {
+                my @value = ();
+                return \@value;
+            }
+            elsif ($sigil eq '%') {
+                my %value = ();
+                return \%value;
+            }
+            else {
+                die "Unknown sigil $sigil";
+            }
+        }
         else {
             if ($sigil eq '$') {
                 $value = $$value;
@@ -302,7 +319,7 @@ role Instantiable {
                 my $param_name = $attrs->{ $attr_name }->get_param_name;
                 if ( exists $params->{ $param_name } ) {
                     my $value = $params->{ $param_name };
-                    $data->{ $attr_name } = $attrs->{$attr_name}->prepare_constructor_value_for_instance(\$value);
+                    $data->{ $attr_name } = $attrs->{$attr_name}->prepare_constructor_value_for_instance($attrs->{ $attr_name }->get_sigil eq '$' ? \$value : $value);
                 }
                 else {
                     $data->{ $attr_name } = $attrs->{$attr_name}->get_initial_value_for_instance;
