@@ -42,11 +42,15 @@ role Cloneable {
     }
 }
 
-class Method (extends => Object, roles => [Cloneable]) {
+role HasName {
     has $name;
-    has $body;
 
     method get_name { $name }
+}
+
+class Method (extends => Object, roles => [Cloneable, HasName]) {
+    has $body;
+
     method get_body { $body }
 
     method is_stub { !defined $body }
@@ -65,11 +69,9 @@ class Method (extends => Object, roles => [Cloneable]) {
     }
 }
 
-class Attribute (extends => Object, roles => [Cloneable]) {
-    has $name;
+class Attribute (extends => Object, roles => [Cloneable, HasName]) {
     has $initial_value;
 
-    method get_name          { $name }
     method get_initial_value { $initial_value }
 
     # XXX this works, but things break if i try to simplify it by returning
@@ -205,12 +207,6 @@ role HasRoles {
         }
     }
 
-}
-
-role HasName {
-    has $name;
-
-    method get_name { $name }
 }
 
 # XXX splitting this from HasName probably doesn't make sense, since VERSION
