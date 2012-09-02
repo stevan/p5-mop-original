@@ -39,12 +39,28 @@ sub new {
 
         my $instance = mop::internal::instance::create(\$class, {});
         foreach my $attr ( keys %attrs ) {
-            my ($plain_attr) = ($attr =~ /^\$(.*)/);
+            my ($sigil, $plain_attr) = ($attr =~ /^([\$\@\%])(.*)/);
             if ( exists $args{ $plain_attr } ) {
-                mop::internal::instance::set_slot_at($instance, $attr, \($args{ $plain_attr }));
+                if ($sigil eq '$') {
+                    mop::internal::instance::set_slot_at($instance, $attr, \($args{ $plain_attr }));
+                }
+                else {
+                    mop::internal::instance::set_slot_at($instance, $attr, $args{ $plain_attr });
+                }
             }
             else {
-                mop::internal::instance::set_slot_at($instance, $attr, \(ref $attrs{ $attr } ? $attrs{ $attr }->() : $attrs{ $attr }));
+                if ($sigil eq '$') {
+                    mop::internal::instance::set_slot_at($instance, $attr, \(ref $attrs{ $attr } ? $attrs{ $attr }->() : $attrs{ $attr }));
+                }
+                elsif ($sigil eq '@') {
+                    mop::internal::instance::set_slot_at($instance, $attr, ref $attrs{ $attr } eq 'CODE' ? [ $attrs{ $attr }->() ] : $attrs{ $attr });
+                }
+                elsif ($sigil eq '%') {
+                    mop::internal::instance::set_slot_at($instance, $attr, ref $attrs{ $attr } eq 'CODE' ? { $attrs{ $attr }->() } : $attrs{ $attr });
+                }
+                else {
+                    die "unknown sigil $sigil";
+                }
             }
         }
 
