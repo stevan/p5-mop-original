@@ -11,6 +11,11 @@ class Bar (extends => Foo) { }
 class Baz (extends => Bar) { }
 class Quux { }
 
+ok(  Foo->new ~~ Foo  );
+ok(!(Foo->new ~~ Bar) );
+ok(!(Foo->new ~~ Baz) );
+ok(!(Foo->new ~~ Quux));
+
 {
     my $found;
     given (Foo->new) {
@@ -22,6 +27,11 @@ class Quux { }
     }
     is($found, "Foo");
 }
+
+ok(  Bar->new ~~ Foo  );
+ok(  Bar->new ~~ Bar  );
+ok(!(Bar->new ~~ Baz) );
+ok(!(Bar->new ~~ Quux));
 
 {
     my $found;
