@@ -46,12 +46,14 @@ sub has {
 
 sub BUILD {
     my ($body) = @_;
-    mop::internal::instance::set_slot_at($::CLASS, '$constructor', \Sub::Name::subname('BUILD', $body));
+    my $method = ${ mop::internal::instance::get_slot_at($::CLASS, '$constructor') };
+    mop::internal::instance::set_slot_at($method, '$body', \Sub::Name::subname('BUILD', $body));
 }
 
 sub DEMOLISH {
     my ($body) = @_;
-    mop::internal::instance::set_slot_at($::CLASS, '$destructor', \Sub::Name::subname('DEMOLISH', $body));
+    my $method = ${ mop::internal::instance::get_slot_at($::CLASS, '$destructor') };
+    mop::internal::instance::set_slot_at($method, '$body', \Sub::Name::subname('DEMOLISH', $body));
 }
 
 sub super {
