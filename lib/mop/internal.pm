@@ -212,6 +212,25 @@ sub _undef_for_type {
     }
 }
 
+# XXX used by FINALIZE, but moved here because we need to hardcode some things
+# that FINALIZE does when bootstrapping... find a better way to do this maybe?
+sub generate_DESTROY {
+    return sub {
+        my $invocant = shift;
+        my $class    = mop::internal::instance::get_class( $invocant );
+        return unless $class; # likely in global destruction ...
+        mop::WALKCLASS(
+            $class->get_dispatcher(),
+            sub {
+                my $dispatcher = $_[0]->get_destructor;
+                return unless $dispatcher;
+                $dispatcher->execute($invocant);
+                return;
+            }
+        );
+    }
+}
+
 1;
 
 __END__

@@ -163,7 +163,7 @@ sub init {
             my $method = $methods{$name};
             $stash->add_method($name => sub { $method->execute(@_) });
         }
-        # XXX DESTROY?
+        $stash->add_method(DESTROY => mop::internal::generate_DESTROY());
     }
 
     # break the cycle with Method->execute, since we just regenerated its stash

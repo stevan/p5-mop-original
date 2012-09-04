@@ -99,7 +99,7 @@ sub finalize_class {
             mop::internal::execute_method(@_)
         });
     }
-    # XXX DESTROY?
+    $stash->add_method(DESTROY => mop::internal::generate_DESTROY());
 
     {
         no strict 'refs';

@@ -450,20 +450,7 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
             ) unless exists $stash->{ $name };
         }
 
-        $stash->add_method('DESTROY' => sub {
-            my $invocant = shift;
-            my $class    = mop::internal::instance::get_class( $invocant );
-            return unless $class; # likely in global destruction ...
-            mop::WALKCLASS(
-                $class->get_dispatcher(),
-                sub {
-                    my $dispatcher = $_[0]->get_destructor;
-                    return unless $dispatcher;
-                    $dispatcher->execute($invocant);
-                    return;
-                }
-            );
-        });
+        $stash->add_method('DESTROY' => mop::internal::generate_DESTROY());
     }
 }
 
