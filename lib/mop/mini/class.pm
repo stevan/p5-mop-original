@@ -50,13 +50,13 @@ sub new {
             }
             else {
                 if ($sigil eq '$') {
-                    mop::internal::instance::set_slot_at($instance, $attr, \(ref $attrs{ $attr } ? $attrs{ $attr }->() : $attrs{ $attr }));
+                    mop::internal::instance::set_slot_at($instance, $attr, ref $attrs{ $attr } eq 'CODE' ? \($attrs{ $attr }->()) : \($attrs{ $attr }));
                 }
                 elsif ($sigil eq '@') {
-                    mop::internal::instance::set_slot_at($instance, $attr, ref $attrs{ $attr } eq 'CODE' ? [ $attrs{ $attr }->() ] : $attrs{ $attr });
+                    mop::internal::instance::set_slot_at($instance, $attr, ref $attrs{ $attr } eq 'CODE' ? [ $attrs{ $attr }->() ] : defined $attrs{ $attr } ? $attrs{ $attr } : []);
                 }
                 elsif ($sigil eq '%') {
-                    mop::internal::instance::set_slot_at($instance, $attr, ref $attrs{ $attr } eq 'CODE' ? { $attrs{ $attr }->() } : $attrs{ $attr });
+                    mop::internal::instance::set_slot_at($instance, $attr, ref $attrs{ $attr } eq 'CODE' ? { $attrs{ $attr }->() } : defined $attrs{ $attr } ? $attrs{ $attr } : {});
                 }
                 else {
                     die "unknown sigil $sigil";

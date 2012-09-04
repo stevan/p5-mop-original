@@ -185,32 +185,32 @@ role HasAttributes {
 }
 
 role HasRoles {
-    has $roles = [];
+    has @roles;
 
-    method get_local_roles { $roles }
+    method get_local_roles { @roles }
 
     method get_roles_for_composition {
-        [ map { $_, @{ $_->get_local_roles } } @{ $self->get_local_roles } ];
+        map { $_, $_->get_local_roles } $self->get_local_roles;
     }
 
     method get_all_roles {
-        [ map { $_, @{ $_->get_local_roles } } @{ $self->get_local_roles } ];
+        map { $_, $_->get_local_roles } $self->get_local_roles;
     }
 
     method does_role ($role) {
-        scalar grep { $_ == $role } @{ $self->get_all_roles };
+        scalar grep { $_ == $role } $self->get_all_roles;
     }
 
-    method add_roles (@roles) {
-        push @$roles, @roles;
+    method add_roles (@roles_to_add) {
+        push @roles, @roles_to_add;
     }
 
     # XXX very simplistic for now, need a real implementation
-    method apply_roles (@roles) {
+    method apply_roles (@roles_to_apply) {
         my $local_methods = $self->get_local_methods;
         my $local_attributes = $self->get_local_attributes;
 
-        for my $role (@roles) {
+        for my $role (@roles_to_apply) {
             my $methods = $role->get_local_methods;
             for my $name (keys %$methods) {
                 $self->add_method($methods->{$name}->clone)
@@ -374,7 +374,7 @@ role Dispatchable {
 
 class Role (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion, Cloneable], extends => Object) {
     method FINALIZE {
-        $self->apply_roles(@{ $self->get_roles_for_composition });
+        $self->apply_roles($self->get_roles_for_composition);
     }
 }
 
@@ -418,19 +418,19 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
             $self->get_dispatcher('reverse'),
             sub {
                 push @roles, (
-                    map { $_, @{ $_->get_local_roles } }
-                        @{ $_[0]->get_local_roles },
+                    map { $_, $_->get_local_roles }
+                        $_[0]->get_local_roles,
                 );
             }
         );
-        return \@roles;
+        return @roles;
     }
 
     method FINALIZE {
         my $stash      = mop::internal::get_stash_for( $self );
         my $dispatcher = $self->get_dispatcher;
 
-        $self->apply_roles(@{ $self->get_roles_for_composition });
+        $self->apply_roles($self->get_roles_for_composition);
 
         my $methods = $self->get_all_methods;
 

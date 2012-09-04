@@ -145,7 +145,7 @@ sub init {
         my $methods = {
             (map { %{ ${ get_slot_at($_, '$methods') } } }
                 (${ get_slot_at($class, '$superclass') } || ()),
-                @{ ${ get_slot_at($class, '$roles') } },
+                @{ get_slot_at($class, '@roles') },
                 $class),
         };
         %$stash = ();
@@ -223,7 +223,7 @@ sub deserialize {
         for my $attr (values %$class_attrs) {
             $attribute_stash->bless($attr);
         }
-        for my $role (@{ ${ get_slot_at($class, '$roles') } }) {
+        for my $role (@{ get_slot_at($class, '@roles') }) {
             for my $method (values %{ ${ get_slot_at($role, '$methods') } }) {
                 my $name = ${ get_slot_at($method, '$name') };
                 # XXX need to track sources
@@ -262,9 +262,9 @@ sub fixup_after_bootstrap {
         my $clone = sub {
             my %params = (
                 (map {
-                    $_->get_param_name => ${ get_slot_at(
-                        $::SELF, $_->get_name
-                    ) }
+                    $_->get_param_name => ($_->get_sigil eq '$'
+                        ? ${ get_slot_at($::SELF, $_->get_name) }
+                        : get_slot_at($::SELF, $_->get_name))
                 } values %{ $::CLASS->get_all_attributes }),
                 @_,
             );

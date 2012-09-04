@@ -12,8 +12,8 @@ BEGIN { $SIG{__DIE__} = \&Carp::confess }
 
 sub apply_roles_to {
     my($target, @roles) = @_;
-    my $roles = ${ mop::internal::instance::get_slot_at( $target, '$roles' ) };
-    mop::internal::instance::set_slot_at( $target, '$roles', \ [@$roles, @roles] );
+    my @current = @{ mop::internal::instance::get_slot_at( $target, '@roles' ) };
+    mop::internal::instance::set_slot_at( $target, '@roles', [@current, @roles] );
     $target->FINALIZE;
 }
 

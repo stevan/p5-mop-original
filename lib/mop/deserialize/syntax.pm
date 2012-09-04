@@ -77,7 +77,7 @@ sub finalize_class {
     my $methods = {
         (map { %{ ${ mop::internal::instance::get_slot_at($_, '$methods') } } }
             (${ mop::internal::instance::get_slot_at($class, '$superclass') } || ()),
-            @{ ${ mop::internal::instance::get_slot_at($class, '$roles') } },
+            @{ mop::internal::instance::get_slot_at($class, '@roles') },
             $class),
     };
     %$stash = ();
