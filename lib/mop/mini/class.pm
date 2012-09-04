@@ -11,6 +11,7 @@ use Hash::Util::FieldHash qw[ fieldhashes ];
 use Sub::Name             qw[ subname ];
 use PadWalker             qw[ set_closed_over ];
 use Scope::Guard          qw[ guard ];
+use Scalar::Util          qw[ weaken ];
 
 use mop::internal::instance;
 
@@ -216,6 +217,7 @@ sub _create_method {
             my $invocant = shift;
             my $instance = mop::internal::instance::get_slots( $invocant );
             my $class    = mop::internal::instance::get_class( $invocant );
+            weaken($invocant);
             my $env      = {
                 %$instance,
                 '$self'  => \$invocant,

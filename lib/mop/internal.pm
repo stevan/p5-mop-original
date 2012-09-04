@@ -158,6 +158,7 @@ sub execute_method {
     my $class    = mop::internal::instance::get_class( $invocant );
     my $instance = mop::internal::instance::get_slots( $invocant );
     my $body     = ${ mop::internal::instance::get_slot_at( $method, '$body' ) };
+    Scalar::Util::weaken($invocant);
     my $env      = {
         %$instance,
         '$self'  => \$invocant,
