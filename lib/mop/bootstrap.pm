@@ -253,6 +253,7 @@ sub deserialize {
         if (my $destructor = ${ get_slot_at($class, '$destructor') }) {
             $method_stash->bless($destructor);
         }
+        mop::internal::_apply_overloading(mop::internal::get_stash_for($class));
     }
 
     for my $role ($::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasSuperclass, $::Instantiable, $::Dispatchable, $::Cloneable) {
@@ -264,6 +265,7 @@ sub deserialize {
         for my $attr (values %role_attrs) {
             $attribute_stash->bless($attr);
         }
+        mop::internal::_apply_overloading(mop::internal::get_stash_for($role));
     }
 
     fixup_after_bootstrap();
