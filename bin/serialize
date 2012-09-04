@@ -36,11 +36,11 @@ for my $thing (values %$mop) {
 push @methods, $::Class->get_constructor;
 
 for my $method (@methods) {
-    mop::internal::instance::set_slot_at($method, '$body', \'fix');
+    mop::internal::instance::set_slot_at($method, '$body', \'serialize-fix');
 }
 
 for my $attr (@attrs) {
-    mop::internal::instance::set_slot_at($attr, '$initial_value', \'fix');
+    mop::internal::instance::set_slot_at($attr, '$initial_value', \'serialize-fix');
 }
 
 Storable::store($mop, 'lib/mop/bootstrap.mop');
