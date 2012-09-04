@@ -49,7 +49,8 @@ sub has {
     $::CLASS->add_attribute(
         $::CLASS->attribute_class->new(
             name          => $name,
-            initial_value => \$default,
+            initial_value =>
+                ($default ? \$default : mop::internal::_undef_for_type($name)),
             ($metadata ? %$metadata : ()),
         )
     );

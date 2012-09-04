@@ -94,23 +94,6 @@ class Attribute (extends => Object, roles => [Cloneable, HasName]) {
                 die "References of type " . ref($value) . " are not supported";
             }
         }
-        elsif (ref($value) eq 'SCALAR' && !defined($$value)) {
-            if ($sigil eq '$') {
-                $value = $$value;
-                return \$value;
-            }
-            elsif ($sigil eq '@') {
-                my @value = ();
-                return \@value;
-            }
-            elsif ($sigil eq '%') {
-                my %value = ();
-                return \%value;
-            }
-            else {
-                die "Unknown sigil $sigil";
-            }
-        }
         else {
             if ($sigil eq '$') {
                 $value = $$value;

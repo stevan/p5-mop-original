@@ -41,7 +41,7 @@ sub method {
 sub has {
     my ($name, $ref, $metadata, $default) = @_;
     my %attributes = %{ mop::internal::instance::get_slot_at($::CLASS, '%attributes') };
-    mop::internal::instance::set_slot_at($attributes{$name}, '$initial_value', \\$default);
+    mop::internal::instance::set_slot_at($attributes{$name}, '$initial_value', \($default ? \$default : mop::internal::_undef_for_type($name)) );
 }
 
 sub BUILD {
