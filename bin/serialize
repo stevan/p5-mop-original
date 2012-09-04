@@ -33,7 +33,8 @@ for my $thing (values %$mop) {
     push @attrs,   values %{ $thing->get_local_attributes };
 }
 
-push @methods, $::Class->get_constructor;
+push @methods, grep { defined } map { $_->get_constructor, $_->get_destructor }
+               $::Class, $::Attribute, $::Method, $::Object, $::Role;
 
 for my $method (@methods) {
     mop::internal::instance::set_slot_at($method, '$body', \'serialize-fix');

@@ -136,6 +136,16 @@ sub init {
             set_class($method, $::Method);
             get_stash_for($::Method)->bless($method);
         }
+
+        if (my $constructor = ${ get_slot_at($class, '$constructor') }) {
+            set_class($constructor, $::Method);
+            get_stash_for($::Method)->bless($constructor);
+        }
+
+        if (my $destructor = ${ get_slot_at($class, '$destructor') }) {
+            set_class($destructor, $::Method);
+            get_stash_for($::Method)->bless($destructor);
+        }
     }
 
     # now reconstruct the stashes (not using FINALIZE or _generate_callable_sub
@@ -236,6 +246,12 @@ sub deserialize {
                 my $default = ${ get_slot_at($attr, '$initial_value') };
                 set_slot_at($class_attrs{$name}, '$initial_value', \$default);
             }
+        }
+        if (my $constructor = ${ get_slot_at($class, '$constructor') }) {
+            $method_stash->bless($constructor);
+        }
+        if (my $destructor = ${ get_slot_at($class, '$destructor') }) {
+            $method_stash->bless($destructor);
         }
     }
 
