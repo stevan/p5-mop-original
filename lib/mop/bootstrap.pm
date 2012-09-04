@@ -164,6 +164,7 @@ sub init {
             $stash->add_method($name => sub { $method->execute(@_) });
         }
         $stash->add_method(DESTROY => mop::internal::generate_DESTROY());
+        mop::internal::_apply_overloading(get_stash_for($class));
     }
 
     # break the cycle with Method->execute, since we just regenerated its stash
@@ -265,7 +266,6 @@ sub deserialize {
         for my $attr (values %role_attrs) {
             $attribute_stash->bless($attr);
         }
-        mop::internal::_apply_overloading(mop::internal::get_stash_for($role));
     }
 
     fixup_after_bootstrap();
