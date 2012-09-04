@@ -29,7 +29,12 @@ sub set_class {
 
 sub get_slot_at {
     my ($instance, $name) = @_;
-    $instance->{'slots'}->{ $name } || \undef
+    my $sigil = substr($name, 0, 1);
+    $instance->{'slots'}->{ $name }
+        || ($sigil eq '$' ? \undef
+          : $sigil eq '@' ? []
+          : $sigil eq '%' ? {}
+          :                 die "unknown sigil $sigil");
 }
 
 sub set_slot_at {
