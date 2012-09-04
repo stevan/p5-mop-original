@@ -145,9 +145,9 @@ class Attribute (extends => Object, roles => [Cloneable, HasName]) {
 }
 
 role HasMethods {
-    has $methods = {};
+    has %methods;
 
-    method get_local_methods { $methods }
+    method get_local_methods { \%methods }
 
     method method_class { $::Method }
 
@@ -165,9 +165,9 @@ role HasMethods {
 }
 
 role HasAttributes {
-    has $attributes = {};
+    has %attributes;
 
-    method get_local_attributes { $attributes }
+    method get_local_attributes { \%attributes }
 
     method attribute_class { $::Attribute }
 
