@@ -14,37 +14,37 @@ use mop::internal;
 use mop::internal::instance;
 
 package mop::bootstrap::mini {
-    sub HasMethods;
-    sub HasAttributes;
-    sub HasRoles;
-    sub HasName;
-    sub HasVersion;
-    sub HasSuperclass;
-    sub Instantiable;
-    sub Dispatchable;
-    sub Cloneable;
-    sub Role;
-    sub Object;
-    sub Class;
-    sub Method;
-    sub Attribute;
+    sub HasMethods ();
+    sub HasAttributes ();
+    sub HasRoles ();
+    sub HasName ();
+    sub HasVersion ();
+    sub HasSuperclass ();
+    sub Instantiable ();
+    sub Dispatchable ();
+    sub Cloneable ();
+    sub Role ();
+    sub Object ();
+    sub Class ();
+    sub Method ();
+    sub Attribute ();
 }
 
 package mop::bootstrap::full {
-    sub HasMethods;
-    sub HasAttributes;
-    sub HasRoles;
-    sub HasName;
-    sub HasVersion;
-    sub HasSuperclass;
-    sub Instantiable;
-    sub Dispatchable;
-    sub Cloneable;
-    sub Role;
-    sub Object;
-    sub Class;
-    sub Method;
-    sub Attribute;
+    sub HasMethods ();
+    sub HasAttributes ();
+    sub HasRoles ();
+    sub HasName ();
+    sub HasVersion ();
+    sub HasSuperclass ();
+    sub Instantiable ();
+    sub Dispatchable ();
+    sub Cloneable ();
+    sub Role ();
+    sub Object ();
+    sub Class ();
+    sub Method ();
+    sub Attribute ();
 }
 
 sub init {
