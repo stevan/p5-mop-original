@@ -155,6 +155,7 @@ sub execute_method {
 
     my $method   = shift;
     my $invocant = shift;
+    my $uuid     = mop::uuid_of($method);
     my $class    = mop::internal::instance::get_class( $invocant );
     my $instance = mop::internal::instance::get_slots( $invocant );
     my $body     = ${ mop::internal::instance::get_slot_at( $method, '$body' ) };
@@ -165,14 +166,14 @@ sub execute_method {
         '$class' => \$class
     };
 
-    $STACKS->{ mop::uuid_of( $method ) } = []
-        unless ref $STACKS->{ mop::uuid_of( $method ) };
+    $STACKS->{ $uuid } = []
+        unless ref $STACKS->{ $uuid };
 
-    push @{ $STACKS->{ mop::uuid_of( $method ) } } => $env;
+    push @{ $STACKS->{ $uuid } } => $env;
     PadWalker::set_closed_over( $body, $env );
 
     my $g = guard {
-        my $stack = $STACKS->{ mop::uuid_of( $method ) };
+        my $stack = $STACKS->{ $uuid };
         pop @$stack;
         my $env = $stack->[-1];
         if ( $env ) {
