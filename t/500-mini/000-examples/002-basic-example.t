@@ -40,7 +40,7 @@ class CheckingAccount (extends => BankAccount) {
     }
 }
 
-ok CheckingAccount->is_subclass_of( BankAccount ), '... CheckingAccount is a subclass of BankAccount';
+ok CheckingAccount->instance_isa( BankAccount ), '... CheckingAccount is a subclass of BankAccount';
 
 my $savings = BankAccount->new( balance => 250 );
 ok $savings->isa( BankAccount ), '... savings is an instance of BankAccount';

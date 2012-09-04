@@ -24,8 +24,8 @@ class FooMeta (extends => $::Class) {
 is mop::class_of( FooMeta ), $::Class, '... got the class we expected';
 ok FooMeta->isa( $::Object ), '... FooMeta is an Object';
 ok FooMeta->isa( $::Class ), '... FooMeta is a Class';
-ok FooMeta->is_subclass_of( $::Object ), '... FooMeta is a subclass of Object';
-ok FooMeta->is_subclass_of( $::Class ), '... FooMeta is a subclass of Class';
+ok FooMeta->instance_isa( $::Object ), '... FooMeta is a subclass of Object';
+ok FooMeta->instance_isa( $::Class ), '... FooMeta is a subclass of Class';
 
 # create a class (using our meta-class)
 class Foo (metaclass => FooMeta) {
@@ -37,7 +37,7 @@ is mop::class_of( Foo ), FooMeta, '... got the class we expected';
 ok Foo->isa( $::Object ), '... Foo is an Object';
 ok Foo->isa( $::Class ), '... Foo is a Class';
 ok Foo->isa( FooMeta ), '... Foo is a FooMeta';
-ok Foo->is_subclass_of( $::Object ), '... Foo is a subclass of Object';
+ok Foo->instance_isa( $::Object ), '... Foo is a subclass of Object';
 
 is Foo->static_method, 'STATIC', '... called the static method on Foo';
 

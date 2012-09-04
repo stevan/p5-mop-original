@@ -23,8 +23,8 @@ class MetaWithData (extends => $::Class) {
 is mop::class_of( MetaWithData ), $::Class, '... got the class we expected';
 ok MetaWithData->isa( $::Object ), '... MetaWithData is an Object';
 ok MetaWithData->isa( $::Class ), '... MetaWithData is a Class';
-ok MetaWithData->is_subclass_of( $::Object ), '... MetaWithData is a subclass of Object';
-ok MetaWithData->is_subclass_of( $::Class ), '... MetaWithData is a subclass of Class';
+ok MetaWithData->instance_isa( $::Object ), '... MetaWithData is a subclass of Object';
+ok MetaWithData->instance_isa( $::Class ), '... MetaWithData is a subclass of Class';
 
 # create a class (using our meta-class)
 class Foo (metaclass => MetaWithData) {
@@ -44,7 +44,7 @@ is mop::class_of( Foo ), MetaWithData, '... got the class we expected';
 ok Foo->isa( $::Object ), '... Foo is an Object';
 ok Foo->isa( $::Class ), '... Foo is a Class';
 ok Foo->isa( MetaWithData ), '... Foo is a MetaWithData';
-ok Foo->is_subclass_of( $::Object ), '... Foo is a subclass of Object';
+ok Foo->instance_isa( $::Object ), '... Foo is a subclass of Object';
 
 is_deeply Foo->get_data, [], '... called the static method on Foo';
 
@@ -52,7 +52,7 @@ is mop::class_of( Bar ), MetaWithData, '... got the class we expected';
 ok Bar->isa( $::Object ), '... Bar is an Object';
 ok Bar->isa( $::Class ), '... Bar is a Class';
 ok Bar->isa( MetaWithData ), '... Bar is a MetaWithData';
-ok Bar->is_subclass_of( $::Object ), '... Bar is a subclass of Object';
+ok Bar->instance_isa( $::Object ), '... Bar is a subclass of Object';
 
 is_deeply Bar->get_data, [ 1, 2, 3 ], '... called the static method on Bar';
 

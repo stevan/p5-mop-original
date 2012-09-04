@@ -59,12 +59,12 @@ class US::Currency ( with => [ Comparable, Printable ] ) {
 
 is(mop::class_of(Eq), $::Role, '... Eq is a role');
 is(mop::class_of(Comparable), $::Role, '... Comparable is a role');
-ok(Comparable->does_role( Eq ), '... Comparable does the Eq role');
+ok(Comparable->instance_does( Eq ), '... Comparable does the Eq role');
 is(mop::class_of(Printable), $::Role, '... Printable is a role');
 is(mop::class_of(US::Currency), $::Class, '... US::Currency is a class');
-ok(US::Currency->does_role( Eq ), '... US::Currency does Eq');
-ok(US::Currency->does_role( Comparable ), '... US::Currency does Comparable');
-ok(US::Currency->does_role( Printable ), '... US::Currency does Printable');
+ok(US::Currency->instance_does( Eq ), '... US::Currency does Eq');
+ok(US::Currency->instance_does( Comparable ), '... US::Currency does Comparable');
+ok(US::Currency->instance_does( Printable ), '... US::Currency does Printable');
 
 ok(Eq->find_method('equal_to')->is_stub, '... EQ::equal_to is a stub method');
 ok(!Eq->find_method('not_equal_to')->is_stub, '... EQ::not_equal_to is NOT a stub method');

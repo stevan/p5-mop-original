@@ -37,7 +37,7 @@ class Foo (metaclass => ClassAccessorMeta) {
 }
 
 is mop::class_of( Foo ), ClassAccessorMeta, '... Foo has the right metaclass';
-ok Foo->is_subclass_of( $::Object ), '... Foo is a subtype of Object';
+ok Foo->instance_isa( $::Object ), '... Foo is a subtype of Object';
 ok Foo->find_method('bar'), '... the bar method was generated for us';
 ok Foo->find_method('baz'), '... the baz method was generated for us';
 

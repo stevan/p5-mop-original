@@ -16,7 +16,7 @@ role Baz ( with => [Foo] ) {
     method baz { join ", "  => $self->bar, 'baz' }
 }
 
-ok( Baz->does_role( Foo ), '... Baz does the Foo role');
+ok( Baz->instance_does( Foo ), '... Baz does the Foo role');
 
 my $bar_method = Baz->find_method('bar');
 ok( $bar_method->isa( $::Method ), '... got a method object' );

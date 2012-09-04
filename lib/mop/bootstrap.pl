@@ -5,24 +5,10 @@ use 5.014;
 # implement all of UNIVERSAL here, because the mop's dispatcher should
 # not be using UNIVERSAL at all
 class Object {
-    method isa ($other) {
-        ref($other) && ( $class == $other || $class->is_subclass_of($other) )
-    }
-    method does ($other) {
-        ref($other) && ( $class->does_role($other) )
-    }
-    # XXX ideally, ->can would return a method object, which would do the
-    # right thing when used as a coderef (so that
-    # if (my $foo = $obj->can('foo')) { $obj->$foo(...) }
-    # and similar things work as expected), but as far as i can tell,
-    # overloading doesn't currently work with anonymous packages
-    method can ($name)  {
-        my $method = $class->find_method( $name );
-        return sub { $method->execute( @_ ) }
-            if $method;
-        return;
-    }
-    method DOES ($other) { $self->isa($other) || $self->does($other) }
+    method isa ($other)  { $class->instance_isa($other) }
+    method does ($other) { $class->instance_does($other) }
+    method can ($name)   { $class->instance_can($name) }
+    method DOES ($other) { $class->instance_DOES($other) }
 }
 
 role Cloneable {
@@ -168,6 +154,18 @@ role HasMethods {
     method add_method ($method) {
         $self->get_local_methods->{$method->get_name} = $method;
     }
+
+    # XXX ideally, ->can would return a method object, which would do the
+    # right thing when used as a coderef (so that
+    # if (my $foo = $obj->can('foo')) { $obj->$foo(...) }
+    # and similar things work as expected), but as far as i can tell,
+    # overloading doesn't currently work with anonymous packages
+    method instance_can ($name) {
+        my $method = $self->find_method( $name );
+        return sub { $method->execute( @_ ) }
+            if $method;
+        return;
+    }
 }
 
 role HasAttributes {
@@ -203,10 +201,6 @@ role HasRoles {
         map { $_, $_->get_local_roles } $self->get_local_roles;
     }
 
-    method does_role ($role) {
-        scalar grep { $_ == $role } $self->get_all_roles;
-    }
-
     method add_roles (@roles_to_add) {
         push @roles, @roles_to_add;
     }
@@ -230,6 +224,10 @@ role HasRoles {
         }
     }
 
+    method instance_does ($role) {
+        return unless ref($role);
+        return !!grep { $_ == $role } $self->get_all_roles;
+    }
 }
 
 # XXX splitting this from HasName probably doesn't make sense, since VERSION
@@ -292,17 +290,20 @@ role HasSuperclass {
     method base_object_class { $::Object }
 
     method get_compatible_class ($other) {
-        # replace the class with a subclass of itself
-        return $other if $other->is_subclass_of( $self );
         # it's already okay
-        return $self  if $self->is_subclass_of( $other ) || $other == $self;
+        return $self  if $self->instance_isa($other);
+        # replace the class with a subclass of itself
+        return $other if $other->instance_isa($self);
         # reconciling this group of metaclasses isn't possible
         return;
     }
-    method is_subclass_of ($super) {
-        my @mro = @{ $self->get_mro };
-        shift @mro;
-        return scalar grep { $super == $_ } @mro;
+
+    method instance_isa ($other) {
+        return unless ref($other);
+        return !!grep { $other == $_ } @{ $self->get_mro };
+    }
+    method instance_DOES ($other) {
+        return $self->instance_isa($other);
     }
 }
 
@@ -430,6 +431,10 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
             }
         );
         return @roles;
+    }
+
+    method instance_DOES ($other) {
+        return $self->instance_isa($other) || $self->instance_does($other);
     }
 
     method FINALIZE {

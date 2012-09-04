@@ -79,7 +79,7 @@ is_deeply $p->dump, { x => 0, y => 0 }, '... got the right value from dump';
 
 ## Test the subclass
 
-ok Point3D->is_subclass_of( Point ), '... class Point3D is a subclass of Point';
+ok Point3D->instance_isa( Point ), '... class Point3D is a subclass of Point';
 is Point3D->get_superclass, Point, '... got the superclass we expected';
 
 my $p3d = Point3D->new( x => 1, y => 2, z => 3 );

@@ -45,6 +45,6 @@ my $composed_role = $::Role->new(
     roles => [ $role ],
 );
 
-ok($composed_role->does_role($role), "Role composed into role");
+ok($composed_role->instance_does($role), "Role composed into role");
 
 done_testing;

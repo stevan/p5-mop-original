@@ -40,10 +40,10 @@ class CheckingAccount (extends => BankAccount) {
     }
 }
 
-ok BankAccount->is_subclass_of( $::Object ), '... BankAccount is a subclass of Object';
+ok BankAccount->instance_isa( $::Object ), '... BankAccount is a subclass of Object';
 
-ok CheckingAccount->is_subclass_of( BankAccount ), '... CheckingAccount is a subclass of BankAccount';
-ok CheckingAccount->is_subclass_of( $::Object ), '... CheckingAccount is a subclass of Object';
+ok CheckingAccount->instance_isa( BankAccount ), '... CheckingAccount is a subclass of BankAccount';
+ok CheckingAccount->instance_isa( $::Object ), '... CheckingAccount is a subclass of Object';
 
 my $savings = BankAccount->new( balance => 250 );
 is mop::class_of( $savings ), BankAccount, '... got the class we expected';

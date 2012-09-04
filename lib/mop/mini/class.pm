@@ -108,10 +108,9 @@ sub get_mro {
     return [ $class, $super ? @{ $super->get_mro } : () ];
 }
 
-sub is_subclass_of {
+sub instance_isa {
     my ($class, $super) = @_;
     my @mro = @{ $class->get_mro };
-    shift @mro;
     return scalar grep { $super eq $_ } @mro;
 }
 
@@ -191,7 +190,7 @@ sub finalize {
 
     $class->SUPER::add_method('isa' => sub {
         my ($self, $other) = @_;
-        $class eq $other || $class->is_subclass_of( $other )
+        $class->instance_isa($other);
     });
 
     $class->SUPER::add_method('DESTROY' => sub {

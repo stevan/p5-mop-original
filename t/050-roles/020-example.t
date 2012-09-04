@@ -49,7 +49,7 @@ class Point1D (does => [Ord]) { # "Number" ;-)
 ## Test the class
 
 ok Point->new->does(Eq), 'class Point does Eq ...';
-ok Point->does_role(Eq), 'class Point does Eq ...';
+ok Point->instance_does(Eq), 'class Point does Eq ...';
 is_deeply [ map { $_->get_name } Point->get_all_roles ], [qw(Eq)], '… got the roles we expected';
 ok Point->new->can("equal"), '˙˙˙ implements equal method';
 ok Point->find_method("equal"), '˙˙˙ implements equal method';
@@ -74,7 +74,7 @@ ok !$p1->equal($p3), "object does not equal other";
 ok $p1->not_equal($p3), "not_equal role method says the same";
 
 ok Point1D->new->does(Ord), "Point1D does Ord";
-ok Point1D->does_role(Ord), "Point1D does Ord";
+ok Point1D->instance_does(Ord), "Point1D does Ord";
 is_deeply [ map { $_->get_name } Point1D->get_local_roles ], [qw(Ord)], 'directly applied roles';
 is_deeply [ sort map { $_->get_name } Point1D->get_all_roles ], [qw(Eq Ord)], 'directly applied roles';
 

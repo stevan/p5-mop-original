@@ -46,7 +46,7 @@ class Point3D (extends => Point) {
 like mop::uuid_of( Point ), qr/[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}/i, '... got the expected uuid format';
 is mop::class_of( Point ), $::Class, '... got the class we expected';
 ok Point->isa( $::Object ), '... class Point is a Object';
-ok Point->is_subclass_of( $::Object ), '... class Point is a subclass of Object';
+ok Point->instance_isa( $::Object ), '... class Point is a subclass of Object';
 is Point->get_superclass, $::Object, '... got the superclass we expected';
 is_deeply Point->get_mro, [ Point, $::Object ], '... got the mro we expected';
 is_deeply
@@ -96,8 +96,8 @@ is_deeply $p->dump, { x => 0, y => 0 }, '... got the right value from dump';
 
 is mop::class_of( Point3D ), $::Class, '... got the class we expected';
 ok Point3D->isa( $::Object ), '... class Point3D is a Object';
-ok Point3D->is_subclass_of( Point ), '... class Point3D is a subclass of Point';
-ok Point3D->is_subclass_of( $::Object ), '... class Point3D is a subclass of Object';
+ok Point3D->instance_isa( Point ), '... class Point3D is a subclass of Point';
+ok Point3D->instance_isa( $::Object ), '... class Point3D is a subclass of Object';
 is Point3D->get_superclass, Point, '... got the superclass we expected';
 is_deeply Point3D->get_mro, [ Point3D, Point, $::Object ], '... got the mro we expected';
 is_deeply

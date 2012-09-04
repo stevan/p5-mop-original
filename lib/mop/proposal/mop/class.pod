@@ -71,10 +71,11 @@ class.
 
 =over 4
 
-=item C<is_subclass_of( $class )>
+=item C<instance_isa( $class )>
 
 This is simply a predicate to determine if a given C<$class> is
-in the MRO of this class.
+in the MRO of this class. It corresponds to calling C<isa> on an
+instance of this class.
 
 =item C<equals( $other )>
 
