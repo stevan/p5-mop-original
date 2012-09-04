@@ -72,6 +72,12 @@ class Method (extends => Object, roles => [Cloneable, HasName]) {
 class Attribute (extends => Object, roles => [Cloneable, HasName]) {
     has $initial_value;
 
+    BUILD {
+        my $name = $self->get_name;
+        die "Attribute '$name' has no sigil (did you mean '\$$name'?)"
+            unless $name =~ /^[\$\@\%]/;
+    }
+
     method get_initial_value { $initial_value }
 
     # XXX this works, but things break if i try to simplify it by returning
