@@ -44,4 +44,10 @@ for my $attr (@attrs) {
     mop::internal::instance::set_slot_at($attr, '$initial_value', \'serialize-fix');
 }
 
+# DESTROY calls methods to find DEMOLISH subs, which will break now that we
+# have stripped things out of the mop
+for my $class ($::Class, $::Attribute, $::Method, $::Object, $::Role) {
+    mop::internal::get_stash_for($class)->add_method(DESTROY => sub { });
+}
+
 Storable::store($mop, 'lib/mop/bootstrap.mop');
