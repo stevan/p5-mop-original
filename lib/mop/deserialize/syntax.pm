@@ -10,7 +10,7 @@ our $AUTHORITY = 'cpan:STEVAN';
 use Sub::Name 'subname';
 
 use mop::internal::instance qw(get_slot_at set_slot_at);
-use mop::internal::stashes qw(get_stash_for apply_overloading_for_stash);
+use mop::internal::stashes qw(get_stash_for populate_stash);
 
 use mop::parser;
 
@@ -82,7 +82,6 @@ sub build_role {
 sub finalize_class {
     my ($name, $class, $caller) = @_;
 
-    my $stash = get_stash_for($class);
     my $methods = {
         (map { %{ get_slot_at($_, '%methods') } }
              (${ get_slot_at($class, '$superclass') } || ()),
@@ -90,16 +89,9 @@ sub finalize_class {
              $class),
     };
 
-    %$stash = ();
-
-    for my $name (keys %$methods) {
-        my $method = $methods->{$name};
-        $stash->add_method($name => sub { $method->execute(@_) });
-    }
-
-    $stash->add_method(DESTROY => mop::internal::stashes::generate_DESTROY());
-
-    apply_overloading_for_stash($stash);
+    # XXX bootstrap => 1 won't work properly if we start serializing
+    # metaclasses outside of the bootstrap
+    populate_stash(get_stash_for($class), $methods, { bootstrap => 1 });
 
     {
         no strict 'refs';

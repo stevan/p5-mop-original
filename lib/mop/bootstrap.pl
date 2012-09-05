@@ -8,7 +8,7 @@ use mop::internal;
 use mop::internal::instance qw(
     create_instance get_class get_slots get_slot_at set_slot_at
 );
-use mop::internal::stashes qw(get_stash_for);
+use mop::internal::stashes qw(get_stash_for populate_stash);
 use mop::util;
 
 # implement all of UNIVERSAL here, because the mop's dispatcher should
@@ -427,26 +427,8 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
     }
 
     method FINALIZE {
-        my $stash      = get_stash_for( $self );
-        my $dispatcher = $self->dispatcher;
-
         $self->apply_roles($self->roles_for_composition);
-
-        my $methods = $self->methods;
-
-        %$stash = ();
-
-        foreach my $name ( keys %$methods ) {
-            my $method = $methods->{ $name };
-            $stash->add_method(
-                $name,
-                $method->_generate_callable_sub,
-            ) unless exists $stash->{ $name };
-        }
-
-        $stash->add_method(
-            'DESTROY' => mop::internal::stashes::generate_DESTROY()
-        );
+        populate_stash(get_stash_for($self), $self->methods);
     }
 }
 

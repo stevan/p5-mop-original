@@ -11,7 +11,7 @@ use version ();
 
 use mop::internal;
 use mop::internal::instance qw(get_slot_at set_slot_at get_class set_class);
-use mop::internal::stashes qw(get_stash_for apply_overloading_for_stash);
+use mop::internal::stashes qw(get_stash_for populate_stash);
 
 # declare some subs so that the rest of the file can be parsed without
 # requiring parentheses on class names
@@ -199,25 +199,14 @@ sub init {
     for my $class (@metaobjects) {
         next unless get_class($class) == $::Class;
 
-        my $stash = get_stash_for($class);
-        my %methods = (
+        my $methods = {
             (map { %{ get_slot_at($_, '%methods') } }
                  (${ get_slot_at($class, '$superclass') } || ()),
                  @{ get_slot_at($class, '@roles') },
                  $class),
-        );
+        };
 
-        %$stash = ();
-
-        for my $name (keys %methods) {
-            my $method = $methods{$name};
-            $stash->add_method($name => sub { $method->execute(@_) });
-        }
-        $stash->add_method(
-            DESTROY => mop::internal::stashes::generate_DESTROY()
-        );
-
-        apply_overloading_for_stash($stash);
+        populate_stash(get_stash_for($class), $methods, { bootstrap => 1 });
     }
 
     # Break the cycle with Method->execute, since we just regenerated its stash
