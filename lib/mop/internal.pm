@@ -7,13 +7,13 @@ use warnings;
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
-use mop::internal::instance;
-
 use overload ();
 use Package::Anon;
-use PadWalker ();
-use Scalar::Util ();
-use Scope::Guard 'guard';
+use PadWalker qw(set_closed_over);
+use Scalar::Util qw(refaddr weaken);
+use Scope::Guard qw(guard);
+
+use mop::internal::instance;
 
 sub _apply_overloading {
     my ($stash) = @_;
@@ -37,13 +37,13 @@ sub _apply_overloading {
         return $other->DOES($self);
     });
     $stash->add_method('(""' => sub { overload::StrVal($_[0]) });
-    $stash->add_method('(0+' => sub { Scalar::Util::refaddr($_[0]) });
-    $stash->add_method('(==' => sub { mop::internal::instance::get_uuid($_[0]) eq mop::internal::instance::get_uuid($_[1]) });
+    $stash->add_method('(0+' => sub { refaddr($_[0]) });
+    $stash->add_method('(==' => sub { get_uuid($_[0]) eq get_uuid($_[1]) });
 }
 
 sub create_stash_for {
     my ($class) = @_;
-    my $stash = Package::Anon->new( ${ mop::internal::instance::get_slot_at( $class, '$name' ) } || () );
+    my $stash = Package::Anon->new(${ get_slot_at( $class, '$name' ) } || ());
     _apply_overloading($stash);
     return $stash;
 }
@@ -51,8 +51,7 @@ sub create_stash_for {
 sub get_stash_for {
     state $VTABLES = {};
     my $class = shift;
-    my $uuid  = mop::internal::instance::get_uuid( $class );
-    $VTABLES->{ $uuid } //= create_stash_for( $class );
+    $VTABLES->{ get_uuid($class) } //= create_stash_for( $class );
 }
 
 sub execute_method {
@@ -60,11 +59,13 @@ sub execute_method {
 
     my $method   = shift;
     my $invocant = shift;
-    my $uuid     = mop::uuid_of($method);
-    my $class    = mop::internal::instance::get_class( $invocant );
-    my $instance = mop::internal::instance::get_slots( $invocant );
-    my $body     = ${ mop::internal::instance::get_slot_at( $method, '$body' ) };
-    Scalar::Util::weaken($invocant);
+    weaken($invocant);
+
+    my $uuid     = get_uuid($method);
+    my $class    = get_class( $invocant );
+    my $instance = get_slots( $invocant );
+    my $body     = ${ get_slot_at( $method, '$body' ) };
+
     my $env      = {
         %$instance,
         '$self'  => \$invocant,
@@ -75,17 +76,17 @@ sub execute_method {
         unless ref $STACKS->{ $uuid };
 
     push @{ $STACKS->{ $uuid } } => $env;
-    PadWalker::set_closed_over( $body, $env );
+    set_closed_over( $body, $env );
 
     my $g = guard {
         my $stack = $STACKS->{ $uuid };
         pop @$stack;
         my $env = $stack->[-1];
         if ( $env ) {
-            PadWalker::set_closed_over( $body, $env );
+            set_closed_over( $body, $env );
         }
         else {
-            PadWalker::set_closed_over( $body, {
+            set_closed_over( $body, {
                 (map { $_ => _undef_for_type($_) } keys %$instance),
                 '$self'  => \undef,
                 '$class' => \undef,
@@ -124,9 +125,11 @@ sub _undef_for_type {
 sub generate_DESTROY {
     return sub {
         my $invocant = shift;
-        my $class    = mop::internal::instance::get_class( $invocant );
+
+        my $class = get_class( $invocant );
         return unless $class; # likely in global destruction ...
-        mop::WALKCLASS(
+
+        mop::util::WALKCLASS(
             $class->dispatcher(),
             sub {
                 my $dispatcher = $_[0]->destructor;
@@ -137,6 +140,13 @@ sub generate_DESTROY {
         );
     }
 }
+
+sub get_slot_at { mop::internal::instance::get_slot_at(@_) }
+sub set_slot_at { mop::internal::instance::set_slot_at(@_) }
+sub get_class   { mop::internal::instance::get_class(@_)   }
+sub set_class   { mop::internal::instance::set_class(@_)   }
+sub get_uuid    { mop::internal::instance::get_uuid(@_)    }
+sub get_slots   { mop::internal::instance::get_slots(@_)   }
 
 1;
 

@@ -7,9 +7,11 @@ use warnings;
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
-use Sub::Name ();
+use Sub::Name 'subname';
 
+use mop::internal;
 use mop::parser;
+use mop::util;
 
 mop::parser::init_parser_for(__PACKAGE__);
 
@@ -28,18 +30,15 @@ sub setup_for {
     }
 }
 
-sub class { }
-
-sub role { }
+sub class {}
+sub role  {}
 
 sub method {
     my ($name, $body) = @_;
     $::CLASS->add_method(
         $::CLASS->method_class->new(
             name => $name,
-            ($body
-                ? (body => Sub::Name::subname( $name, $body ))
-                : ()),
+            ($body ? (body => subname($name => $body)) : ()),
         )
     )
 }
@@ -61,7 +60,7 @@ sub BUILD {
     $::CLASS->set_constructor(
         $::CLASS->method_class->new(
             name => 'BUILD',
-            body => Sub::Name::subname( 'BUILD', $body )
+            body => subname(BUILD => $body)
         )
     )
 }
@@ -71,24 +70,27 @@ sub DEMOLISH {
     $::CLASS->set_destructor(
         $::CLASS->method_class->new(
             name => 'DEMOLISH',
-            body => Sub::Name::subname( 'DEMOLISH', $body )
+            body => subname(DEMOLISH => $body)
         )
     )
 }
 
 sub super {
     die "Cannot call super() outside of a method" unless defined $::SELF;
+
     my $invocant    = $::SELF;
     my $method_name = (split '::' => ((caller(1))[3]))[-1];
+
     my $dispatcher  = $::CLASS->dispatcher;
     # find the method currently being called
-    my $method = mop::WALKMETH( $dispatcher, $method_name );
+    my $method = mop::util::WALKMETH( $dispatcher, $method_name );
     while ( $method != $::CALLER ) {
-        $method = mop::WALKMETH( $dispatcher, $method_name );
+        $method = mop::util::WALKMETH( $dispatcher, $method_name );
     }
     # and advance past it  by one
-    $method = mop::WALKMETH( $dispatcher, $method_name )
+    $method = mop::util::WALKMETH( $dispatcher, $method_name )
               || die "No super method ($method_name) found";
+
     $method->execute( $invocant, @_ );
 }
 
@@ -115,9 +117,10 @@ sub build_class {
 
     my $superclass = $metadata{ 'superclass' };
 
+    # XXX this shouldn't need to know about mop::mini::class
     if ( $superclass && ref($class_Class) ne 'mop::mini::class' ) {
         my $compatible = $class_Class->find_compatible_class(
-            mop::internal::instance::get_class( $superclass )
+            mop::util::class_of( $superclass )
         );
         $class_Class = $compatible
             if defined $compatible;
@@ -160,7 +163,7 @@ sub finalize_class {
     {
         no strict 'refs';
         no warnings 'redefine';
-        *{"${caller}::${name}"} = Sub::Name::subname( $name, sub () { $class } );
+        *{"${caller}::${name}"} = subname($name => sub () { $class });
     }
 }
 
@@ -172,7 +175,7 @@ sub finalize_role {
     {
         no strict 'refs';
         no warnings 'redefine';
-        *{"${caller}::${name}"} = Sub::Name::subname( $name, sub () { $role } );
+        *{"${caller}::${name}"} = subname($name => sub () { $role });
     }
 }
 

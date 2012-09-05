@@ -30,7 +30,9 @@ sub setup_for {
 sub class {}
 sub role  {}
 
-sub method { $::CLASS->add_method( @_ ) }
+sub method {
+    $::CLASS->add_method( @_ )
+}
 
 sub has {
     my ($name, $ref, $metadata, $default) = @_;
@@ -42,10 +44,19 @@ sub DEMOLISH { $::CLASS->set_destructor( @_ )  }
 
 sub build_class {
     my ($name, $metadata, $caller) = @_;
+
     my %metadata = %{ $metadata || {} };
-    my $class = mop::mini::class->new( $caller eq 'main' ? $name : "${caller}::${name}", \%metadata );
-    $class->set_superclass( $metadata{ 'extends' } ) if exists $metadata{ 'extends' };
-    $class->set_roles( $metadata{ 'roles' } ) if exists $metadata{ 'roles' };
+
+    my $class = mop::mini::class->new(
+        $caller eq 'main' ? $name : "${caller}::${name}",
+        \%metadata
+    );
+
+    $class->set_superclass($metadata{extends})
+        if exists $metadata{extends};
+    $class->set_roles($metadata{roles})
+        if exists $metadata{roles};
+
     $class;
 }
 
@@ -69,8 +80,10 @@ sub finalize_role {
 
 sub super {
     die "Cannot call super() outside of a method" unless defined $::SELF;
+
     my $invocant    = $::SELF;
     my $method_name = (split '::' => ((caller(2))[3]))[-1];
+
     my $dispatcher  = $::CLASS->dispatcher;
     # find the method currently being called
     my $method = mop::util::WALKMETH( $dispatcher, $method_name );
@@ -80,10 +93,8 @@ sub super {
     # and advance past it by one
     $method = mop::util::WALKMETH( $dispatcher, $method_name )
               || die "No super method ($method_name) found";
+
     $invocant->$method( @_ );
 }
 
-
 1;
-
-__END__

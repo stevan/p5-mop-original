@@ -14,6 +14,7 @@ use Scope::Guard          qw[ guard ];
 use Scalar::Util          qw[ weaken ];
 
 use mop::internal::instance;
+use mop::util;
 
 use parent 'Package::Anon';
 
@@ -43,21 +44,39 @@ sub new {
             my ($sigil, $plain_attr) = ($attr =~ /^([\$\@\%])(.*)/);
             if ( exists $args{ $plain_attr } ) {
                 if ($sigil eq '$') {
-                    mop::internal::instance::set_slot_at($instance, $attr, \($args{ $plain_attr }));
+                    set_slot_at($instance, $attr, \($args{ $plain_attr }));
                 }
                 else {
-                    mop::internal::instance::set_slot_at($instance, $attr, $args{ $plain_attr });
+                    set_slot_at($instance, $attr, $args{ $plain_attr });
                 }
             }
             else {
                 if ($sigil eq '$') {
-                    mop::internal::instance::set_slot_at($instance, $attr, ref $attrs{ $attr } eq 'CODE' ? \($attrs{ $attr }->()) : \($attrs{ $attr }));
+                    set_slot_at(
+                        $instance,
+                        $attr,
+                        (ref $attrs{ $attr } eq 'CODE'
+                            ? \($attrs{ $attr }->())
+                            : \($attrs{ $attr }))
+                    );
                 }
                 elsif ($sigil eq '@') {
-                    mop::internal::instance::set_slot_at($instance, $attr, ref $attrs{ $attr } eq 'CODE' ? [ $attrs{ $attr }->() ] : defined $attrs{ $attr } ? $attrs{ $attr } : []);
+                    set_slot_at(
+                        $instance,
+                        $attr,
+                        (ref $attrs{ $attr } eq 'CODE'
+                            ? [ $attrs{ $attr }->() ]
+                            : (defined $attrs{ $attr } ? $attrs{ $attr } : []))
+                    );
                 }
                 elsif ($sigil eq '%') {
-                    mop::internal::instance::set_slot_at($instance, $attr, ref $attrs{ $attr } eq 'CODE' ? { $attrs{ $attr }->() } : defined $attrs{ $attr } ? $attrs{ $attr } : {});
+                    set_slot_at(
+                        $instance,
+                        $attr,
+                        (ref $attrs{ $attr } eq 'CODE'
+                            ? { $attrs{ $attr }->() }
+                            : (defined $attrs{ $attr } ? $attrs{ $attr } : {}))
+                    );
                 }
                 else {
                     die "unknown sigil $sigil";
@@ -80,17 +99,17 @@ sub new {
     }
 }
 
-sub name          { $name{ $_[0] }          }
-sub superclass    { $superclass{ $_[0] }    }
-sub local_roles   { $roles{ $_[0] }         }
+sub name             { $name{ $_[0] }          }
+sub superclass       { $superclass{ $_[0] }    }
+sub local_roles      { $roles{ $_[0] }         }
 sub local_attributes { $attributes{ $_[0] }    }
-sub local_methods { $methods{ $_[0] } }
-sub constructor   { $constructor{ $_[0] }   }
-sub destructor    { $destructor{ $_[0] }    }
+sub local_methods    { $methods{ $_[0] }       }
+sub constructor      { $constructor{ $_[0] }   }
+sub destructor       { $destructor{ $_[0] }    }
 
-sub set_name        { $name{ $_[0] } = $_[1]        }
-sub set_superclass  { $superclass{ $_[0] } = $_[1]  }
-sub set_roles       { $roles{ $_[0] } = $_[1]       }
+sub set_name       { $name{ $_[0] } = $_[1]       }
+sub set_superclass { $superclass{ $_[0] } = $_[1] }
+sub set_roles      { $roles{ $_[0] } = $_[1]      }
 
 sub set_constructor {
     my ($class, $body) = @_;
@@ -111,7 +130,7 @@ sub mro {
 sub instance_isa {
     my ($class, $super) = @_;
     my @mro = @{ $class->mro };
-    return scalar grep { $super eq $_ } @mro;
+    return !!grep { $super eq $_ } @mro;
 }
 
 sub dispatcher {
@@ -231,9 +250,11 @@ sub _create_method {
             state $STACK = [];
 
             my $invocant = shift;
-            my $instance = mop::internal::instance::get_slots( $invocant );
-            my $class    = mop::internal::instance::get_class( $invocant );
             weaken($invocant);
+
+            my $instance = get_slots( $invocant );
+            my $class    = get_class( $invocant );
+
             my $env      = {
                 %$instance,
                 '$self'  => \$invocant,
@@ -246,10 +267,10 @@ sub _create_method {
             my $g = guard {
                 pop @$STACK;
                 if ( my $env = $STACK->[-1] ) {
-                    PadWalker::set_closed_over( $body, $env );
+                    set_closed_over( $body, $env );
                 }
                 else {
-                    PadWalker::set_closed_over( $body, {
+                    set_closed_over( $body, {
                         (map { $_ => \undef } keys %$invocant),
                         '$self'  => \undef,
                         '$class' => \undef,
@@ -266,6 +287,11 @@ sub _create_method {
     );
 }
 
-1;
+sub get_slot_at { mop::internal::instance::get_slot_at(@_) }
+sub set_slot_at { mop::internal::instance::set_slot_at(@_) }
+sub get_class   { mop::internal::instance::get_class(@_)   }
+sub set_class   { mop::internal::instance::set_class(@_)   }
+sub get_uuid    { mop::internal::instance::get_uuid(@_)    }
+sub get_slots   { mop::internal::instance::get_slots(@_)   }
 
-__END__
+1;

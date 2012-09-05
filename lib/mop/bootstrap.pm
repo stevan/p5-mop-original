@@ -7,7 +7,6 @@ use warnings;
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
-use Scalar::Util ();
 use version ();
 
 use mop::internal;
@@ -215,7 +214,7 @@ sub init {
         }
         $stash->add_method(DESTROY => mop::internal::generate_DESTROY());
 
-        mop::internal::_apply_overloading(get_stash_for($class));
+        mop::internal::_apply_overloading($stash);
     }
 
     # Break the cycle with Method->execute, since we just regenerated its stash
@@ -284,6 +283,12 @@ sub deserialize {
 
         require 'mop/bootstrap.pl';
     }
+
+    # Break the cycle with Method->execute, since we just regenerated its stash
+    # entry to call itself recursively.
+    get_stash_for($::Method)->add_method(execute => sub {
+        mop::internal::execute_method(@_)
+    });
 
     # =======
     # Phase 4
@@ -425,7 +430,7 @@ sub fixup_after_bootstrap {
 
             my $superclass = $::SELF->superclass;
             if ($superclass) {
-                my $superclass_class = mop::class_of($superclass);
+                my $superclass_class = mop::util::class_of($superclass);
                 my $compatible = $::CLASS->find_compatible_class($superclass_class);
                 if (!defined($compatible)) {
                     die "While creating class " . $::SELF->name . ": "

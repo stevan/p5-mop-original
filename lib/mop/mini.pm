@@ -4,18 +4,10 @@ use 5.014;
 use strict;
 use warnings;
 
-BEGIN {
-    our $VERSION   = '0.01';
-    our $AUTHORITY = 'cpan:STEVAN';
+our $VERSION   = '0.01';
+our $AUTHORITY = 'cpan:STEVAN';
 
-    $::SELF   = undef;
-    $::CLASS  = undef;
-    $::CALLER = undef;
-}
-
-use mop::mini::class;
 use mop::mini::syntax;
-use mop::util;
 
 sub import {
     shift;
@@ -24,5 +16,3 @@ sub import {
 }
 
 1;
-
-__END__

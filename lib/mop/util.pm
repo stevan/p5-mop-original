@@ -4,10 +4,8 @@ use 5.014;
 use strict;
 use warnings;
 
-BEGIN {
-    our $VERSION   = '0.01';
-    our $AUTHORITY = 'cpan:STEVAN';
-}
+our $VERSION   = '0.01';
+our $AUTHORITY = 'cpan:STEVAN';
 
 sub WALKCLASS {
     my ($dispatcher, $solver) = @_;

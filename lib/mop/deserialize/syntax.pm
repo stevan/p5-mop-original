@@ -7,7 +7,7 @@ use warnings;
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
-use Sub::Name ();
+use Sub::Name 'subname';
 
 use mop::parser;
 
@@ -34,31 +34,35 @@ sub role { }
 
 sub method {
     my ($name, $body) = @_;
-    my %methods = %{ mop::internal::instance::get_slot_at($::CLASS, '%methods') };
-    mop::internal::instance::set_slot_at($methods{$name}, '$body', \Sub::Name::subname($name => $body));
+    my %methods = %{ get_slot_at($::CLASS, '%methods') };
+    set_slot_at($methods{$name}, '$body', \subname($name => $body));
 }
 
 sub has {
     my ($name, $ref, $metadata, $default) = @_;
-    my %attributes = %{ mop::internal::instance::get_slot_at($::CLASS, '%attributes') };
-    mop::internal::instance::set_slot_at($attributes{$name}, '$initial_value', \($default ? \$default : mop::internal::_undef_for_type($name)) );
+    my %attributes = %{ get_slot_at($::CLASS, '%attributes') };
+    set_slot_at(
+        $attributes{$name},
+        '$initial_value',
+        \($default ? \$default : mop::internal::_undef_for_type($name))
+    );
 }
 
 sub BUILD {
     my ($body) = @_;
-    my $method = ${ mop::internal::instance::get_slot_at($::CLASS, '$constructor') };
-    mop::internal::instance::set_slot_at($method, '$body', \Sub::Name::subname('BUILD', $body));
+    my $method = ${ get_slot_at($::CLASS, '$constructor') };
+    set_slot_at($method, '$body', \subname('BUILD' => $body));
 }
 
 sub DEMOLISH {
     my ($body) = @_;
-    my $method = ${ mop::internal::instance::get_slot_at($::CLASS, '$destructor') };
-    mop::internal::instance::set_slot_at($method, '$body', \Sub::Name::subname('DEMOLISH', $body));
+    my $method = ${ get_slot_at($::CLASS, '$destructor') };
+    set_slot_at($method, '$body', \subname('DEMOLISH' => $body));
 }
 
-sub super {
-    goto &mop::syntax::super;
-}
+# this isn't used by the bootstrap anywhere currently, but this may need to be
+# figured out if we want to serialize classes in general
+sub super { ... }
 
 sub build_class {
     my ($name, $metadata, $caller) = @_;
@@ -75,30 +79,30 @@ sub build_role {
 sub finalize_class {
     my ($name, $class, $caller) = @_;
 
-    my $stash = mop::internal::get_stash_for($class);
+    my $stash = get_stash_for($class);
     my $methods = {
-        (map { %{ mop::internal::instance::get_slot_at($_, '%methods') } }
-            (${ mop::internal::instance::get_slot_at($class, '$superclass') } || ()),
-            @{ mop::internal::instance::get_slot_at($class, '@roles') },
-            $class),
+        (map { %{ get_slot_at($_, '%methods') } }
+             (${ get_slot_at($class, '$superclass') } || ()),
+             @{ get_slot_at($class, '@roles') },
+             $class),
     };
+
     %$stash = ();
+
     for my $name (keys %$methods) {
         my $method = $methods->{$name};
         $stash->add_method($name => sub { $method->execute(@_) });
     }
-    for my $attribute (values %{ mop::internal::instance::get_slot_at($class, '%attributes') }) {
-        mop::internal::get_stash_for($::Attribute)->bless($attribute);
+
+    my $attribute_stash = get_stash_for($::Attribute);
+    my $method_stash = get_stash_for($::Method);
+    for my $attribute (values %{ get_slot_at($class, '%attributes') }) {
+        $attribute_stash->bless($attribute);
+    }
+    for my $method (values %{ get_slot_at($class, '%methods') }) {
+        $method_stash->bless($method);
     }
 
-    for my $method (values %{ mop::internal::instance::get_slot_at($class, '%methods') }) {
-        mop::internal::get_stash_for($::Method)->bless($method);
-    }
-    if ($name eq 'Method') {
-        $stash->add_method(execute => sub {
-            mop::internal::execute_method(@_)
-        });
-    }
     $stash->add_method(DESTROY => mop::internal::generate_DESTROY());
 
     mop::internal::_apply_overloading($stash);
@@ -106,26 +110,31 @@ sub finalize_class {
     {
         no strict 'refs';
         no warnings 'redefine';
-        *{"${caller}::${name}"} = Sub::Name::subname( $name, sub () { $class } );
+        *{"${caller}::${name}"} = subname($name => sub () { $class });
     }
 }
 
 sub finalize_role {
     my ($name, $role, $caller) = @_;
 
-    for my $attribute (values %{ mop::internal::instance::get_slot_at($role, '%attributes') }) {
-        mop::internal::get_stash_for($::Attribute)->bless($attribute);
+    my $attribute_stash = get_stash_for($::Attribute);
+    my $method_stash = get_stash_for($::Method);
+    for my $attribute (values %{ get_slot_at($role, '%attributes') }) {
+        $attribute_stash->bless($attribute);
     }
-
-    for my $method (values %{ mop::internal::instance::get_slot_at($role, '%methods') }) {
-        mop::internal::get_stash_for($::Method)->bless($method);
+    for my $method (values %{ get_slot_at($role, '%methods') }) {
+        $method_stash->bless($method);
     }
 
     {
         no strict 'refs';
         no warnings 'redefine';
-        *{"${caller}::${name}"} = Sub::Name::subname( $name, sub () { $role } );
+        *{"${caller}::${name}"} = subname($name => sub () { $role });
     }
 }
+
+sub get_slot_at   { mop::internal::instance::get_slot_at(@_) }
+sub set_slot_at   { mop::internal::instance::set_slot_at(@_) }
+sub get_stash_for { mop::internal::get_stash_for(@_) }
 
 1;

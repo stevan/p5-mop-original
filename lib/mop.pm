@@ -4,48 +4,8 @@ use 5.014;
 use strict;
 use warnings;
 
-BEGIN {
-    our $VERSION   = '0.01';
-    our $AUTHORITY = 'cpan:STEVAN';
-
-    # These are global variables of the current invocant
-    # and current class of the invocant, they are localized
-    # within the body of the current method being executed.
-    # These are needed mostly in the bootstrap process so
-    # that the class Class and class Object can have access
-    # to them.
-    $::SELF  = undef;
-    $::CLASS = undef;
-
-    # this is the current method being executed it is mostly
-    # needed for finding the super-method
-    $::CALLER = undef;
-
-    # These are global variable that will (post-bootstrap)
-    # represent the class Class and class Object respectively.
-    # These are populated in the bootstrap process, but are
-    # referenced in the syntax modules.
-    $::Class  = undef;
-    $::Object = undef;
-
-    # these are some of the classes that are also created
-    # in the bootstrap and are part of the MOP
-    $::Method        = undef;
-    $::Attribute     = undef;
-    $::Role          = undef;
-
-    $::HasMethods         = undef;
-    $::HasAttributes      = undef;
-    $::HasRoles           = undef;
-    $::HasName            = undef;
-    $::HasVersion         = undef;
-    $::HasRequiredMethods = undef;
-    $::Composable         = undef;
-    $::HasSuperclass      = undef;
-    $::Instantiable       = undef;
-    $::Dispatchable       = undef;
-    $::Cloneable          = undef;
-}
+our $VERSION   = '0.01';
+our $AUTHORITY = 'cpan:STEVAN';
 
 use mop::bootstrap;
 use mop::syntax;
