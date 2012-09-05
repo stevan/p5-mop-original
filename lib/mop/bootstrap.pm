@@ -182,7 +182,7 @@ sub init {
     # this in the bootstrap directly, but it would have just been kind of
     # repetitive and ugly, so easier to read to do it here.
     for my $class (@metaobjects) {
-        set_slot_at($class, '$version',   \$mop::VERSION);
+        set_slot_at($class, '$version',   \version->parse($mop::VERSION));
         set_slot_at($class, '$authority', \$mop::AUTHORITY);
         set_slot_at($class, '$name',
                     \(${ get_slot_at($class, '$name') } =~ s/.*:://r));
