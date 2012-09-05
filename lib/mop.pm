@@ -47,8 +47,6 @@ BEGIN {
     $::Cloneable          = undef;
 }
 
-use Devel::CallParser;
-
 use mop::bootstrap;
 use mop::syntax;
 use mop::util;

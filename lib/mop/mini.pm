@@ -13,8 +13,6 @@ BEGIN {
     $::CALLER = undef;
 }
 
-use Devel::CallParser;
-
 use mop::mini::class;
 use mop::mini::syntax;
 use mop::util;
