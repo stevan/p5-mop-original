@@ -15,10 +15,10 @@ my $Foo = $::Class->new;
     BUILD ( $params ) {}
 }
 
-my $foo_constructor = $Foo->get_constructor();
+my $foo_constructor = $Foo->constructor();
 ok( $foo_constructor, '... found the BUILD method' );
 ok( $foo_constructor->isa( $::Method ), '... it is a proper method');
-is($foo_constructor->get_name, 'BUILD', '... got the right name for BUILD');
+is($foo_constructor->name, 'BUILD', '... got the right name for BUILD');
 
 
 done_testing;

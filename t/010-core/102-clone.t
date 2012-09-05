@@ -40,9 +40,9 @@ use mop;
     is($bar->foo, 'FOO');
     is(${ mop::internal::instance::get_slot_at($bar, '$foo') }, 'OOF');
 
-    is($Foo->find_method('foo')->get_body, $method->get_body);
-    is($Bar->find_method('foo')->get_body, $method->get_body);
-    is($Foo->find_method('foo')->get_body, $Bar->find_method('foo')->get_body);
+    is($Foo->find_method('foo')->body, $method->body);
+    is($Bar->find_method('foo')->body, $method->body);
+    is($Foo->find_method('foo')->body, $Bar->find_method('foo')->body);
 
     isnt($Foo->find_method('foo'), $method);
     isnt($Bar->find_method('foo'), $method);
@@ -92,9 +92,9 @@ use mop;
     is(${ mop::internal::instance::get_slot_at($bar, '$foo') }, undef);
     is(${ mop::internal::instance::get_slot_at($bar, '$bar') }, 'RAB');
 
-    is($Foo->find_method('foo')->get_body, $method->get_body);
-    isnt($Bar->find_method('bar')->get_body, $method->get_body);
-    isnt($Foo->find_method('foo')->get_body, $Bar->find_method('bar')->get_body);
+    is($Foo->find_method('foo')->body, $method->body);
+    isnt($Bar->find_method('bar')->body, $method->body);
+    isnt($Foo->find_method('foo')->body, $Bar->find_method('bar')->body);
 
     isnt($Foo->find_method('foo'), $method);
     isnt($Bar->find_method('bar'), $method);

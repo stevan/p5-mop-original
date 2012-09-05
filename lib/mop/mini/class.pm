@@ -24,7 +24,7 @@ fieldhashes \ my (
     %constructor,
     %destructor,
     %attributes,
-    %local_methods
+    %methods
 );
 
 sub new {
@@ -33,9 +33,9 @@ sub new {
         my %args  = scalar @_ == 1 && ref $_[0] eq 'HASH' ? %{ $_[0] } : @_;
 
         my %attrs = (
-            (map { %{ $_->get_attributes || {} } }
-                 @{ $class->get_roles || [] }),
-            %{ $class->get_all_attributes || {} },
+            (map { %{ $_->attributes || {} } }
+                 @{ $class->roles || [] }),
+            %{ $class->attributes || {} },
         );
 
         my $instance = mop::internal::instance::create(\$class, {});
@@ -67,8 +67,8 @@ sub new {
 
         my $self = $class->bless( $instance );
         mop::util::WALKCLASS(
-            $class->get_dispatcher('reverse'),
-            sub { ( $_[0]->get_constructor || return )->( $self, \%args ); return }
+            $class->dispatcher('reverse'),
+            sub { ( $_[0]->constructor || return )->( $self, \%args ); return }
         );
         $self;
     }
@@ -80,13 +80,13 @@ sub new {
     }
 }
 
-sub get_name          { $name{ $_[0] }          }
-sub get_superclass    { $superclass{ $_[0] }    }
-sub get_roles         { $roles{ $_[0] }         }
-sub get_attributes    { $attributes{ $_[0] }    }
-sub get_local_methods { $local_methods{ $_[0] } }
-sub get_constructor   { $constructor{ $_[0] }   }
-sub get_destructor    { $destructor{ $_[0] }    }
+sub name          { $name{ $_[0] }          }
+sub superclass    { $superclass{ $_[0] }    }
+sub local_roles   { $roles{ $_[0] }         }
+sub local_attributes { $attributes{ $_[0] }    }
+sub local_methods { $methods{ $_[0] } }
+sub constructor   { $constructor{ $_[0] }   }
+sub destructor    { $destructor{ $_[0] }    }
 
 sub set_name        { $name{ $_[0] } = $_[1]        }
 sub set_superclass  { $superclass{ $_[0] } = $_[1]  }
@@ -102,54 +102,71 @@ sub set_destructor {
     $destructor{ $class } = $class->_create_method( 'DEMOLISH' => $body )
 }
 
-sub get_mro {
+sub mro {
     my $class = shift;
-    my $super = $class->get_superclass;
-    return [ $class, $super ? @{ $super->get_mro } : () ];
+    my $super = $class->superclass;
+    return [ $class, $super ? @{ $super->mro } : () ];
 }
 
 sub instance_isa {
     my ($class, $super) = @_;
-    my @mro = @{ $class->get_mro };
+    my @mro = @{ $class->mro };
     return scalar grep { $super eq $_ } @mro;
 }
 
-sub get_dispatcher {
+sub dispatcher {
     my ($class, $type) = @_;
-    return sub { state $mro = $class->get_mro; shift @$mro } unless $type;
-    return sub { state $mro = $class->get_mro; pop   @$mro } if $type eq 'reverse';
+    return sub { state $mro = $class->mro; shift @$mro } unless $type;
+    return sub { state $mro = $class->mro; pop   @$mro } if $type eq 'reverse';
 }
 
-sub get_all_methods {
+sub methods {
     my $class = shift;
     my %methods;
     mop::util::WALKCLASS(
-        $class->get_dispatcher('reverse'),
+        $class->dispatcher('reverse'),
         sub {
             my $c = shift;
             %methods = (
                 %methods,
-                %{ $c->get_local_methods || {} },
+                %{ $c->local_methods || {} },
             );
         }
     );
     \%methods;
 }
 
-sub get_all_attributes {
+sub attributes {
     my $class = shift;
     my %attrs;
     mop::util::WALKCLASS(
-        $class->get_dispatcher('reverse'),
+        $class->dispatcher('reverse'),
         sub {
             my $c = shift;
             %attrs = (
                 %attrs,
-                %{ $c->get_attributes || {} },
+                %{ $c->local_attributes || {} },
             );
         }
     );
     \%attrs;
+}
+
+sub roles {
+    my $class = shift;
+
+    my @roles;
+    mop::util::WALKCLASS(
+        $class->dispatcher('reverse'),
+        sub {
+            my $c = shift;
+            push @roles, (
+                map { $_, @{ $_->local_roles || [] } }
+                    @{ $c->local_roles || [] },
+            );
+        }
+    );
+    return \@roles;
 }
 
 sub add_attribute {
@@ -160,14 +177,14 @@ sub add_attribute {
 
 sub add_method {
     my ($class, $name, $body) = @_;
-    $local_methods{ $class } = {} unless exists $local_methods{ $class };
-    $local_methods{ $class }->{ $name } = $class->_create_method( $name, $body );
+    $methods{ $class } = {} unless exists $methods{ $class };
+    $methods{ $class }->{ $name } = $class->_create_method( $name, $body );
 }
 
 sub finalize {
     my $class  = shift;
 
-    my $methods = $class->get_all_methods;
+    my $methods = $class->methods;
 
     foreach my $name ( keys %$methods ) {
         my $method = $methods->{ $name };
@@ -177,8 +194,8 @@ sub finalize {
         ) unless exists $class->{ $name };
     }
 
-    my %role_methods = map { %{ $_->get_local_methods } }
-                           @{ $class->get_roles || [] };
+    my %role_methods = map { %{ $_->local_methods } }
+                           @{ $class->roles || [] };
 
     foreach my $name ( keys %role_methods ) {
         my $method = $role_methods{ $name };
@@ -197,8 +214,8 @@ sub finalize {
         my $self = shift;
         return unless $class; # likely in global destruction ...
         mop::util::WALKCLASS(
-            $class->get_dispatcher,
-            sub { ( $_[0]->get_destructor || return )->( $self ); return }
+            $class->dispatcher,
+            sub { ( $_[0]->destructor || return )->( $self ); return }
         );
     });
 }
@@ -206,7 +223,7 @@ sub finalize {
 sub _create_method {
     my ($class, $name, $body) = @_;
 
-    my $method_name = join '::' => ($class->get_name || ()), $name;
+    my $method_name = join '::' => ($class->name || ()), $name;
 
     my $method;
     $method = subname(

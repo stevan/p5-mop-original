@@ -11,7 +11,7 @@ my @OUTPUT;
 
 class WrappedMethod ( extends => $::Method ) {
     method execute ( @args ) {
-        push @OUTPUT => "calling " . $self->get_name;
+        push @OUTPUT => "calling " . $self->name;
         super( @args );
     }
 }

@@ -11,8 +11,8 @@ use mop;
 class ClassAccessorMeta (extends => $::Class) {
     method FINALIZE {
 
-        foreach my $attribute ( values %{ $self->get_all_attributes } ) {
-            my $name = $attribute->get_name;
+        foreach my $attribute ( values %{ $self->attributes } ) {
+            my $name = $attribute->name;
             my $accessor_name = $name;
             $accessor_name =~ s/^\$//;
 

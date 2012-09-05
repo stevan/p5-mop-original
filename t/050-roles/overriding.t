@@ -199,7 +199,7 @@ TODO: {
 class Class::D {
     has $foo = ${ mop::internal::instance::get_slot_at(Class::D(), '$name') } . "::foo"; # is => "rw"
     method foo {
-        local $TODO = '$class->get_name does not seem to work at line 200';
+        local $TODO = '$class->name does not seem to work at line 200';
         ok(0, 'Dummy test to make the TODO work...');
         $foo
     }

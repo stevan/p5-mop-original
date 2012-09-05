@@ -7,8 +7,8 @@ use List::MoreUtils 'any';
 
 class ExplicitOverride (extends => $::Class) {
     method add_method ($method, $override) {
-        die "Overriding method " . $method->get_name . " without using override"
-            if !$override && $self->find_method($method->get_name);
+        die "Overriding method " . $method->name . " without using override"
+            if !$override && $self->find_method($method->name);
         super($method);
     }
 

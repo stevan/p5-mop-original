@@ -238,7 +238,12 @@ sub deserialize {
             for my $method (values %{ get_slot_at($role, '%methods') }) {
                 my $name = ${ get_slot_at($method, '$name') };
                 # XXX need to track sources
-                next if $class == $::Class && $name =~ /^get_all_/;
+                if ($class == $::Class) {
+                    next if $name eq 'methods'
+                         || $name eq 'attributes'
+                         || $name eq 'roles'
+                         || $name eq 'instance_DOES';
+                }
                 my $body = ${ get_slot_at($method, '$body') };
                 set_slot_at($class_methods{$name}, '$body', \$body);
             }
@@ -280,10 +285,10 @@ sub fixup_after_bootstrap {
         my $clone = sub {
             my %params = (
                 (map {
-                    $_->get_param_name => ($_->get_sigil eq '$'
-                        ? ${ get_slot_at($::SELF, $_->get_name) }
-                        : get_slot_at($::SELF, $_->get_name))
-                } values %{ $::CLASS->get_all_attributes }),
+                    $_->param_name => ($_->sigil eq '$'
+                        ? ${ get_slot_at($::SELF, $_->name) }
+                        : get_slot_at($::SELF, $_->name))
+                } values %{ $::CLASS->attributes }),
                 @_,
             );
             return $::CLASS->new(%params);
@@ -315,21 +320,21 @@ sub fixup_after_bootstrap {
         name => 'BUILD',
         body => sub {
             $::SELF->set_superclass($::SELF->base_object_class)
-                unless $::SELF->get_superclass;
+                unless $::SELF->superclass;
 
-            my $v = $::SELF->get_version;
+            my $v = $::SELF->version;
             $::SELF->set_version(version->parse($v))
                 if defined $v;
 
-            my $superclass = $::SELF->get_superclass;
+            my $superclass = $::SELF->superclass;
             if ($superclass) {
                 my $superclass_class = mop::class_of($superclass);
-                my $compatible = $::CLASS->get_compatible_class($superclass_class);
+                my $compatible = $::CLASS->find_compatible_class($superclass_class);
                 if (!defined($compatible)) {
-                    die "While creating class " . $::SELF->get_name . ": "
-                    . "Metaclass " . $::CLASS->get_name . " is not compatible "
+                    die "While creating class " . $::SELF->name . ": "
+                    . "Metaclass " . $::CLASS->name . " is not compatible "
                     . "with the metaclass of its superclass: "
-                    . $superclass_class->get_name;
+                    . $superclass_class->name;
                 }
             }
         },

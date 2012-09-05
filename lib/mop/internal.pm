@@ -222,9 +222,9 @@ sub generate_DESTROY {
         my $class    = mop::internal::instance::get_class( $invocant );
         return unless $class; # likely in global destruction ...
         mop::WALKCLASS(
-            $class->get_dispatcher(),
+            $class->dispatcher(),
             sub {
-                my $dispatcher = $_[0]->get_destructor;
+                my $dispatcher = $_[0]->destructor;
                 return unless $dispatcher;
                 $dispatcher->execute($invocant);
                 return;

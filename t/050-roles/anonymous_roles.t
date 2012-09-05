@@ -36,7 +36,7 @@ ok($visored->is_worn, "accessor was consumed");
 $visored->remove;
 ok(!$visored->is_worn, "method was consumed");
 
-is($role->get_name, '__ANON__::Role', "Role has the right name");
+is($role->name, '__ANON__::Role', "Role has the right name");
 ok(mop::class_of($role), "creating an anonymous role satisifes class_of");
 
 done_testing;

@@ -29,11 +29,11 @@ my @methods;
 my @attrs;
 
 for my $thing (values %$mop) {
-    push @methods, values %{ $thing->get_local_methods };
-    push @attrs,   values %{ $thing->get_local_attributes };
+    push @methods, values %{ $thing->local_methods };
+    push @attrs,   values %{ $thing->local_attributes };
 }
 
-push @methods, grep { defined } map { $_->get_constructor, $_->get_destructor }
+push @methods, grep { defined } map { $_->constructor, $_->destructor }
                $::Class, $::Attribute, $::Method, $::Object, $::Role;
 
 for my $method (@methods) {

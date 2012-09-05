@@ -80,7 +80,7 @@ sub super {
     die "Cannot call super() outside of a method" unless defined $::SELF;
     my $invocant    = $::SELF;
     my $method_name = (split '::' => ((caller(1))[3]))[-1];
-    my $dispatcher  = $::CLASS->get_dispatcher;
+    my $dispatcher  = $::CLASS->dispatcher;
     # find the method currently being called
     my $method = mop::WALKMETH( $dispatcher, $method_name );
     while ( $method != $::CALLER ) {
@@ -116,7 +116,7 @@ sub build_class {
     my $superclass = $metadata{ 'superclass' };
 
     if ( $superclass && ref($class_Class) ne 'mop::mini::class' ) {
-        my $compatible = $class_Class->get_compatible_class(
+        my $compatible = $class_Class->find_compatible_class(
             mop::internal::instance::get_class( $superclass )
         );
         $class_Class = $compatible

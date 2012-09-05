@@ -17,13 +17,13 @@ class Foo {
     method bar { $bar }
 }
 
-is(Foo->get_name, 'Foo', '... got the name we expected');
-is(Foo->get_superclass, $::Object, '... got the superclass we expected');
+is(Foo->name, 'Foo', '... got the name we expected');
+is(Foo->superclass, $::Object, '... got the superclass we expected');
 
-my $foo_constructor = Foo->get_constructor();
+my $foo_constructor = Foo->constructor();
 ok( $foo_constructor, '... found the BUILD method' );
 ok( $foo_constructor->isa( $::Method ), '... it is a proper method');
-is($foo_constructor->get_name, 'BUILD', '... got the right name for BUILD');
+is($foo_constructor->name, 'BUILD', '... got the right name for BUILD');
 
 my $foo = Foo->new( bar => "HELLO", BAR => ' World' );
 ok($foo->isa( Foo ), '... this is a Foo');

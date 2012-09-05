@@ -71,7 +71,7 @@ sub super {
     die "Cannot call super() outside of a method" unless defined $::SELF;
     my $invocant    = $::SELF;
     my $method_name = (split '::' => ((caller(2))[3]))[-1];
-    my $dispatcher  = $::CLASS->get_dispatcher;
+    my $dispatcher  = $::CLASS->dispatcher;
     # find the method currently being called
     my $method = mop::util::WALKMETH( $dispatcher, $method_name );
     while ( $method && $method ne $::CALLER ) {

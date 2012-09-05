@@ -12,7 +12,7 @@ class Foo {
 
 {
     my $FooClone = Foo->clone;
-    is($FooClone->get_name, 'Foo');
+    is($FooClone->name, 'Foo');
     is($FooClone->find_method('foo'), Foo->find_method('foo'));
     is($FooClone->find_attribute('$foo'), Foo->find_attribute('$foo'));
     isnt($FooClone, Foo);
@@ -32,7 +32,7 @@ role FooRole {
 
 {
     my $FooClone = FooRole->clone;
-    is($FooClone->get_name, 'FooRole');
+    is($FooClone->name, 'FooRole');
     is($FooClone->find_method('foo'), FooRole->find_method('foo'));
     is($FooClone->find_attribute('$foo'), FooRole->find_attribute('$foo'));
     isnt($FooClone, FooRole);

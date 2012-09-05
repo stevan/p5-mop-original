@@ -16,11 +16,11 @@ my $Foo = $::Class->new;
 }
 
 {
-    my $attribute = $Foo->get_all_attributes->{'$bar'};
+    my $attribute = $Foo->attributes->{'$bar'};
     ok( $attribute, '... found the attribute' );
     ok( $attribute->isa( $::Attribute ), '... it is a proper attribute');
-    is( $attribute->get_name, '$bar', '... got the right name');
-    is( ${ $attribute->get_initial_value }, 200, '... got the right initial value' );
+    is( $attribute->name, '$bar', '... got the right name');
+    is( ${ $attribute->initial_value }, 200, '... got the right initial value' );
 }
 
 done_testing;

@@ -16,7 +16,7 @@ sub WALKCLASS {
 
 sub WALKMETH {
     my ($dispatcher, $method_name) = @_;
-    { ( $dispatcher->() || return )->get_local_methods->{ $method_name } || redo }
+    { ( $dispatcher->() || return )->local_methods->{ $method_name } || redo }
 }
 
 sub class_of { mop::internal::instance::get_class( shift ) }

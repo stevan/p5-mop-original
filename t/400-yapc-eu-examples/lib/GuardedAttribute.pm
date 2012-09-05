@@ -10,7 +10,7 @@ role MetaAttributeWithGuard {
     method guard     { $guard }
     method has_guard { defined $guard }
 
-    method get_initial_value_for_instance {
+    method initial_value_for_instance {
         my $value = super;
         return $value unless $self->has_guard;
         $self->_add_guard_to_slot( $value );
