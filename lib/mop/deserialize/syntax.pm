@@ -101,6 +101,8 @@ sub finalize_class {
     }
     $stash->add_method(DESTROY => mop::internal::generate_DESTROY());
 
+    mop::internal::_apply_overloading($stash);
+
     {
         no strict 'refs';
         no warnings 'redefine';

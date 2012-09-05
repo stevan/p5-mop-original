@@ -13,6 +13,8 @@ use version ();
 use mop::internal;
 use mop::internal::instance;
 
+# declare some subs so that the rest of the file can be parsed without
+# requiring parentheses on class names
 package mop::bootstrap::mini {
     sub HasMethods ();
     sub HasAttributes ();
@@ -48,10 +50,26 @@ package mop::bootstrap::full {
 }
 
 sub init {
+    # =======
+    # Phase 0
+    # =======
+    # Check to see if we want to populate the mop via a serialized form
+    # instead.
     if (-e 'lib/mop/bootstrap.mop') {
         deserialize();
         return;
     }
+
+    # =======
+    # Phase 1
+    # =======
+    # First, use mop::mini to create the mop classes. mop::mini uses the same
+    # parser as the full mop, but creates normal perl stash-based classes
+    # instead (so they don't require any special setup). This creates a class
+    # structure which is capable of creating new full mop objects, but is
+    # implemented in terms of the mini mop (so mop::class_of(Class) is
+    # mop::mini::class). The mini mop doesn't use any metaobjects, so it
+    # doesn't matter that $::Class and such aren't populated yet.
     package mop::bootstrap::mini {
         require mop::mini::syntax;
         mop::mini::syntax->setup_for(__PACKAGE__);
@@ -59,13 +77,31 @@ sub init {
         require 'mop/bootstrap.pl';
     }
 
-    delete $INC{'mop/bootstrap.pl'};
-
+    # =========
+    # Phase 1.5
+    # =========
+    # Now that we have a mop capable of creating fully functional objects, we
+    # need to do some preparation before we can use those objects to create the
+    # full mop. First, we populate the necessary globals (since in the full
+    # mop, the 'class' keyword is implemented via $::Class->new), and then we
+    # clear the %INC cache for the bootstrap so that calling require will
+    # evaluate the code again.
     $::Class     = mop::bootstrap::mini::Class;
     $::Role      = mop::bootstrap::mini::Role;
     $::Method    = mop::bootstrap::mini::Method;
     $::Attribute = mop::bootstrap::mini::Attribute;
 
+    delete $INC{'mop/bootstrap.pl'};
+
+    # =======
+    # Phase 2
+    # =======
+    # Now we can use the classes we just created to recreate the mop using full
+    # mop objects. This means that class_of(Class) will also be a full mop
+    # object (although it won't yet be Class - it'll be the Class object we
+    # created in phase 1). The point here is that the metaobjects are now
+    # structurally the same, so we can just swap things around in order to tie
+    # the knot.
     package mop::bootstrap::full {
         require mop::syntax;
         mop::syntax->setup_for(__PACKAGE__);
@@ -73,6 +109,12 @@ sub init {
         require 'mop/bootstrap.pl';
     }
 
+    # =======
+    # Phase 3
+    # =======
+    # Now, populate all of the globals with the objects that we just built, so
+    # they can be used. Also, collect them all in an array so we can use them
+    # later.
     my @metaobjects = (
         ($::Object        = mop::bootstrap::full::Object       ),
         ($::Class         = mop::bootstrap::full::Class        ),
@@ -90,134 +132,152 @@ sub init {
         ($::Cloneable     = mop::bootstrap::full::Cloneable    ),
     );
 
-    my @classes = grep {
-        get_class($_) == mop::bootstrap::mini::Class
-    } @metaobjects;
-    my @roles   = grep {
-        get_class($_) == mop::bootstrap::mini::Role
-    } @metaobjects;
-
-    # fix up the objects, which are still mini-mop objects at this point
-    # this section intentionally doesn't call any methods, to avoid needing
-    # to use the mop when it's in a halfway transition state
-    for my $role (@roles) {
-        set_class($role, $::Role);
-        get_stash_for($::Role)->bless($role);
-
-        set_slot_at($role, '$version', \$mop::VERSION);
-        set_slot_at($role, '$authority', \$mop::AUTHORITY);
-        set_slot_at($role, '$name', \(${ get_slot_at($role, '$name') } =~ s/.*:://r));
-
-        for my $attribute (values %{ get_slot_at($role, '%attributes') }) {
-            set_class($attribute, $::Attribute);
-            get_stash_for($::Attribute)->bless($attribute);
-        }
-
-        for my $method (values %{ get_slot_at($role, '%methods') }) {
-            set_class($method, $::Method);
-            get_stash_for($::Method)->bless($method);
-        }
-    }
-
-    for my $class (@classes) {
-        set_class($class, $::Class);
-        get_stash_for($::Class)->bless($class);
-
-        set_slot_at($class, '$version', \$mop::VERSION);
-        set_slot_at($class, '$authority', \$mop::AUTHORITY);
-        set_slot_at($class, '$name', \(${ get_slot_at($class, '$name') } =~ s/.*:://r));
-
-        for my $attribute (values %{ get_slot_at($class, '%attributes') }) {
-            set_class($attribute, $::Attribute);
-            get_stash_for($::Attribute)->bless($attribute);
-        }
-
-        for my $method (values %{ get_slot_at($class, '%methods') }) {
-            set_class($method, $::Method);
-            get_stash_for($::Method)->bless($method);
-        }
-
-        if (my $constructor = ${ get_slot_at($class, '$constructor') }) {
-            set_class($constructor, $::Method);
-            get_stash_for($::Method)->bless($constructor);
-        }
-
-        if (my $destructor = ${ get_slot_at($class, '$destructor') }) {
-            set_class($destructor, $::Method);
-            get_stash_for($::Method)->bless($destructor);
-        }
-    }
-
-    # now reconstruct the stashes (not using FINALIZE or _generate_callable_sub
-    # because we're still avoiding method calls)
-    for my $class (@classes) {
-        my $stash = get_stash_for($class);
-        my %methods = (
-            (map { %{ get_slot_at($_, '%methods') } }
-                (${ get_slot_at($class, '$superclass') } || ()),
-                @{ get_slot_at($class, '@roles') },
-                $class),
-        );
-        %$stash = ();
-        for my $name (keys %methods) {
-            my $method = $methods{$name};
-            $stash->add_method($name => sub { $method->execute(@_) });
-        }
-        $stash->add_method(DESTROY => mop::internal::generate_DESTROY());
-        mop::internal::_apply_overloading(get_stash_for($class));
-    }
-
-    # break the cycle with Method->execute, since we just regenerated its stash
-    # entry to call itself recursively
-    get_stash_for($::Method)->add_method(execute => sub {
-        mop::internal::execute_method(@_)
-    });
-
-    fixup_after_bootstrap();
-
-    return;
-}
-
-sub deserialize {
-    require Storable;
-    my $mop = Storable::retrieve('lib/mop/bootstrap.mop');
-
-    $::Object        = $mop->{Object};
-    $::Class         = $mop->{Class};
-    $::Role          = $mop->{Role};
-    $::Method        = $mop->{Method};
-    $::Attribute     = $mop->{Attribute};
-    $::HasMethods    = $mop->{HasMethods};
-    $::HasAttributes = $mop->{HasAttributes};
-    $::HasRoles      = $mop->{HasRoles};
-    $::HasName       = $mop->{HasName};
-    $::HasVersion    = $mop->{HasVersion};
-    $::HasSuperclass = $mop->{HasSuperclass};
-    $::Instantiable  = $mop->{Instantiable};
-    $::Dispatchable  = $mop->{Dispatchable};
-    $::Cloneable     = $mop->{Cloneable};
-
+    # =======
+    # Phase 4
+    # =======
+    # Now that the classes are all created, and their metaclasses are all full
+    # mop objects, we can swap out the metaclasses that currently exist for the
+    # corresponding ones in the full mop, which ties the knot (sets up the
+    # metacircularity).
     my $class_stash     = get_stash_for($::Class);
     my $role_stash      = get_stash_for($::Role);
     my $method_stash    = get_stash_for($::Method);
     my $attribute_stash = get_stash_for($::Attribute);
 
-    $class_stash->bless($::Object);
-    $class_stash->bless($::Class);
-    $class_stash->bless($::Role);
-    $class_stash->bless($::Method);
-    $class_stash->bless($::Attribute);
+    for my $class (@metaobjects) {
+        if (get_class($class) == mop::bootstrap::mini::Class) {
+            set_class($class, $::Class);
+            $class_stash->bless($class);
 
-    $role_stash->bless($::HasMethods);
-    $role_stash->bless($::HasAttributes);
-    $role_stash->bless($::HasRoles);
-    $role_stash->bless($::HasName);
-    $role_stash->bless($::HasVersion);
-    $role_stash->bless($::HasSuperclass);
-    $role_stash->bless($::Instantiable);
-    $role_stash->bless($::Dispatchable);
-    $role_stash->bless($::Cloneable);
+            if (my $constructor = ${ get_slot_at($class, '$constructor') }) {
+                set_class($constructor, $::Method);
+                $method_stash->bless($constructor);
+            }
 
+            if (my $destructor = ${ get_slot_at($class, '$destructor') }) {
+                set_class($destructor, $::Method);
+                $method_stash->bless($destructor);
+            }
+        }
+        else {
+            set_class($class, $::Role);
+            $role_stash->bless($class);
+        }
+
+        for my $attribute (values %{ get_slot_at($class, '%attributes') }) {
+            set_class($attribute, $::Attribute);
+            $attribute_stash->bless($attribute);
+        }
+
+        for my $method (values %{ get_slot_at($class, '%methods') }) {
+            set_class($method, $::Method);
+            $method_stash->bless($method);
+        }
+    }
+
+    # =======
+    # Phase 5
+    # =======
+    # Fill in some metadata that we didn't do earlier - we could have defined
+    # this in the bootstrap directly, but it would have just been kind of
+    # repetitive and ugly, so easier to read to do it here.
+    for my $class (@metaobjects) {
+        set_slot_at($class, '$version',   \$mop::VERSION);
+        set_slot_at($class, '$authority', \$mop::AUTHORITY);
+        set_slot_at($class, '$name',
+                    \(${ get_slot_at($class, '$name') } =~ s/.*:://r));
+    }
+
+    # =======
+    # Phase 6
+    # =======
+    # Now we reconstruct the stashes for the objects, since the existing
+    # stashes are populated with methods that refer to the method objects from
+    # phase 1. This is basically copied from $::Class->FINALIZE, but we need to
+    # avoid calling methods on the metaobjects until everything is completely
+    # in place or else things don't work properly.
+    for my $class (@metaobjects) {
+        next unless get_class($class) == $::Class;
+
+        my $stash = get_stash_for($class);
+        my %methods = (
+            (map { %{ get_slot_at($_, '%methods') } }
+                 (${ get_slot_at($class, '$superclass') } || ()),
+                 @{ get_slot_at($class, '@roles') },
+                 $class),
+        );
+
+        %$stash = ();
+
+        for my $name (keys %methods) {
+            my $method = $methods{$name};
+            $stash->add_method($name => sub { $method->execute(@_) });
+        }
+        $stash->add_method(DESTROY => mop::internal::generate_DESTROY());
+
+        mop::internal::_apply_overloading(get_stash_for($class));
+    }
+
+    # Break the cycle with Method->execute, since we just regenerated its stash
+    # entry to call itself recursively.
+    get_stash_for($::Method)->add_method(execute => sub {
+        mop::internal::execute_method(@_)
+    });
+
+    # =======
+    # Phase 7
+    # =======
+    # There were a couple things in the bootstrap that can't be defined in
+    # there directly, or require a different implementation while bootstrapping
+    # than for actual use. These get fixed up or replaced or whatever at this
+    # point.
+    fixup_after_bootstrap();
+
+    # And we're done!
+    return;
+}
+
+sub deserialize {
+    # =======
+    # Phase 1
+    # =======
+    # First, load the raw data structures themselves from disk. This doesn't
+    # include any of the methods or attribute defaults, since perl can't
+    # serialize those reliably. We'll fill those in later.
+    require Storable;
+    my $mop = Storable::retrieve('lib/mop/bootstrap.mop');
+
+    # =======
+    # Phase 2
+    # =======
+    # Populate the globals from the data we loaded, and stick them in an array
+    # so we can use them below.
+    my @metaobjects = (
+        ($::Object        = $mop->{Object}       ),
+        ($::Class         = $mop->{Class}        ),
+        ($::Role          = $mop->{Role}         ),
+        ($::Method        = $mop->{Method}       ),
+        ($::Attribute     = $mop->{Attribute}    ),
+        ($::HasMethods    = $mop->{HasMethods}   ),
+        ($::HasAttributes = $mop->{HasAttributes}),
+        ($::HasRoles      = $mop->{HasRoles}     ),
+        ($::HasName       = $mop->{HasName}      ),
+        ($::HasVersion    = $mop->{HasVersion}   ),
+        ($::HasSuperclass = $mop->{HasSuperclass}),
+        ($::Instantiable  = $mop->{Instantiable} ),
+        ($::Dispatchable  = $mop->{Dispatchable} ),
+        ($::Cloneable     = $mop->{Cloneable}    ),
+    );
+
+    # =======
+    # Phase 3
+    # =======
+    # Now parse the bootstrap code. The only purpose here is to find the bits
+    # of it which couldn't be serialized (just coderefs at this point) and fill
+    # them in. For instance, when it reaches a method definition, it just takes
+    # the body coderef and sets the method body to that coderef - it doesn't
+    # create new method objects or anything like that. This also recreates the
+    # stashes, since they can't be serialized.
     package mop::bootstrap::full {
         require mop::deserialize::syntax;
         mop::deserialize::syntax->setup_for(__PACKAGE__);
@@ -225,24 +285,61 @@ sub deserialize {
         require 'mop/bootstrap.pl';
     }
 
-    for my $class ($::Object, $::Method, $::Attribute, $::Class, $::Role) {
-        my %class_methods = %{ get_slot_at($class, '%methods') };
-        my %class_attrs = %{ get_slot_at($class, '%attributes') };
-        for my $method (values %class_methods) {
+    # =======
+    # Phase 4
+    # =======
+    # Now go through and rebless everything into the proper stashes.
+    my $class_stash     = get_stash_for($::Class);
+    my $role_stash      = get_stash_for($::Role);
+    my $method_stash    = get_stash_for($::Method);
+    my $attribute_stash = get_stash_for($::Attribute);
+
+    for my $class (@metaobjects) {
+        if (get_class($class) == $::Class) {
+            $class_stash->bless($class);
+
+            if (my $constructor = ${ get_slot_at($class, '$constructor') }) {
+                $method_stash->bless($constructor);
+            }
+            if (my $destructor = ${ get_slot_at($class, '$destructor') }) {
+                $method_stash->bless($destructor);
+            }
+        }
+        else {
+            $role_stash->bless($class);
+        }
+
+        for my $method (values %{ get_slot_at($class, '%methods') }) {
             $method_stash->bless($method);
         }
-        for my $attr (values %class_attrs) {
+        for my $attr (values %{ get_slot_at($class, '%attributes') }) {
             $attribute_stash->bless($attr);
         }
+    }
+
+    # =======
+    # Phase 5
+    # =======
+    # Since parsing the bootstrap code only populates methods and attribute
+    # defaults into the role or class they were originally defined in, if they
+    # were defined in a role, we need to copy those coderefs around into all of
+    # the classes that consume that role.
+    for my $class (@metaobjects) {
+        next unless get_class($class) == $::Class;
+
+        my %class_methods = %{ get_slot_at($class, '%methods') };
+        my %class_attrs = %{ get_slot_at($class, '%attributes') };
+
         for my $role (@{ get_slot_at($class, '@roles') }) {
             for my $method (values %{ get_slot_at($role, '%methods') }) {
                 my $name = ${ get_slot_at($method, '$name') };
-                # XXX need to track sources
+                # XXX need to track sources - these are role methods which are
+                # overridden in $::Class
                 if ($class == $::Class) {
                     next if $name eq 'methods'
-                         || $name eq 'attributes'
-                         || $name eq 'roles'
-                         || $name eq 'instance_DOES';
+                        || $name eq 'attributes'
+                        || $name eq 'roles'
+                        || $name eq 'instance_DOES';
                 }
                 my $body = ${ get_slot_at($method, '$body') };
                 set_slot_at($class_methods{$name}, '$body', \$body);
@@ -253,35 +350,28 @@ sub deserialize {
                 set_slot_at($class_attrs{$name}, '$initial_value', \$default);
             }
         }
-        if (my $constructor = ${ get_slot_at($class, '$constructor') }) {
-            $method_stash->bless($constructor);
-        }
-        if (my $destructor = ${ get_slot_at($class, '$destructor') }) {
-            $method_stash->bless($destructor);
-        }
-        mop::internal::_apply_overloading(mop::internal::get_stash_for($class));
     }
 
-    for my $role ($::HasMethods, $::HasAttributes, $::HasRoles, $::HasName, $::HasVersion, $::HasSuperclass, $::Instantiable, $::Dispatchable, $::Cloneable) {
-        my %role_methods = %{ get_slot_at($role, '%methods') };
-        my %role_attrs = %{ get_slot_at($role, '%attributes') };
-        for my $method (values %role_methods) {
-            $method_stash->bless($method);
-        }
-        for my $attr (values %role_attrs) {
-            $attribute_stash->bless($attr);
-        }
-    }
-
+    # =======
+    # Phase 6
+    # =======
+    # And, since we populated the coderefs from parsing the bootstrap code, we
+    # still need to replace the implementations of things that need alternate
+    # implementations here too, just like in the non-serialized codepath.
     fixup_after_bootstrap();
 
+    # And we're done!
     return;
 }
 
+# replace some methods that we hardcoded in the initial mop with some working
+# variants that actually use the full mop instead of the mini mop
 sub fixup_after_bootstrap {
-    # replace some methods that we hardcoded in the initial mop, with some
-    # working variants that actually use the full mop instead of the mini mop
+    # ================
+    # Cloneable->clone
+    # ================
     {
+        # create the method
         my $clone = sub {
             my %params = (
                 (map {
@@ -299,8 +389,12 @@ sub fixup_after_bootstrap {
             body => $clone,
         );
 
+        # add it to its initial role
         $::Cloneable->add_method($method);
 
+        # clone it into each of the classes that consume Cloneable
+        # note that we can't call $method->clone yet, since that's what we're
+        # trying to define
         local $::SELF = $method;
         local $::CLASS = $::Method;
         $::Role->add_method($clone->());
@@ -308,6 +402,7 @@ sub fixup_after_bootstrap {
         $::Method->add_method($clone->());
         $::Attribute->add_method($clone->());
     }
+    # and now fix up the stashes of all of the classes that consume Cloneable
     for my $cloneable ($::Role, $::Class, $::Method, $::Attribute) {
         my $method = ${ get_slot_at($cloneable, '%methods') }{clone};
         get_stash_for($cloneable)->add_method(clone => sub {
@@ -315,7 +410,9 @@ sub fixup_after_bootstrap {
         });
     }
 
-    # and finally, install the constructor for classes
+    # ============
+    # Class->BUILD
+    # ============
     $::Class->set_constructor($::Method->new(
         name => 'BUILD',
         body => sub {
