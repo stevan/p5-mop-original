@@ -97,15 +97,6 @@ sub finalize_class {
         $stash->add_method($name => sub { $method->execute(@_) });
     }
 
-    my $attribute_stash = get_stash_for($::Attribute);
-    my $method_stash = get_stash_for($::Method);
-    for my $attribute (values %{ get_slot_at($class, '%attributes') }) {
-        $attribute_stash->bless($attribute);
-    }
-    for my $method (values %{ get_slot_at($class, '%methods') }) {
-        $method_stash->bless($method);
-    }
-
     $stash->add_method(DESTROY => mop::internal::generate_DESTROY());
 
     apply_overloading_for_stash($stash);
@@ -119,15 +110,6 @@ sub finalize_class {
 
 sub finalize_role {
     my ($name, $role, $caller) = @_;
-
-    my $attribute_stash = get_stash_for($::Attribute);
-    my $method_stash = get_stash_for($::Method);
-    for my $attribute (values %{ get_slot_at($role, '%attributes') }) {
-        $attribute_stash->bless($attribute);
-    }
-    for my $method (values %{ get_slot_at($role, '%methods') }) {
-        $method_stash->bless($method);
-    }
 
     {
         no strict 'refs';
