@@ -9,6 +9,9 @@ our $AUTHORITY = 'cpan:STEVAN';
 
 use Sub::Name 'subname';
 
+use mop::internal qw(get_stash_for apply_overloading_for_stash);
+use mop::internal::instance qw(get_slot_at set_slot_at);
+
 use mop::parser;
 
 mop::parser::init_parser_for(__PACKAGE__);
@@ -44,7 +47,7 @@ sub has {
     set_slot_at(
         $attributes{$name},
         '$initial_value',
-        \($default ? \$default : mop::internal::_undef_for_type($name))
+        \($default ? \$default : mop::util::undef_for_type($name))
     );
 }
 
@@ -105,7 +108,7 @@ sub finalize_class {
 
     $stash->add_method(DESTROY => mop::internal::generate_DESTROY());
 
-    mop::internal::_apply_overloading($stash);
+    apply_overloading_for_stash($stash);
 
     {
         no strict 'refs';
@@ -132,9 +135,5 @@ sub finalize_role {
         *{"${caller}::${name}"} = subname($name => sub () { $role });
     }
 }
-
-sub get_slot_at   { mop::internal::instance::get_slot_at(@_) }
-sub set_slot_at   { mop::internal::instance::set_slot_at(@_) }
-sub get_stash_for { mop::internal::get_stash_for(@_) }
 
 1;

@@ -9,8 +9,8 @@ our $AUTHORITY = 'cpan:STEVAN';
 
 use version ();
 
-use mop::internal;
-use mop::internal::instance;
+use mop::internal qw(get_stash_for apply_overloading_for_stash);
+use mop::internal::instance qw(get_slot_at set_slot_at get_class set_class);
 
 # declare some subs so that the rest of the file can be parsed without
 # requiring parentheses on class names
@@ -214,7 +214,7 @@ sub init {
         }
         $stash->add_method(DESTROY => mop::internal::generate_DESTROY());
 
-        mop::internal::_apply_overloading($stash);
+        apply_overloading_for_stash($stash);
     }
 
     # Break the cycle with Method->execute, since we just regenerated its stash
@@ -430,7 +430,7 @@ sub fixup_after_bootstrap {
 
             my $superclass = $::SELF->superclass;
             if ($superclass) {
-                my $superclass_class = mop::util::class_of($superclass);
+                my $superclass_class = get_class($superclass);
                 my $compatible = $::CLASS->find_compatible_class($superclass_class);
                 if (!defined($compatible)) {
                     die "While creating class " . $::SELF->name . ": "
@@ -442,12 +442,6 @@ sub fixup_after_bootstrap {
         },
     ));
 }
-
-sub get_slot_at   { mop::internal::instance::get_slot_at(@_) }
-sub set_slot_at   { mop::internal::instance::set_slot_at(@_) }
-sub get_class     { mop::internal::instance::get_class(@_)   }
-sub set_class     { mop::internal::instance::set_class(@_)   }
-sub get_stash_for { mop::internal::get_stash_for(@_)         }
 
 1;
 

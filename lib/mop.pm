@@ -8,6 +8,7 @@ our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
 use mop::bootstrap;
+use mop::internal::instance;
 use mop::syntax;
 use mop::util;
 
@@ -26,8 +27,8 @@ sub import {
 BEGIN {
     *WALKCLASS = \&mop::util::WALKCLASS;
     *WALKMETH  = \&mop::util::WALKMETH;
-    *class_of  = \&mop::util::class_of;
-    *uuid_of   = \&mop::util::uuid_of;
+    *class_of  = \&mop::internal::instance::get_class;
+    *uuid_of   = \&mop::internal::instance::get_uuid;
 }
 
 1;

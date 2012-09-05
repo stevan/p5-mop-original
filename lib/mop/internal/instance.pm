@@ -9,7 +9,17 @@ our $AUTHORITY = 'cpan:STEVAN';
 
 use UUID::Tiny qw[ create_uuid_as_string UUID_V4 ];
 
-sub create {
+use mop::util;
+
+use Exporter 'import';
+our @EXPORT_OK = qw(
+    create_instance
+    get_uuid get_class get_slots
+    set_class
+    get_slot_at set_slot_at
+);
+
+sub create_instance {
     my ($class, $slots) = @_;
     return +{
         uuid  => create_uuid_as_string(UUID_V4),
@@ -29,7 +39,7 @@ sub set_class {
 
 sub get_slot_at {
     my ($instance, $name) = @_;
-    $instance->{'slots'}->{ $name } || mop::internal::_undef_for_type($name)
+    $instance->{'slots'}->{ $name } || mop::util::undef_for_type($name)
 }
 
 sub set_slot_at {

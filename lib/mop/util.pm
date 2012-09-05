@@ -17,7 +17,21 @@ sub WALKMETH {
     { ( $dispatcher->() || return )->local_methods->{ $method_name } || redo }
 }
 
-sub class_of { mop::internal::instance::get_class( shift ) }
-sub uuid_of  { mop::internal::instance::get_uuid( shift )  }
+sub undef_for_type {
+    my ($name) = @_;
+    my $sigil = substr($name, 0, 1);
+    if ($sigil eq '$') {
+        return \undef;
+    }
+    elsif ($sigil eq '@') {
+        return [];
+    }
+    elsif ($sigil eq '%') {
+        return {};
+    }
+    else {
+        die "Unknown sigil '$sigil' for name $name";
+    }
+}
 
 1;

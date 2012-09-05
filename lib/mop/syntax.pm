@@ -9,7 +9,7 @@ our $AUTHORITY = 'cpan:STEVAN';
 
 use Sub::Name 'subname';
 
-use mop::internal;
+use mop::internal::instance 'get_class';
 use mop::parser;
 use mop::util;
 
@@ -49,7 +49,7 @@ sub has {
         $::CLASS->attribute_class->new(
             name          => $name,
             initial_value =>
-                ($default ? \$default : mop::internal::_undef_for_type($name)),
+                ($default ? \$default : mop::util::undef_for_type($name)),
             ($metadata ? %$metadata : ()),
         )
     );
@@ -120,7 +120,7 @@ sub build_class {
     # XXX this shouldn't need to know about mop::mini::class
     if ( $superclass && ref($class_Class) ne 'mop::mini::class' ) {
         my $compatible = $class_Class->find_compatible_class(
-            mop::util::class_of( $superclass )
+            get_class($superclass)
         );
         $class_Class = $compatible
             if defined $compatible;

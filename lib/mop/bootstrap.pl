@@ -2,6 +2,14 @@ use strict;
 use warnings;
 use 5.014;
 
+use version ();
+
+use mop::internal qw(get_stash_for);
+use mop::internal::instance qw(
+    create_instance get_class get_slots get_slot_at set_slot_at
+);
+use mop::util;
+
 # implement all of UNIVERSAL here, because the mop's dispatcher should
 # not be using UNIVERSAL at all
 class Object {
@@ -16,14 +24,11 @@ role Cloneable {
     # handle mini-mop objects. after the bootstrap is done, this is replaced
     # with a real implementation using full mop objects.
     method clone (%params) {
-        my $new_instance = mop::internal::instance::create(
-            \mop::internal::instance::get_class($self),
-            {
-                %{ mop::internal::instance::get_slots($self) },
-                %params,
-            }
-        );
-        mop::internal::instance::get_class($self)->bless($new_instance);
+        my $new_instance = create_instance(\get_class($self), {
+            %{ get_slots($self) },
+            %params,
+        });
+        get_class($self)->bless($new_instance);
         return $new_instance;
     }
 }
@@ -318,11 +323,11 @@ role Instantiable {
             }
         }
 
-        my $stash = mop::internal::get_stash_for( $self );
+        my $stash = get_stash_for( $self );
         die "Could not find stash for class(" . $self->name . ")"
             unless $stash;
 
-        $stash->bless(mop::internal::instance::create( $self, $data ));
+        $stash->bless(create_instance($self, $data));
     }
 
     method BUILDARGS (@params) { +{ @params } }
@@ -330,7 +335,7 @@ role Instantiable {
     method new (@params) {
         my $params = $self->BUILDARGS(@params);
         my $instance = $self->create_instance($params);
-        mop::WALKCLASS(
+        mop::util::WALKCLASS(
             $self->dispatcher('reverse'),
             sub {
                 my $meta = shift;
@@ -376,7 +381,7 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
 
     method methods {
         my %methods;
-        mop::WALKCLASS(
+        mop::util::WALKCLASS(
             $self->dispatcher('reverse'),
             sub {
                 %methods = (
@@ -390,7 +395,7 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
 
     method attributes {
         my %attrs;
-        mop::WALKCLASS(
+        mop::util::WALKCLASS(
             $self->dispatcher('reverse'),
             sub {
                 %attrs = (
@@ -404,7 +409,7 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
 
     method roles {
         my @roles;
-        mop::WALKCLASS(
+        mop::util::WALKCLASS(
             $self->dispatcher('reverse'),
             sub {
                 push @roles, (
@@ -421,7 +426,7 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
     }
 
     method FINALIZE {
-        my $stash      = mop::internal::get_stash_for( $self );
+        my $stash      = get_stash_for( $self );
         my $dispatcher = $self->dispatcher;
 
         $self->apply_roles($self->roles_for_composition);

@@ -13,7 +13,12 @@ use PadWalker             qw[ set_closed_over ];
 use Scope::Guard          qw[ guard ];
 use Scalar::Util          qw[ weaken ];
 
-use mop::internal::instance;
+use mop::internal::instance qw(
+    create_instance
+    get_uuid get_class get_slots
+    set_class
+    get_slot_at set_slot_at
+);
 use mop::util;
 
 use parent 'Package::Anon';
@@ -39,7 +44,7 @@ sub new {
             %{ $class->attributes || {} },
         );
 
-        my $instance = mop::internal::instance::create($class, {});
+        my $instance = create_instance($class, {});
         foreach my $attr ( keys %attrs ) {
             my ($sigil, $plain_attr) = ($attr =~ /^([\$\@\%])(.*)/);
             if ( exists $args{ $plain_attr } ) {
@@ -286,12 +291,5 @@ sub _create_method {
         }
     );
 }
-
-sub get_slot_at { mop::internal::instance::get_slot_at(@_) }
-sub set_slot_at { mop::internal::instance::set_slot_at(@_) }
-sub get_class   { mop::internal::instance::get_class(@_)   }
-sub set_class   { mop::internal::instance::set_class(@_)   }
-sub get_uuid    { mop::internal::instance::get_uuid(@_)    }
-sub get_slots   { mop::internal::instance::get_slots(@_)   }
 
 1;

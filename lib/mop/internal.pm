@@ -13,9 +13,19 @@ use PadWalker qw(set_closed_over);
 use Scalar::Util qw(refaddr weaken);
 use Scope::Guard qw(guard);
 
-use mop::internal::instance;
+use mop::internal::instance qw(get_uuid get_class get_slots get_slot_at);
+use mop::util;
 
-sub _apply_overloading {
+use Exporter 'import';
+our @EXPORT_OK = qw(get_stash_for apply_overloading_for_stash);
+
+sub get_stash_for {
+    state $VTABLES = {};
+    my $class = shift;
+    $VTABLES->{ get_uuid($class) } //= _create_stash_for( $class );
+}
+
+sub apply_overloading_for_stash {
     my ($stash) = @_;
 
     # enable overloading
@@ -39,19 +49,6 @@ sub _apply_overloading {
     $stash->add_method('(""' => sub { overload::StrVal($_[0]) });
     $stash->add_method('(0+' => sub { refaddr($_[0]) });
     $stash->add_method('(==' => sub { get_uuid($_[0]) eq get_uuid($_[1]) });
-}
-
-sub create_stash_for {
-    my ($class) = @_;
-    my $stash = Package::Anon->new(${ get_slot_at( $class, '$name' ) } || ());
-    _apply_overloading($stash);
-    return $stash;
-}
-
-sub get_stash_for {
-    state $VTABLES = {};
-    my $class = shift;
-    $VTABLES->{ get_uuid($class) } //= create_stash_for( $class );
 }
 
 sub execute_method {
@@ -87,7 +84,7 @@ sub execute_method {
         }
         else {
             set_closed_over( $body, {
-                (map { $_ => _undef_for_type($_) } keys %$instance),
+                (map { $_ => mop::util::undef_for_type($_) } keys %$instance),
                 '$self'  => \undef,
                 '$class' => \undef,
             });
@@ -101,23 +98,6 @@ sub execute_method {
     local $::CALLER = $method;
 
     $body->( @_ );
-}
-
-sub _undef_for_type {
-    my ($name) = @_;
-    my $sigil = substr($name, 0, 1);
-    if ($sigil eq '$') {
-        return \undef;
-    }
-    elsif ($sigil eq '@') {
-        return [];
-    }
-    elsif ($sigil eq '%') {
-        return {};
-    }
-    else {
-        die "Unknown sigil '$sigil' for name $name";
-    }
 }
 
 # XXX used by FINALIZE, but moved here because we need to hardcode some things
@@ -141,12 +121,12 @@ sub generate_DESTROY {
     }
 }
 
-sub get_slot_at { mop::internal::instance::get_slot_at(@_) }
-sub set_slot_at { mop::internal::instance::set_slot_at(@_) }
-sub get_class   { mop::internal::instance::get_class(@_)   }
-sub set_class   { mop::internal::instance::set_class(@_)   }
-sub get_uuid    { mop::internal::instance::get_uuid(@_)    }
-sub get_slots   { mop::internal::instance::get_slots(@_)   }
+sub _create_stash_for {
+    my ($class) = @_;
+    my $stash = Package::Anon->new(${ get_slot_at( $class, '$name' ) } || ());
+    apply_overloading_for_stash($stash);
+    return $stash;
+}
 
 1;
 
