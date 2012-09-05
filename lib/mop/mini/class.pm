@@ -39,7 +39,7 @@ sub new {
             %{ $class->attributes || {} },
         );
 
-        my $instance = mop::internal::instance::create(\$class, {});
+        my $instance = mop::internal::instance::create($class, {});
         foreach my $attr ( keys %attrs ) {
             my ($sigil, $plain_attr) = ($attr =~ /^([\$\@\%])(.*)/);
             if ( exists $args{ $plain_attr } ) {

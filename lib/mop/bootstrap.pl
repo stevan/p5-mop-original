@@ -322,7 +322,7 @@ role Instantiable {
         die "Could not find stash for class(" . $self->name . ")"
             unless $stash;
 
-        $stash->bless(mop::internal::instance::create( \$self, $data ));
+        $stash->bless(mop::internal::instance::create( $self, $data ));
     }
 
     method BUILDARGS (@params) { +{ @params } }
