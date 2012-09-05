@@ -9,8 +9,9 @@ our $AUTHORITY = 'cpan:STEVAN';
 
 use version ();
 
-use mop::internal qw(get_stash_for apply_overloading_for_stash);
+use mop::internal;
 use mop::internal::instance qw(get_slot_at set_slot_at get_class set_class);
+use mop::internal::stashes qw(get_stash_for apply_overloading_for_stash);
 
 # declare some subs so that the rest of the file can be parsed without
 # requiring parentheses on class names
@@ -212,7 +213,9 @@ sub init {
             my $method = $methods{$name};
             $stash->add_method($name => sub { $method->execute(@_) });
         }
-        $stash->add_method(DESTROY => mop::internal::generate_DESTROY());
+        $stash->add_method(
+            DESTROY => mop::internal::stashes::generate_DESTROY()
+        );
 
         apply_overloading_for_stash($stash);
     }

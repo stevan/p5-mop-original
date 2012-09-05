@@ -9,8 +9,8 @@ our $AUTHORITY = 'cpan:STEVAN';
 
 use Sub::Name 'subname';
 
-use mop::internal qw(get_stash_for apply_overloading_for_stash);
 use mop::internal::instance qw(get_slot_at set_slot_at);
+use mop::internal::stashes qw(get_stash_for apply_overloading_for_stash);
 
 use mop::parser;
 
@@ -97,7 +97,7 @@ sub finalize_class {
         $stash->add_method($name => sub { $method->execute(@_) });
     }
 
-    $stash->add_method(DESTROY => mop::internal::generate_DESTROY());
+    $stash->add_method(DESTROY => mop::internal::stashes::generate_DESTROY());
 
     apply_overloading_for_stash($stash);
 

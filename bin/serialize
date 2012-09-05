@@ -6,6 +6,9 @@ BEGIN { unlink 'lib/mop/bootstrap.mop' }
 
 use mop;
 
+use mop::internal::instance qw(get_slot_at set_slot_at);
+use mop::internal::stashes qw(get_stash_for);
+
 use Storable;
 
 my $mop = {
@@ -37,15 +40,15 @@ push @methods, grep { defined } map { $_->constructor, $_->destructor }
                $::Class, $::Attribute, $::Method, $::Object, $::Role;
 
 for my $method (@methods) {
-    mop::internal::instance::set_slot_at($method, '$body', \'serialize-fix');
+    set_slot_at($method, '$body', \'serialize-fix');
 }
 
 for my $attr (@attrs) {
-    mop::internal::instance::set_slot_at($attr, '$initial_value', \'serialize-fix');
+    set_slot_at($attr, '$initial_value', \'serialize-fix');
 }
 
 for my $class ($::Class, $::Attribute, $::Method, $::Object, $::Role) {
-    my $stash = mop::internal::get_stash_for($class);
+    my $stash = get_stash_for($class);
     # DESTROY calls methods to find DEMOLISH subs, which will break now that we
     # have stripped things out of the mop
     $stash->add_method(DESTROY => sub { });

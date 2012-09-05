@@ -29,7 +29,7 @@ BEGIN {
             # exist, so we need to install one instead of just leaving it empty
             # this may change in the future
 
-            my $stash = mop::internal::get_stash_for($self);
+            my $stash = mop::internal::stashes::get_stash_for($self);
             $stash->add_method(AUTOLOAD => sub {
                 (my $name = our $AUTOLOAD) =~ s/.*:://;
                 $self->find_method($name)->execute(@_);

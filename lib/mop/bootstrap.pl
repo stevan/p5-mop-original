@@ -4,10 +4,11 @@ use 5.014;
 
 use version ();
 
-use mop::internal qw(get_stash_for);
+use mop::internal;
 use mop::internal::instance qw(
     create_instance get_class get_slots get_slot_at set_slot_at
 );
+use mop::internal::stashes qw(get_stash_for);
 use mop::util;
 
 # implement all of UNIVERSAL here, because the mop's dispatcher should
@@ -443,7 +444,9 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
             ) unless exists $stash->{ $name };
         }
 
-        $stash->add_method('DESTROY' => mop::internal::generate_DESTROY());
+        $stash->add_method(
+            'DESTROY' => mop::internal::stashes::generate_DESTROY()
+        );
     }
 }
 
