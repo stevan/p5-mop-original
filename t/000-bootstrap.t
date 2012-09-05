@@ -55,10 +55,10 @@ is $::Class->name, 'Class', '... got the right name';
 is $::Class->version, '0.01', '... got the right version';
 is $::Class->authority, 'cpan:STEVAN', '... got the right authority';
 is $::Class->superclass, $::Object, '... got the right superclass';
-is_deeply $::Class->mro, [ $::Class, $::Object ], '... got the right mro';
+is_deeply [ $::Class->mro ], [ $::Class, $::Object ], '... got the right mro';
 
 {
-    my @mro = @{ $::Class->mro };
+    my @mro = $::Class->mro;
     is((shift @mro), $::Class, '... we are the first entry in our mro');
     foreach my $super ( @mro ) {
         ok $::Class->instance_isa( $super ), '... we are a subclass of class (' . $super->name . ')';
@@ -79,10 +79,10 @@ is $::Object->name, 'Object', '... got the right name';
 is $::Object->version, '0.01', '... got the right version';
 is $::Object->authority, 'cpan:STEVAN', '... got the right authority';
 is $::Object->superclass, undef, '... got the right superclass';
-is_deeply $::Object->mro, [ $::Object ], '... got the right mro';
+is_deeply [ $::Object->mro ], [ $::Object ], '... got the right mro';
 
 {
-    my @mro = @{ $::Object->mro };
+    my @mro = $::Object->mro;
     is((shift @mro), $::Object, '... we are the first entry in our mro');
     foreach my $super ( @mro ) {
         ok $::Object->instance_isa( $super ), '... we are a subclass of class (' . $super->name . ')';
@@ -103,10 +103,10 @@ is $::Method->name, 'Method', '... got the right name';
 is $::Method->version, '0.01', '... got the right version';
 is $::Method->authority, 'cpan:STEVAN', '... got the right authority';
 is $::Method->superclass, $::Object, '... got the right superclass';
-is_deeply $::Method->mro, [ $::Method, $::Object ], '... got the right mro';
+is_deeply [ $::Method->mro ], [ $::Method, $::Object ], '... got the right mro';
 
 {
-    my @mro = @{ $::Method->mro };
+    my @mro = $::Method->mro;
     is((shift @mro), $::Method, '... we are the first entry in our mro');
     foreach my $super ( @mro ) {
         ok $::Method->instance_isa( $super ), '... we are a subclass of class (' . $super->name . ')';
@@ -127,10 +127,10 @@ is $::Attribute->name, 'Attribute', '... got the right name';
 is $::Attribute->version, '0.01', '... got the right version';
 is $::Attribute->authority, 'cpan:STEVAN', '... got the right authority';
 is $::Attribute->superclass, $::Object, '... got the right superclass';
-is_deeply $::Attribute->mro, [ $::Attribute, $::Object ], '... got the right mro';
+is_deeply [ $::Attribute->mro ], [ $::Attribute, $::Object ], '... got the right mro';
 
 {
-    my @mro = @{ $::Attribute->mro };
+    my @mro = $::Attribute->mro;
     is((shift @mro), $::Attribute, '... we are the first entry in our mro');
     foreach my $super ( @mro ) {
         ok $::Attribute->instance_isa( $super ), '... we are a subclass of class (' . $super->name . ')';
@@ -151,10 +151,10 @@ is $::Role->name, 'Role', '... got the right name';
 is $::Role->version, '0.01', '... got the right version';
 is $::Role->authority, 'cpan:STEVAN', '... got the right authority';
 is $::Role->superclass, $::Object, '... got the right superclass';
-is_deeply $::Role->mro, [ $::Role, $::Object ], '... got the right mro';
+is_deeply [ $::Role->mro ], [ $::Role, $::Object ], '... got the right mro';
 
 {
-    my @mro = @{ $::Role->mro };
+    my @mro = $::Role->mro;
     is((shift @mro), $::Role, '... we are the first entry in our mro');
     foreach my $super ( @mro ) {
         ok $::Role->instance_isa( $super ), '... we are a subclass of class (' . $super->name . ')';

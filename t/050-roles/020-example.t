@@ -53,7 +53,7 @@ ok Point->instance_does(Eq), 'class Point does Eq ...';
 is_deeply [ map { $_->name } Point->roles ], [qw(Eq)], '… got the roles we expected';
 ok Point->new->can("equal"), '˙˙˙ implements equal method';
 ok Point->find_method("equal"), '˙˙˙ implements equal method';
-is_deeply Point->mro, [ Point, $::Object ], '⸘⸘⸘ got the mro we expected ‽‽‽';
+is_deeply [ Point->mro ], [ Point, $::Object ], '⸘⸘⸘ got the mro we expected ‽‽‽';
 is_deeply
     [ sort { $a cmp $b } map { $_->name } values %{ Point->methods } ],
     [ sort qw(x y equal not_equal),

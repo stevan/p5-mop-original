@@ -48,7 +48,7 @@ is mop::class_of( Point ), $::Class, '... got the class we expected';
 ok Point->isa( $::Object ), '... class Point is a Object';
 ok Point->instance_isa( $::Object ), '... class Point is a subclass of Object';
 is Point->superclass, $::Object, '... got the superclass we expected';
-is_deeply Point->mro, [ Point, $::Object ], '... got the mro we expected';
+is_deeply [ Point->mro ], [ Point, $::Object ], '... got the mro we expected';
 is_deeply
     [ sort { $a cmp $b } map { $_->name } values %{ Point->attributes } ],
     [ '$x', '$y' ],
@@ -99,7 +99,7 @@ ok Point3D->isa( $::Object ), '... class Point3D is a Object';
 ok Point3D->instance_isa( Point ), '... class Point3D is a subclass of Point';
 ok Point3D->instance_isa( $::Object ), '... class Point3D is a subclass of Object';
 is Point3D->superclass, Point, '... got the superclass we expected';
-is_deeply Point3D->mro, [ Point3D, Point, $::Object ], '... got the mro we expected';
+is_deeply [ Point3D->mro ], [ Point3D, Point, $::Object ], '... got the mro we expected';
 is_deeply
     [ sort map { $_->name } values %{ Point3D->attributes } ],
     [ '$x', '$y', '$z' ],

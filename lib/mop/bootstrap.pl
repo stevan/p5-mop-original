@@ -283,7 +283,7 @@ role HasSuperclass {
 
     method instance_isa ($other) {
         return unless ref($other);
-        return !!grep { $other == $_ } @{ $self->mro };
+        return !!grep { $other == $_ } $self->mro;
     }
     method instance_DOES ($other) {
         return $self->instance_isa($other);
@@ -351,13 +351,13 @@ role Dispatchable {
         # warn "mro for " . $self->name . ' ' . $::SELF->name;
         my $super = $::SELF->superclass;
         # warn $super->name if $super;
-        return [ $::SELF, $super ? @{ $super->mro } : () ]
+        return $::SELF, ($super ? $super->mro : ());
     }
 
     method dispatcher ($type) {
-        return sub { state $mro = $self->mro; shift @$mro }
+        return sub { state $mro = [ $self->mro ]; shift @$mro }
             unless $type;
-        return sub { state $mro = $self->mro; pop   @$mro }
+        return sub { state $mro = [ $self->mro ]; pop   @$mro }
             if $type eq 'reverse';
     }
 }
