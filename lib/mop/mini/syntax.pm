@@ -61,7 +61,10 @@ sub build_class {
 }
 
 sub build_role {
-    build_class(@_);
+    my $role = build_class(@_);
+    $role->set_is_role(1);
+
+    $role;
 }
 
 sub finalize_class {

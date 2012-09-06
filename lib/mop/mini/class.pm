@@ -25,6 +25,7 @@ use parent 'Package::Anon';
 
 fieldhashes \ my (
     %name,
+    %is_role,
     %superclass,
     %roles,
     %constructor,
@@ -105,6 +106,7 @@ sub new {
 }
 
 sub name             { $name{ $_[0] }          }
+sub is_role          { $is_role{ $_[0] }       }
 sub superclass       { $superclass{ $_[0] }    }
 sub local_roles      { $roles{ $_[0] }         }
 sub local_attributes { $attributes{ $_[0] }    }
@@ -113,6 +115,7 @@ sub constructor      { $constructor{ $_[0] }   }
 sub destructor       { $destructor{ $_[0] }    }
 
 sub set_name       { $name{ $_[0] } = $_[1]       }
+sub set_is_role    { $is_role{ $_[0] } = $_[1]    }
 sub set_superclass { $superclass{ $_[0] } = $_[1] }
 sub set_roles      { $roles{ $_[0] } = $_[1]      }
 
