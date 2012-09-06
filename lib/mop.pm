@@ -12,8 +12,15 @@ use mop::util;
 
 sub import {
     shift;
-    require mop::full;
-    mop::full->import(-into => scalar(caller), @_);
+    # XXX this is just here for testing for now
+    if ($ENV{PERL_MOP_MINI}) {
+        require mop::mini;
+        mop::mini->import(-into => scalar(caller), @_);
+    }
+    else {
+        require mop::full;
+        mop::full->import(-into => scalar(caller), @_);
+    }
 }
 
 BEGIN {
