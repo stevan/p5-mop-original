@@ -1,4 +1,4 @@
-package mop::syntax;
+package mop::full::syntax;
 
 use 5.014;
 use strict;

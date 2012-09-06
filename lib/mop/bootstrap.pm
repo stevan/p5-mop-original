@@ -103,8 +103,8 @@ sub init {
     # structurally the same, so we can just swap things around in order to tie
     # the knot.
     package mop::bootstrap::full {
-        require mop::syntax;
-        mop::syntax->setup_for(__PACKAGE__);
+        require mop::full::syntax;
+        mop::full::syntax->setup_for(__PACKAGE__);
 
         require 'mop/bootstrap.pl';
     }
