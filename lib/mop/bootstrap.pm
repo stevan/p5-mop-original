@@ -49,6 +49,7 @@ package mop::bootstrap::full {
     sub Attribute ();
 }
 
+our $SERIALIZED_BOOTSTRAP = __FILE__ =~ s/pm$/mop/r;
 our $BOOTSTRAPPED;
 
 sub init {
@@ -59,7 +60,7 @@ sub init {
     # mop via a serialized form instead.
     return if $BOOTSTRAPPED;
 
-    if (-e 'lib/mop/bootstrap.mop') {
+    if (-e $SERIALIZED_BOOTSTRAP) {
         deserialize();
         return;
     }
@@ -186,8 +187,8 @@ sub init {
     # this in the bootstrap directly, but it would have just been kind of
     # repetitive and ugly, so easier to read to do it here.
     for my $class (@metaobjects) {
-        set_slot_at($class, '$version',   \version->parse($mop::VERSION));
-        set_slot_at($class, '$authority', \$mop::AUTHORITY);
+        set_slot_at($class, '$version',   \version->parse($mop::bootstrap::VERSION));
+        set_slot_at($class, '$authority', \$mop::bootstrap::AUTHORITY);
         set_slot_at($class, '$name',
                     \(${ get_slot_at($class, '$name') } =~ s/.*:://r));
     }
@@ -242,7 +243,7 @@ sub deserialize {
     # include any of the methods or attribute defaults, since perl can't
     # serialize those reliably. We'll fill those in later.
     require Storable;
-    my $mop = Storable::retrieve('lib/mop/bootstrap.mop');
+    my $mop = Storable::retrieve($SERIALIZED_BOOTSTRAP);
 
     # =======
     # Phase 2

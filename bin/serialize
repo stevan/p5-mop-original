@@ -2,14 +2,15 @@
 use strict;
 use warnings;
 
-BEGIN { unlink 'lib/mop/bootstrap.mop' }
-
-use mop;
+use mop::bootstrap;
 
 use mop::internal::instance qw(get_slot_at set_slot_at);
 use mop::internal::stashes qw(get_stash_for);
 
 use Storable;
+
+unlink $mop::bootstrap::SERIALIZED_BOOTSTRAP;
+mop::bootstrap::init();
 
 my $mop = {
     Object        => $::Object,
@@ -57,4 +58,4 @@ for my $class ($::Class, $::Attribute, $::Method, $::Object, $::Role) {
     delete $stash->{'()'};
 }
 
-Storable::store($mop, 'lib/mop/bootstrap.mop');
+Storable::store($mop, $mop::bootstrap::SERIALIZED_BOOTSTRAP);
