@@ -53,8 +53,10 @@ sub init {
     # =======
     # Phase 0
     # =======
-    # Check to see if we want to populate the mop via a serialized form
-    # instead.
+    # Check to see if we're already bootstrapped, or if we want to populate the
+    # mop via a serialized form instead.
+    return if $::Class;
+
     if (-e 'lib/mop/bootstrap.mop') {
         deserialize();
         return;
