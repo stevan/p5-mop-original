@@ -89,9 +89,13 @@ sub finalize_class {
              $class),
     };
 
-    # XXX bootstrap => 1 won't work properly if we start serializing
-    # metaclasses outside of the bootstrap
-    populate_stash(get_stash_for($class), $methods, { bootstrap => 1 });
+    populate_stash(
+        get_stash_for($class),
+        $methods,
+        # XXX hardcoding the bootstrap stuff here is annoying, but not sure
+        # where else to put it
+        $caller =~ /^mop::bootstrap::/ ? ({ bootstrap => 1 }) : ()
+    );
 
     {
         no strict 'refs';
