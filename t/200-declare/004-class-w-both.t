@@ -13,6 +13,7 @@ class Foo {
     method bar { $bar }
 }
 
+SKIP: { skip "Requires the full mop", 6 if $ENV{PERL_MOP_MINI}; $::Object = $::Object; $::Attribute = $::Attribute;
 is(Foo->name, 'Foo', '... got the name we expected');
 is(Foo->superclass, $::Object, '... got the superclass we expected');
 
@@ -21,6 +22,7 @@ ok($bar, '... got a bar');
 ok($bar->isa( $::Attribute ), '... bar is a Attribute');
 is($bar->name, '$bar', '... got the right name for bar');
 is(${$bar->initial_value}->(), 100, '... got the right initial value for bar');
+}
 
 {
     my $foo = Foo->new;

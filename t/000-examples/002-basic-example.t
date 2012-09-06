@@ -40,10 +40,12 @@ class CheckingAccount (extends => BankAccount) {
     }
 }
 
+SKIP: { skip "Requires the full mop", 2 if $ENV{PERL_MOP_MINI};
 ok BankAccount->instance_isa( $::Object ), '... BankAccount is a subclass of Object';
+ok CheckingAccount->instance_isa( $::Object ), '... CheckingAccount is a subclass of Object';
+}
 
 ok CheckingAccount->instance_isa( BankAccount ), '... CheckingAccount is a subclass of BankAccount';
-ok CheckingAccount->instance_isa( $::Object ), '... CheckingAccount is a subclass of Object';
 
 my $savings = BankAccount->new( balance => 250 );
 is mop::class_of( $savings ), BankAccount, '... got the class we expected';

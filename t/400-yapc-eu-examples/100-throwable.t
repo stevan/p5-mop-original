@@ -9,7 +9,8 @@ use Test::Requires 'Devel::StackTrace';
 
 use mop;
 
-use lib 't/400-yapc-eu-examples/lib/';
+use FindBin;
+use lib "$FindBin::Bin/lib";
 
 use Throwable;
 
@@ -22,7 +23,10 @@ sub bar { foo() }
 eval { bar };
 my $e = $@;
 
+TODO: { todo_skip "does not yet implemented", 1 if $ENV{PERL_MOP_MINI};
 ok( $e->does( Throwable ), '... the exception does the Throwable role' );
+}
+TODO: { todo_skip "role application is broken", 4 if $ENV{PERL_MOP_MINI};
 ok( $e->isa( MyError ), '... the exception is a MyError object' );
 
 is( $e->message, 'HELLO', '... got the exception' );
@@ -43,6 +47,7 @@ eval {...} at $file line $line3
 ],
     '... got the exception'
 );
+}
 
 done_testing;
 

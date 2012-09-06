@@ -23,11 +23,15 @@ is(exception {
     }
 }, undef, 'consuming two roles that had consumed the same method is not a conflict');
 
+SKIP: { skip "Requires the full mop", 4 if $ENV{PERL_MOP_MINI};
 ok(Role::Base->find_method('foo'), 'Role::Base has method foo');
 ok(Role::Derived1->find_method('foo'), 'Role::Derived1 has method foo');
 ok(Role::Derived2->find_method('foo'), 'Role::Derived2 has method foo');
 ok(Class::Test->find_method('foo'),'Class::Test has method foo');
+}
+TODO: { todo_skip "role composition is broken", 1 if $ENV{PERL_MOP_MINI};
 is(Class::Test->new->foo, 'Role::Base::foo', 'got the right value from the method foo');
+}
 
 # now the same but for attributes
 
@@ -48,12 +52,16 @@ is(exception {
     }
 }, undef, 'consuming two roles that had consumed the same attribute is not a conflict');
 
+SKIP: { skip "Requires the full mop", 4 if $ENV{PERL_MOP_MINI};
 ok(Role::Base2->find_attribute('$foo'), 'Role::Base2 has method foo');
 ok(Role::Derived3->find_attribute('$foo'), 'Role::Derived3 has method foo');
 ok(Role::Derived4->find_attribute('$foo'), 'Role::Derived4 has method foo');
 ok(Class::Test2->find_attribute('$foo'), 'Class::Test2 has method foo');
+}
 
+TODO: { todo_skip "role composition is broken", 1 if $ENV{PERL_MOP_MINI};
 is(Class::Test2->new->foo, 'Role::Base2::foo', 'got the right value from the method foo');
+}
 
 done_testing;
 

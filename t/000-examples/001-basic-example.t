@@ -43,6 +43,7 @@ class Point3D (extends => Point) {
 
 ## Test the class
 
+SKIP: { skip "Requires the full mop", 7 if $ENV{PERL_MOP_MINI};
 like mop::uuid_of( Point ), qr/[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}/i, '... got the expected uuid format';
 is mop::class_of( Point ), $::Class, '... got the class we expected';
 ok Point->isa( $::Object ), '... class Point is a Object';
@@ -53,6 +54,7 @@ is_deeply
     [ sort { $a cmp $b } map { $_->name } values %{ Point->attributes } ],
     [ '$x', '$y' ],
     '... got the attribute list we expected';
+}
 
 ## Test an instance
 
@@ -94,6 +96,7 @@ is_deeply $p->dump, { x => 0, y => 0 }, '... got the right value from dump';
 
 ## Test the subclass
 
+SKIP: { skip "Requires the full mop", 7 if $ENV{PERL_MOP_MINI};
 is mop::class_of( Point3D ), $::Class, '... got the class we expected';
 ok Point3D->isa( $::Object ), '... class Point3D is a Object';
 ok Point3D->instance_isa( Point ), '... class Point3D is a subclass of Point';
@@ -104,6 +107,7 @@ is_deeply
     [ sort map { $_->name } values %{ Point3D->attributes } ],
     [ '$x', '$y', '$z' ],
     '... got the attributes we expected';
+}
 
 
 ## Test the instance

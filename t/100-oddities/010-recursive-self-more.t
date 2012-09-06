@@ -28,29 +28,31 @@ class Tree {
         $self;
     }
 
-    $::CLASS->add_method($::Method->new(
-        name => 'traverse',
-        body => sub {
-            my $indent = shift;
-            $indent ||= '';
-            # say $indent, $::SELF->node, ' => ', $self, ' => ', $::SELF;
-            push @lexical, $self;
-            push @global, $::SELF;
-            foreach my $t ( @{ $::SELF->children } ) {
-                # warn $t, ' => ', $t->node;
-                $t->traverse( $indent . '  ' );
-            }
-        }
-    ));
+    # $::CLASS->add_method($::Method->new(
+    #     name => 'traverse',
+    #     body => sub {
+    #         my $indent = shift;
+    #         $indent ||= '';
+    #         # say $indent, $::SELF->node, ' => ', $self, ' => ', $::SELF;
+    #         push @lexical, $self;
+    #         push @global, $::SELF;
+    #         foreach my $t ( @{ $::SELF->children } ) {
+    #             # warn $t, ' => ', $t->node;
+    #             $t->traverse( $indent . '  ' );
+    #         }
+    #     }
+    # ));
 
-    #method traverse ($indent) {
-    #    $indent ||= '';
-    #    say $indent, $node, ' => ', $self, ' => ', $::SELF;
-    #    foreach my $t ( @$children ) {
-    #        warn $t, ' => ', $t->node;
-    #        $t->traverse( $indent . '  ' );
-    #    }
-    #}
+    method traverse ($indent) {
+       $indent ||= '';
+       # say $indent, $node, ' => ', $self, ' => ', $::SELF;
+       push @lexical, $self;
+       push @global, $::SELF;
+       foreach my $t ( @$children ) {
+           # warn $t, ' => ', $t->node;
+           $t->traverse( $indent . '  ' );
+       }
+    }
 }
 
 

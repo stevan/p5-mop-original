@@ -18,14 +18,18 @@ class Foo {}
 
 my $foo = Foo->new;
 ok( $foo->isa( Foo ), '... the object is from class Foo' );
+SKIP: { skip "Requires the full mop", 1 if $ENV{PERL_MOP_MINI};
 ok( $foo->isa( $::Object ), '... the object is derived from class Object' );
+}
 is( mop::class_of( $foo ), Foo, '... the class of this object is Foo' );
 like( "$foo", qr/^Foo/, '... object stringification includes the class name' );
 
 {
     my $foo2 = Foo->new;
     ok( $foo2->isa( Foo ), '... the object is from class Foo' );
+    SKIP: { skip "Requires the full mop", 1 if $ENV{PERL_MOP_MINI};
     ok( $foo2->isa( $::Object ), '... the object is derived from class Object' );
+    }
     is( mop::class_of( $foo2 ), Foo, '... the class of this object is Foo' );
 
     isnt( $foo, $foo2, '... these are not the same objects' );

@@ -17,6 +17,7 @@ class Foo {
     method bar { $bar }
 }
 
+SKIP: { skip "Requires the full mop", 5 if $ENV{PERL_MOP_MINI}; $::Object = $::Object; $::Method = $::Method;
 is(Foo->name, 'Foo', '... got the name we expected');
 is(Foo->superclass, $::Object, '... got the superclass we expected');
 
@@ -24,6 +25,7 @@ my $foo_constructor = Foo->constructor();
 ok( $foo_constructor, '... found the BUILD method' );
 ok( $foo_constructor->isa( $::Method ), '... it is a proper method');
 is($foo_constructor->name, 'BUILD', '... got the right name for BUILD');
+}
 
 my $foo = Foo->new( bar => "HELLO", BAR => ' World' );
 ok($foo->isa( Foo ), '... this is a Foo');

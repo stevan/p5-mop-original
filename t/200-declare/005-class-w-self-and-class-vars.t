@@ -14,8 +14,10 @@ class Foo {
     method foobar { $class->name }
 }
 
+SKIP: { skip "Requires the full mop", 2 if $ENV{PERL_MOP_MINI}; $::Object = $::Object;
 is( Foo->name, 'Foo', '... got the name we expected' );
 is(Foo->superclass, $::Object, '... got the superclass we expected');
+}
 
 my $foo = Foo->new;
 ok($foo->isa( Foo ), '... got the right instance');

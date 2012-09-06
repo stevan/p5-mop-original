@@ -11,6 +11,7 @@ class Bar (extends => Foo) { }
 class Baz (extends => Bar) { }
 class Quux { }
 
+TODO: { todo_skip "overloading not yet implemented", 11 if $ENV{PERL_MOP_MINI};
 ok(  Foo->new ~~ Foo  );
 ok(!(Foo->new ~~ Bar) );
 ok(!(Foo->new ~~ Baz) );
@@ -54,6 +55,7 @@ ok(!(Bar->new ~~ Quux));
         default     { $found = "default" }
     }
     is($found, "Foo");
+}
 }
 
 done_testing;

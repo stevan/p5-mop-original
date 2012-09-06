@@ -16,8 +16,11 @@ role Baz ( with => [Foo] ) {
     method baz { join ", "  => $self->bar, 'baz' }
 }
 
+TODO: { todo_skip "instance_does not yet implemented", 1 if $ENV{PERL_MOP_MINI};
 ok( Baz->instance_does( Foo ), '... Baz does the Foo role');
+}
 
+SKIP: { skip "Requires the full mop", 6 if $ENV{PERL_MOP_MINI}; $::Attribute = $::Attribute;
 my $bar_method = Baz->find_method('bar');
 ok( $bar_method->isa( $::Method ), '... got a method object' );
 is( $bar_method->name, 'bar', '... got the method we expected' );
@@ -29,5 +32,6 @@ is( $bar_attribute->name, '$bar', '... got the attribute we expected' );
 my $baz_method = Baz->find_method('baz');
 ok( $baz_method->isa( $::Method ), '... got a method object' );
 is( $baz_method->name, 'baz', '... got the method we expected' );
+}
 
 done_testing;

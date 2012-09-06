@@ -20,3 +20,4 @@ callparser0.h
 callparser1.h
 env.sh
 lib/mop/bootstrap.mop
+t/500-mini/*
