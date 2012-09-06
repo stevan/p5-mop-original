@@ -49,13 +49,15 @@ package mop::bootstrap::full {
     sub Attribute ();
 }
 
+our $BOOTSTRAPPED;
+
 sub init {
     # =======
     # Phase 0
     # =======
     # Check to see if we're already bootstrapped, or if we want to populate the
     # mop via a serialized form instead.
-    return if $::Class;
+    return if $BOOTSTRAPPED;
 
     if (-e 'lib/mop/bootstrap.mop') {
         deserialize();
@@ -226,6 +228,8 @@ sub init {
     # point.
     fixup_after_bootstrap();
 
+    $BOOTSTRAPPED = 1;
+
     # And we're done!
     return;
 }
@@ -358,6 +362,8 @@ sub deserialize {
     # still need to replace the implementations of things that need alternate
     # implementations here too, just like in the non-serialized codepath.
     fixup_after_bootstrap();
+
+    $BOOTSTRAPPED = 1;
 
     # And we're done!
     return;
