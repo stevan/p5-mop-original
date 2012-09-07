@@ -56,7 +56,7 @@ sub populate_stash {
                 }
             );
         }
-    );
+    ) unless $params->{bootstrap};
 
     apply_overloading_for_stash($stash);
 }
