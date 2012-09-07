@@ -29,10 +29,12 @@ my (@FOO, @BAR);
 
 my $o = FooWatcher->new;
 ok($o->isa(FooWatcher), '... isa FooWatcher');
-ok($o->does(Observable), '... does Observable');
 
+TODO: { todo_skip "instance_does not yet implemented", 3 if $ENV{PERL_MOP_MINI};
+ok($o->does(Observable), '... does Observable');
 ok($o->DOES(FooWatcher), '... DOES FooWatcher');
 ok($o->DOES(Observable), '... DOES Observable');
+}
 
 is(exception { $o->bind( 'foo' => sub { push @FOO => @_ } ) }, undef, '... bind succeeded');
 is(exception { $o->bind( 'foo' => sub { push @BAR => 1  } ) }, undef, '... bind succeeded');
