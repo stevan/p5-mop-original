@@ -16,7 +16,7 @@ eval q{
     }
 };
 
-like "$@", qr/^Global symbol \"\$bar\" requires explicit package name/, '... got the syntax error we expected';
+like "$@", qr/^Global symbol \"\$bar\" requires explicit package name .*/, '... got the syntax error we expected';
 
 
 done_testing
