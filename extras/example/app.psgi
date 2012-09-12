@@ -1,93 +1,117 @@
 #!perl
 
-use v5.14;
+use v5.16;
 
-package TaskTracker {
-    use mop;
+package Blog {
 
-    package TaskTracker::Model {
+    package Blog::Model {
         use mop;
-        use JSON::PP ();
-
-        my $JSON = JSON::PP->new->pretty->canonical;
 
         role Packable { method pack }
 
-        role Serializable (roles => [Packable]) {
-            method serialize { $JSON->encode( $self->pack ) }
+        class Author ( roles => [ Packable ] ) {
+            has $name;
+
+            method name { $name }
+
+            method pack { +{ name => $name } }
+
+            method unpack ( $data ) {
+                $name = $data->{'name'};
+                $self;
+            }
         }
 
-        class TaskList (roles => [Serializable]) {
-            has $tasks = [];
+        class Post ( roles => [ Packable ] )  {
+            has $title;
+            has $author;
+            has $url;
+            has $body;
 
-            method add_task ( $task ) { push @$tasks => $task }
+            method title  { $title }
+            method author { $author }
+            method url    { $url }
+            method body   { $body }
 
             method pack {
-                return +{
-                    'tasks' => [
-                        map  { $_->pack }
-                        sort { $b->priority <=> $a->priority }
-                             @$tasks
-                    ]
+                +{
+                    title  => $title,
+                    author => $author->pack,
+                    url    => $url,
+                    body   => $body
                 }
+            }
+
+            method unpack ( $data ) {
+                $title  = $data->{'title'};
+                $author = Author->new->unpack( $data->{'author'} );
+                $url    = $data->{'url'};
+                $body   = $data->{'body'};
+                $self;
             }
         }
 
-        class Task (roles => [Serializable]) {
-            has $priority = 0.0;
-            has $desc     = '...';
-            has $subtasks;
+        class Blog ( roles => [ Packable ] )  {
+            has @posts;
 
-            BUILD {
-                warn $subtasks;
+            method add_post ( $post ) {
+                push @posts => $post
             }
-
-            method priority ( $p ) { $priority = $p if $p; $priority }
-            method desc     ( $d ) { $desc     = $d if $d; $desc     }
 
             method pack {
-                return +{
-                    'desc'     => $desc,
-                    'priority' => $priority,
-                    'subtasks' => $subtasks->pack
+                +{ posts => [ map { $_->pack } @posts ] }
+            }
+
+            method unpack ( $data ) {
+                foreach my $post ( @{ $data->{'posts'} } ) {
+                    push @posts => Post->new->unpack( $post );
                 }
+                $self;
             }
         }
 
+
+        package Blog::Model::Util {
+            use JSON::XS ();
+
+            my $JSON = JSON::XS->new->pretty;
+
+            sub encode_model {
+                my ( $blog ) = @_;
+                $JSON->encode( $blog->pack )
+            }
+
+            sub decode_model {
+                my ( $json ) = @_;
+                Blog::Model::Blog->new->unpack( $JSON->decode( $json ) )
+            }
+        }
     }
-
 }
 
-my $list = TaskTracker::Model::TaskList->new(
-    tasks => [
-        TaskTracker::Model::Task->new(
-            desc     => 'Create TaskTracker app',
-            priority => 1.0
+
+my $blog = Blog::Model::Blog->new(
+    posts => [
+        Blog::Model::Post->new(
+            title  => 'Test Post',
+            url    => '/test_post',
+            author => Blog::Model::Author->new( name => 'Stevan Little' ),
+            body   => 'Testing 1, 2, 3'
         ),
-        TaskTracker::Model::Task->new(
-            desc     => 'Test TaskTracker app',
-            priority => 0.5
-        ),
-        TaskTracker::Model::Task->new(
-            desc     => 'Fly to JFK',
-            priority => 0.75,
-            subtasks => TaskTracker::Model::TaskList->new(
-                tasks => [
-                    TaskTracker::Model::Task->new(
-                        desc     => 'Board Plane',
-                        priority => 1.0
-                    ),
-                    TaskTracker::Model::Task->new(
-                        desc     => 'Sleep on plane',
-                        priority => 0.5
-                    ),
-                ]
-            )
-        ),
+        Blog::Model::Post->new(
+            title  => 'Test Post 2',
+            url    => '/test_post_2',
+            author => Blog::Model::Author->new( name => 'Stevan Little' ),
+            body   => 'Testing 1, 2, 3, 4'
+        )
     ]
 );
 
-say $list->serialize;
+say Blog::Model::Util::encode_model(
+    Blog::Model::Util::decode_model(
+        Blog::Model::Util::encode_model( $blog )
+    )
+);
 
 
 1;
