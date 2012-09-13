@@ -6,17 +6,6 @@ package Blog {
 
     package Blog::Model {
         use mop;
-        use Fun;
-        use JSON::XS ();
-
-        # NOTE:
-        # hack until doy fixes the Closure
-        # prototype issue with Fun
-        # - SL
-        sub JSON { state $JSON = JSON::XS->new->pretty; $JSON; }
-
-        fun encode ( $blog ) { JSON->encode( $blog->pack ) }
-        fun decode ( $json ) { Blog::Model::Blog->new->unpack( JSON->decode( $json ) ) }
 
         role Packable { method pack }
 
@@ -81,6 +70,20 @@ package Blog {
             }
         }
 
+
+        package Blog::Model::Util {
+            use Fun;
+            use JSON::XS ();
+
+            # NOTE:
+            # hack until doy fixes the Closure
+            # prototype issue with Fun
+            # - SL
+            sub JSON { state $JSON = JSON::XS->new->pretty; $JSON; }
+
+            fun encode_model ( $blog ) { JSON->encode( $blog->pack ) }
+            fun decode_model ( $json ) { Blog::Model::Blog->new->unpack( JSON->decode( $json ) ) }
+        }
     }
 }
 
@@ -102,9 +105,9 @@ my $blog = Blog::Model::Blog->new(
     ]
 );
 
-say Blog::Model::encode(
-    Blog::Model::decode(
-        Blog::Model::encode( $blog )
+say Blog::Model::Util::encode_model(
+    Blog::Model::Util::decode_model(
+        Blog::Model::Util::encode_model( $blog )
     )
 );
 
