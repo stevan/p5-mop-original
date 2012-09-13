@@ -7,7 +7,10 @@ package Blog {
     package Blog::Model {
         use mop;
 
-        role Packable { method pack }
+        role Packable {
+            method pack;
+            method unpack;
+        }
 
         class Author ( roles => [ Packable ] ) {
             has $name;
