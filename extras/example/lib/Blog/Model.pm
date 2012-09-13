@@ -3,8 +3,8 @@ use v5.16;
 use mop;
 
 role Packable {
-    method pack;
-    method unpack;
+    method pack;   # ( ()      => HashRef )
+    method unpack; # ( HashRef => $self   )
 }
 
 class Author ( roles => [ Packable ] ) {
@@ -12,7 +12,7 @@ class Author ( roles => [ Packable ] ) {
 
     method name { $name }
 
-    method pack { +{ name => $name } }
+    method pack { return +{ name => $name } }
 
     method unpack ( $data ) {
         $name = $data->{'name'};
@@ -32,7 +32,7 @@ class Post ( roles => [ Packable ] )  {
     method body   { $body }
 
     method pack {
-        +{
+        return +{
             title  => $title,
             author => $author->pack,
             url    => $url,
@@ -57,7 +57,7 @@ class Blog ( roles => [ Packable ] )  {
     }
 
     method pack {
-        +{ posts => [ map { $_->pack } @posts ] }
+        return +{ posts => [ map { $_->pack } @posts ] }
     }
 
     method unpack ( $data ) {
