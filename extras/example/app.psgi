@@ -72,19 +72,17 @@ package Blog {
 
 
         package Blog::Model::Util {
+            use Fun;
             use JSON::XS ();
 
-            my $JSON = JSON::XS->new->pretty;
+            # NOTE:
+            # hack until doy fixes the Closure
+            # prototype issue with Fun
+            # - SL
+            sub JSON { state $JSON = JSON::XS->new->pretty; $JSON; }
 
-            sub encode_model {
-                my ( $blog ) = @_;
-                $JSON->encode( $blog->pack )
-            }
-
-            sub decode_model {
-                my ( $json ) = @_;
-                Blog::Model::Blog->new->unpack( $JSON->decode( $json ) )
-            }
+            fun encode_model ( $blog ) { JSON->encode( $blog->pack ) }
+            fun decode_model ( $json ) { Blog::Model::Blog->new->unpack( JSON->decode( $json ) ) }
         }
     }
 }
