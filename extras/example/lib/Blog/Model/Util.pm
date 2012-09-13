@@ -3,6 +3,12 @@ package Blog::Model::Util {
     use Fun;
     use JSON::XS ();
 
+    use Blog::Model;
+
+    use Sub::Exporter -setup => {
+        exports => [qw[ encode_model decode_model ]],
+    };
+
     # NOTE:
     # hack until doy fixes the Closure
     # prototype issue with Fun

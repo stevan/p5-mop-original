@@ -3,7 +3,7 @@
 use v5.16;
 
 use Blog::Model;
-use Blog::Model::Util;
+use Blog::Model::Util qw[ encode_model decode_model ];
 
 
 my $blog = Blog::Model::Blog->new(
@@ -23,11 +23,7 @@ my $blog = Blog::Model::Blog->new(
     ]
 );
 
-say Blog::Model::Util::encode_model(
-    Blog::Model::Util::decode_model(
-        Blog::Model::Util::encode_model( $blog )
-    )
-);
+say encode_model( decode_model( encode_model( $blog ) ) );
 
 
 1;
