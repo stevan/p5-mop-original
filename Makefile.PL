@@ -25,6 +25,7 @@ WriteMakefile(
         'Carp'          => 0,
         'UUID::Tiny'    => 0,
         'Scalar::Util'  => 0,
+        'Module::Runtime' => 0,
     },
     BUILD_REQUIRES => {
         'Test::More'     => 0,

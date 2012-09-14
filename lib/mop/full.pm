@@ -7,8 +7,9 @@ use warnings;
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
+use Module::Runtime 'require_module';
+
 use mop::bootstrap;
-use mop::full::syntax;
 
 mop::bootstrap::init();
 
@@ -19,7 +20,9 @@ sub import {
         if $options{'-metaclass'};
     $^H{'mop/default_role_metaclass'} = $options{'-role_metaclass'}
         if $options{'-role_metaclass'};
-    mop::full::syntax->setup_for( $options{'-into'} // caller )
+    my $parser = $options{'-parser'} // 'mop::full::syntax';
+    require_module($parser);
+    $parser->setup_for( $options{'-into'} // caller )
 }
 
 1;
