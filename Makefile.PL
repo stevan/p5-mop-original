@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use ExtUtils::MakeMaker;
+use ExtUtils::MakeMaker 6.52;
 
 BEGIN { require 5.014 }
 
@@ -18,21 +18,27 @@ WriteMakefile(
     NAME         => 'mop',
     VERSION_FROM => 'lib/mop.pm',
     PREREQ_PM    => {
-        'Package::Anon' => 0.01,
-        'Sub::Name'     => 0,
-        'PadWalker'     => 0,
-        'Scope::Guard'  => 0,
-        'Carp'          => 0,
-        'UUID::Tiny'    => 0,
-        'Scalar::Util'  => 0,
-        'Module::Runtime' => 0,
+        'Devel::CallParser' => 0,
+        'Package::Anon'     => 0.01,
+        'Sub::Name'         => 0,
+        'PadWalker'         => 0,
+        'Scope::Guard'      => 0,
+        'Carp'              => 0,
+        'UUID::Tiny'        => 0,
+        'Scalar::Util'      => 0,
+        'Module::Runtime'   => 0,
     },
     BUILD_REQUIRES => {
         'Test::More'     => 0,
         'Test::Fatal'    => 0,
         'Test::Requires' => 0,
     },
-    test           => {
+    CONFIGURE_REQUIRES => {
+        'ExtUtils::MakeMaker' => 6.52,
+        'Devel::CallParser'   => 0,
+    },
+    MIN_PERL_VERSION => 5.014000,
+    test => {
         TESTS => 't/*.t t/*/*.t t/*/*/*.t',
     },
     clean => {
