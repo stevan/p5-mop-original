@@ -60,7 +60,7 @@ AV *get_slot_names_noref(SV *class)
 {
     MAGIC *mg = NULL;
 
-    if (SvTYPE(class) >= SVt_PVMG) {
+    if (SvMAGICAL(class)) {
         mg = mg_findext(class, PERL_MAGIC_ext, &vtbl_slot_names);
     }
 
