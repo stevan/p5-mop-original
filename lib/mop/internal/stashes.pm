@@ -79,8 +79,9 @@ sub apply_overloading_for_stash {
     $stash->add_method('(bool' => sub { 1 });
     $stash->add_method('(~~' => sub {
         my $self = shift;
-        my ($other) = @_;
-        return $other->DOES($self);
+        my ($other, $swap) = @_;
+        ($self, $other) = ($other, $self) if $swap;
+        return $self->DOES($other);
     });
     $stash->add_method('(""' => sub { overload::StrVal($_[0]) });
     $stash->add_method('(0+' => sub { refaddr($_[0]) });
