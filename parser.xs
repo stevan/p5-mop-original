@@ -39,14 +39,25 @@ struct mop_instance {
     SV **slots;
 };
 
-void free_mop_instance(SV *instance);
+void free_mop_instance(struct mop_instance *instance);
 
-int mg_free_mop_instance(SV *sv, MAGIC *mg)
+int mg_free_mop_instance(pTHX_ SV *sv, MAGIC *mg)
 {
-    free_mop_instance(sv);
+    free_mop_instance((struct mop_instance *)mg->mg_ptr);
 }
 
-MGVTBL vtbl_instance   = { 0, 0, 0, 0, mg_free_mop_instance };
+MGVTBL vtbl_instance   = {
+  NULL, NULL, NULL, NULL, mg_free_mop_instance
+#if MGf_COPY
+  ,NULL
+#endif
+#if MGf_DUP
+  ,NULL /* TODO: thread cloning */
+#endif
+#if MGf_LOCAL
+  ,NULL
+#endif
+};
 MGVTBL vtbl_slot_names = { 0, 0, 0, 0, 0 };
 
 void attach_slot_names(SV *class, AV *slot_names)
@@ -118,34 +129,6 @@ struct mop_instance *allocate_mop_instance(SV *class)
     Newxz(instance->slots, number_of_slots, SV *);
 
     return instance;
-}
-
-void free_mop_instance(SV *instance_sv)
-{
-    struct mop_instance *instance;
-    AV *slot_names;
-    I32 number_of_slots;
-    int i;
-
-    instance = (struct mop_instance *)SvIVX(instance_sv);
-
-    slot_names = get_slot_names_noref(instance_sv);
-    number_of_slots = av_len(slot_names) + 1;
-
-    SvREFCNT_dec(instance->class);
-    instance->class = NULL;
-    if (instance->uuid) {
-        Safefree(instance->uuid);
-        instance->uuid = NULL;
-    }
-    for (i = 0; i < number_of_slots; ++i) {
-        if ((instance->slots)[i]) {
-            SvREFCNT_dec((instance->slots)[i]);
-        }
-    }
-    Safefree(instance->slots);
-    instance->slots = NULL;
-    Safefree(instance);
 }
 
 SV *mop_get_class(struct mop_instance *instance)
@@ -806,6 +789,53 @@ static OP *parse_method(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     }
 }
 
+static void
+attach_instance (pTHX_ SV *sv, struct mop_instance *instance)
+{
+  sv_magicext(sv, NULL, PERL_MAGIC_ext, &vtbl_instance, (char *)instance, 0);
+}
+
+static struct mop_instance *
+get_instance (pTHX_ SV *sv)
+{
+  if (SvMAGICAL(sv)) {
+    MAGIC *mg;
+    for (mg = SvMAGIC(sv); mg; mg = mg->mg_moremagic) {
+      if ((mg->mg_type == PERL_MAGIC_ext)
+       && (mg->mg_virtual == &vtbl_instance)) {
+	return (struct mop_instance *)mg->mg_ptr;
+      }
+    }
+  }
+
+  croak("not a mop instance");
+}
+
+void free_mop_instance(struct mop_instance *instance)
+{
+    AV *slot_names;
+    I32 number_of_slots;
+    int i;
+
+    slot_names = get_slot_names_noref(instance->class);
+    number_of_slots = av_len(slot_names) + 1;
+
+    SvREFCNT_dec(instance->class);
+    instance->class = NULL;
+    if (instance->uuid) {
+        Safefree(instance->uuid);
+        instance->uuid = NULL;
+    }
+    for (i = 0; i < number_of_slots; ++i) {
+        if ((instance->slots)[i]) {
+            SvREFCNT_dec((instance->slots)[i]);
+        }
+    }
+    Safefree(instance->slots);
+    instance->slots = NULL;
+    Safefree(instance);
+}
+
 MODULE = mop  PACKAGE = mop::internal::instance
 
 PROTOTYPES: DISABLE
@@ -836,9 +866,8 @@ create_instance(SV *class, SV *slots_ref)
         mop_set_slot_at(instance, offset, HeVAL(slot_entry));
     }
 
-    instance_sv = newSViv((IV)instance);
-
-    sv_magicext(instance_sv, NULL, PERL_MAGIC_ext, &vtbl_instance, NULL, 0);
+    instance_sv = newHV();
+    attach_instance(aTHX_ instance_sv, instance);
 
     RETVAL = newRV_noinc(instance_sv);
   OUTPUT:
@@ -849,7 +878,7 @@ get_class(SV *instance_ref)
   PREINIT:
     struct mop_instance *instance;
   CODE:
-    instance = (struct mop_instance *)SvIVX(SvRV(instance_ref));
+    instance = get_instance(aTHX_ SvRV(instance_ref));
     RETVAL = SvREFCNT_inc(mop_get_class(instance));
   OUTPUT:
     RETVAL
@@ -859,7 +888,7 @@ set_class(SV *instance_ref, SV *class)
   PREINIT:
     struct mop_instance *instance;
   CODE:
-    instance = (struct mop_instance *)SvIVX(SvRV(instance_ref));
+    instance = get_instance(aTHX_ SvRV(instance_ref));
     mop_set_class(instance, class);
 
 SV *
@@ -868,7 +897,7 @@ get_uuid(SV *instance_ref)
     struct mop_instance *instance;
     I32 *uuid;
   CODE:
-    instance = (struct mop_instance *)SvIVX(SvRV(instance_ref));
+    instance = get_instance(aTHX_ SvRV(instance_ref));
     uuid = mop_get_uuid(instance);
     RETVAL = uuid_as_string(uuid);
   OUTPUT:
@@ -884,7 +913,7 @@ get_slots(SV *instance_ref)
     HV *slots;
     int i;
   CODE:
-    instance = (struct mop_instance *)SvIVX(SvRV(instance_ref));
+    instance = get_instance(aTHX_ SvRV(instance_ref));
     slot_names = get_slot_names(mop_get_class(instance));
     slot_vals = mop_get_slots(instance);
     number_of_slots = av_len(slot_names) + 1;
@@ -909,7 +938,7 @@ get_slot_at(SV *instance_ref, SV *slot)
     I32 offset;
     SV *value;
   CODE:
-    instance = (struct mop_instance *)SvIVX(SvRV(instance_ref));
+    instance = get_instance(aTHX_ SvRV(instance_ref));
     slot_names = get_slot_names(mop_get_class(instance));
     offset = slot_offset_for_name(slot_names, slot);
     value = mop_get_slot_at(instance, offset);
@@ -962,7 +991,7 @@ set_slot_at(SV *instance_ref, SV *slot, SV *value)
             croak("unknown sigil: %c", sigil);
         }
     }
-    instance = (struct mop_instance *)SvIVX(SvRV(instance_ref));
+    instance = get_instance(aTHX_ SvRV(instance_ref));
     slot_names = get_slot_names(mop_get_class(instance));
     offset = slot_offset_for_name(slot_names, slot);
     mop_set_slot_at(instance, offset, value);
