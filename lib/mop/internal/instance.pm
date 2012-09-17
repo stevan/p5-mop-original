@@ -7,10 +7,6 @@ use warnings;
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 
-use UUID::Tiny qw[ create_uuid_as_string UUID_V4 ];
-
-use mop::util;
-
 use Exporter 'import';
 our @EXPORT_OK = qw(
     create_instance
@@ -18,34 +14,6 @@ our @EXPORT_OK = qw(
     set_class
     get_slot_at set_slot_at
 );
-
-sub create_instance {
-    my ($class, $slots) = @_;
-    return +{
-        uuid  => create_uuid_as_string(UUID_V4),
-        class => $class,
-        slots => $slots
-    }
-}
-
-sub get_uuid  { (shift)->{'uuid'}  }
-sub get_class { (shift)->{'class'} }
-sub get_slots { (shift)->{'slots'} }
-
-sub set_class {
-    my ($instance, $class) = @_;
-    $instance->{'class'} = $class;
-}
-
-sub get_slot_at {
-    my ($instance, $name) = @_;
-    $instance->{'slots'}->{ $name } || mop::util::undef_for_type($name)
-}
-
-sub set_slot_at {
-    my ($instance, $name, $value) = @_;
-    $instance->{'slots'}->{ $name } = $value
-}
 
 1;
 

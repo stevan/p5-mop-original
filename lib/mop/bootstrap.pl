@@ -429,6 +429,10 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
     method FINALIZE {
         $self->apply_roles($self->roles_for_composition);
         populate_stash(get_stash_for($self), $self->methods);
+        # XXX
+        mop::internal::instance::_set_offset_map($self, [
+            keys %{ $class->attributes }
+        ]);
     }
 }
 
