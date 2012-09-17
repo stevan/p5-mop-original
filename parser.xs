@@ -17,7 +17,8 @@ static I32 *new_uuid()
     }
 
     for (i = 0; i < 4; ++i) {
-        uuid[i] = Drand01();
+        /* XXX this is terrible */
+        uuid[i] = (I32)(Drand01() * (double)(2<<30));
     }
 
     return uuid;
