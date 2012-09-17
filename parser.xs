@@ -866,7 +866,7 @@ create_instance(SV *class, SV *slots_ref)
         mop_set_slot_at(instance, offset, HeVAL(slot_entry));
     }
 
-    instance_sv = newHV();
+    instance_sv = newSV(0);
     attach_instance(aTHX_ instance_sv, instance);
 
     RETVAL = newRV_noinc(instance_sv);
