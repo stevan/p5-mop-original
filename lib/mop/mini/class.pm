@@ -221,15 +221,26 @@ sub finalize {
         ) unless exists $class->{ $name };
     }
 
-    my %role_methods = map { %{ $_->local_methods } }
+    my %role_methods = map { %{ $_->local_methods || {} } }
                            @{ $class->roles || [] };
 
     foreach my $name ( keys %role_methods ) {
         my $method = $role_methods{ $name };
+        $class->add_method($name, $method)
+            unless exists $class->methods->{$name};
         $class->SUPER::add_method(
             $name,
             $method
         ) unless exists $class->{ $name };
+    }
+
+    my %role_attributes = map { %{ $_->local_attributes || {} } }
+                              @{ $class->roles || [] };
+
+    foreach my $name ( keys %role_attributes ) {
+        my $attribute = $role_attributes{ $name };
+        $class->add_attribute($name, $attribute)
+            unless exists $class->attributes->{$name};
     }
 
     $class->SUPER::add_method('isa' => sub {
@@ -279,7 +290,8 @@ sub _create_method {
                 }
                 else {
                     set_closed_over( $body, {
-                        (map { $_ => \undef } keys %$invocant),
+                        (map { $_ => mop::util::undef_for_type($_) }
+                             keys %$instance),
                         '$self'  => \undef,
                         '$class' => \undef,
                     });
