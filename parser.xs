@@ -150,8 +150,6 @@ void free_mop_instance(SV *instance_sv)
 
 SV *mop_get_class(struct mop_instance *instance)
 {
-    assert(SvROK(instance->class));
-
     return instance->class;
 }
 
