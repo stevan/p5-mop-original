@@ -32,8 +32,10 @@ class BinaryTree {
     method has_right { defined $right }
 }
 
+my $weak;
 {
     my $t = BinaryTree->new;
+    weaken($weak = $t);
     ok($t->isa(BinaryTree), '... this is a BinaryTree object');
 
     ok(!$t->has_parent, '... this tree has no parent');
@@ -49,12 +51,11 @@ class BinaryTree {
 
     ok($t->left->has_parent, '... left has a parent');
     is($t->left->parent, $t, '... and it is us');
-    ok(isweak(${ $t->left->{'slots'}->{'$parent'} }), '... the value is weakened');
 
     ok($t->right->has_parent, '... right has a parent');
     is($t->right->parent, $t, '... and it is us');
-    ok(isweak(${ $t->right->{'slots'}->{'$parent'} }), '... the value is weakened');
 }
+is($weak, undef, '... the value is weakened');
 
 class MyBinaryTree ( extends => BinaryTree ) {}
 
