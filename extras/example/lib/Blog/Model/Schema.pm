@@ -1,0 +1,74 @@
+package Blog::Model::Schema;
+use v5.16;
+use mop;
+
+role Packable {
+    method pack;   # ( ()      => HashRef )
+    method unpack; # ( HashRef => $self   )
+}
+
+class Author ( roles => [ Packable ] ) {
+    has $name;
+
+    method name { $name }
+
+    method pack { return +{ name => $name } }
+
+    method unpack ( $data ) {
+        $name = $data->{'name'};
+        $self;
+    }
+}
+
+class Post ( roles => [ Packable ] )  {
+    has $title;
+    has $author;
+    has $url;
+    has $body;
+
+    method title  { $title }
+    method author { $author }
+    method url    { $url }
+    method body   { $body }
+
+    method pack {
+        return +{
+            title  => $title,
+            author => $author->pack,
+            url    => $url,
+            body   => $body
+        }
+    }
+
+    method unpack ( $data ) {
+        $title  = $data->{'title'};
+        $author = Author->new->unpack( $data->{'author'} );
+        $url    = $data->{'url'};
+        $body   = $data->{'body'};
+        $self;
+    }
+}
+
+class Blog ( roles => [ Packable ] )  {
+    has @posts;
+
+    method add_post ( $post ) {
+        push @posts => $post
+    }
+
+    method pack {
+        return +{ posts => [ map { $_->pack } @posts ] }
+    }
+
+    method unpack ( $data ) {
+        foreach my $post ( @{ $data->{'posts'} } ) {
+            push @posts => Post->new->unpack( $post );
+        }
+        $self;
+    }
+}
+
+1;
+
+
+

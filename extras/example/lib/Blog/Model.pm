@@ -1,70 +1,41 @@
-package Blog::Model;
 use v5.16;
 use mop;
 
-role Packable {
-    method pack;   # ( ()      => HashRef )
-    method unpack; # ( HashRef => $self   )
-}
+use JSON::XS ();
 
-class Author ( roles => [ Packable ] ) {
-    has $name;
+use Blog::Model::Schema;
 
-    method name { $name }
+class Blog::Model {
+    has $blog;
+    has $storage;
+    has $serializer;
 
-    method pack { return +{ name => $name } }
-
-    method unpack ( $data ) {
-        $name = $data->{'name'};
-        $self;
+    BUILD {
+        $serializer = JSON::XS->new->pretty
     }
-}
 
-class Post ( roles => [ Packable ] )  {
-    has $title;
-    has $author;
-    has $url;
-    has $body;
+    method add_new_post ( $author, $title, $url, $body ) {
+        $blog->add_post(
+            Blog::Model::Schema::Post->new(
+                author => Blog::Model::Schema::Author->new( name => $author ),
+                title  => $title,
+                url    => $url,
+                body   => $body
+            )
+        );
+    }
 
-    method title  { $title }
-    method author { $author }
-    method url    { $url }
-    method body   { $body }
+    method save {
+        $storage->spew( $serializer->encode( $blog->pack ) )
+    }
 
-    method pack {
-        return +{
-            title  => $title,
-            author => $author->pack,
-            url    => $url,
-            body   => $body
+    method load {
+        if ( -e $storage ) {
+            $blog = $serializer->decode( $storage->slurp( chomp => 1 ) );
         }
-    }
-
-    method unpack ( $data ) {
-        $title  = $data->{'title'};
-        $author = Author->new->unpack( $data->{'author'} );
-        $url    = $data->{'url'};
-        $body   = $data->{'body'};
-        $self;
-    }
-}
-
-class Blog ( roles => [ Packable ] )  {
-    has @posts;
-
-    method add_post ( $post ) {
-        push @posts => $post
-    }
-
-    method pack {
-        return +{ posts => [ map { $_->pack } @posts ] }
-    }
-
-    method unpack ( $data ) {
-        foreach my $post ( @{ $data->{'posts'} } ) {
-            push @posts => Post->new->unpack( $post );
+        else {
+            $blog = Blog::Model::Schema::Blog->new
         }
-        $self;
     }
 }
 
