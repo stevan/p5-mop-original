@@ -74,7 +74,7 @@ AV *get_slot_names_noref(SV *class)
 
 AV *get_slot_names(SV *class_ref)
 {
-    assert(SvTYPE(class_ref) == SVt_RV);
+    assert(SvROK(class_ref));
     return get_slot_names_noref(SvRV(class_ref));
 }
 
@@ -107,7 +107,7 @@ struct mop_instance *allocate_mop_instance(SV *class)
         croak("can't set to null class");
     }
 
-    assert(SvTYPE(class) == SVt_RV);
+    assert(SvROK(class));
 
     Newxz(instance, 1, struct mop_instance);
 
@@ -150,7 +150,7 @@ void free_mop_instance(SV *instance_sv)
 
 SV *mop_get_class(struct mop_instance *instance)
 {
-    assert(SvTYPE(instance->class) == SVt_RV);
+    assert(SvROK(instance->class));
 
     return instance->class;
 }
@@ -163,7 +163,7 @@ void mop_set_class(struct mop_instance *instance, SV *class)
         croak("can't set to null class");
     }
 
-    assert(SvTYPE(class) == SVt_RV);
+    assert(SvROK(class));
 
     old_class = instance->class;
 
