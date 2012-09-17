@@ -16,9 +16,9 @@ is(ref($foo), 'Foo', '... got the value from ref we expected');
 is(ref(Foo), ($ENV{PERL_MOP_MINI} ? 'mop::mini::class' : 'mop::bootstrap::full::Class'), '... got the value from ref we expected');
 
 TODO: {
-    local $TODO = 'This will actually probably be something more specific then SCALAR in the end';
-    is(reftype($foo), 'SCALAR', '... got the value from reftype we expected');
-    is(reftype(Foo), 'SCALAR', '... got the value from reftype we expected');
+    local $TODO = "can't change reftype yet";
+    is(reftype($foo), 'INSTANCE', '... got the value from reftype we expected');
+    is(reftype(Foo), 'INSTANCE', '... got the value from reftype we expected');
 }
 
 done_testing;
