@@ -43,10 +43,6 @@ sub populate_stash {
         'DESTROY' => sub {
             my $invocant = shift;
 
-            # XXX this is wrong, but necessary to prevent crashes for now
-            # remove this line when we fix the instance structure
-            return if ${^GLOBAL_PHASE} eq 'DESTRUCT';
-
             my $class = get_class( $invocant );
             return unless $class; # likely in global destruction ...
 
