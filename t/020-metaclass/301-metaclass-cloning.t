@@ -12,6 +12,7 @@ class Foo {
 
 {
     my $FooClone = Foo->clone;
+    $FooClone->FINALIZE;
     is($FooClone->name, 'Foo');
     is($FooClone->find_method('foo'), Foo->find_method('foo'));
     is($FooClone->find_attribute('$foo'), Foo->find_attribute('$foo'));
