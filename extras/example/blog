@@ -1,0 +1,30 @@
+#!perl
+
+use v5.16;
+
+
+=pod
+
+NOTES:
+
+- make this a command line app
+
+- make a dispatcher
+    - use given/when to dispatch the various commands
+    - this can then be used in a REPL like setting too
+
+- make a IOC component
+    - use Package::Stash to find all classes
+        - perhaps bless the CODE refs we generate so that they are distinguishable
+    - use this component in the dispatcher to find the things being asked for
+
+- publish up to blogs.perl.org using Net::MovableType
+
+- add a Storage layer
+
+=cut
+
+use Blog;
+
+Blog->new->process_options( @ARGV );
+
