@@ -13,7 +13,7 @@ class Foo {}
 
 my $foo = Foo->new;
 is(ref($foo), 'Foo', '... got the value from ref we expected');
-is(ref(Foo), 'mop::bootstrap::full::Class', '... got the value from ref we expected');
+is(ref(Foo), ($ENV{PERL_MOP_MINI} ? 'mop::mini::class' : 'mop::bootstrap::full::Class'), '... got the value from ref we expected');
 
 TODO: {
     local $TODO = 'This will actually probably be something more specific then SCALAR in the end';
