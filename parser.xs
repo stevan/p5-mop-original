@@ -833,7 +833,7 @@ create_instance(SV *class, SV *slots_ref)
     while (slot_entry = hv_iternext(slots)) {
         I32 offset;
 
-        offset = slot_offset_for_name(slot_names, HeSVKEY(slot_entry));
+        offset = slot_offset_for_name(slot_names, HeSVKEY_force(slot_entry));
         mop_set_slot_at(instance, offset, HeVAL(slot_entry));
     }
 
