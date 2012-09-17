@@ -25,7 +25,7 @@ sub test_object {
     my $class      = shift;
 
     ok( $object->isa( $class ), '... the object is from class ' . $class_name );
-    SKIP: { skip "Requires the full mop", 1 if $ENV{PERL_MOP_MINI}; $::Object = $::Object;
+    SKIP: { skip "Requires the full mop", 1 if $ENV{PERL_MOP_MINI};
         ok( $object->isa( $::Object ), '... the object is derived from class Object' );
     }
     is( mop::class_of( $object ), $class, '... the class of this object is ' . $class_name );
