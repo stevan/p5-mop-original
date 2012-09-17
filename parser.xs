@@ -30,7 +30,7 @@ static SV *uuid_as_string(I32 *uuid)
 
     /* XXX endianness, etc... */
     uuid_bytes = (char *)uuid;
-    return newSVpvf("%hhx%hhx%hhx%hhx-%hhx%hhx-%hhx%hhx-%hhx%hhx-%hhx%hhx%hhx%hhx%hhx%hhx", uuid_bytes[0], uuid_bytes[1], uuid_bytes[2], uuid_bytes[3], uuid_bytes[4], uuid_bytes[5], uuid_bytes[6], uuid_bytes[7], uuid_bytes[8], uuid_bytes[9], uuid_bytes[10], uuid_bytes[11], uuid_bytes[12], uuid_bytes[13], uuid_bytes[14], uuid_bytes[15]);
+    return newSVpvf("%02hhx%02hhx%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx", uuid_bytes[0], uuid_bytes[1], uuid_bytes[2], uuid_bytes[3], uuid_bytes[4], uuid_bytes[5], uuid_bytes[6], uuid_bytes[7], uuid_bytes[8], uuid_bytes[9], uuid_bytes[10], uuid_bytes[11], uuid_bytes[12], uuid_bytes[13], uuid_bytes[14], uuid_bytes[15]);
 }
 
 struct mop_instance {
