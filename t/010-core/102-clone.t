@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 use Test::More;
+use Test::Fatal;
 
 use mop;
 
@@ -83,13 +84,19 @@ use mop;
     ok(!$foo->can('bar'));
     is($foo->foo, 'FOO');
     is(${ mop::internal::instance::get_slot_at($foo, '$foo') }, 'OOF');
-    is(${ mop::internal::instance::get_slot_at($foo, '$bar') }, undef);
+    like(
+        exception { mop::internal::instance::get_slot_at($foo, '$bar') },
+        qr/slot offset.*\$bar/
+    );
 
     my $bar = $Bar->new;
     ok(!$bar->can('foo'));
     can_ok($bar, 'bar');
     is($bar->bar, 'BAR');
-    is(${ mop::internal::instance::get_slot_at($bar, '$foo') }, undef);
+    like(
+        exception { mop::internal::instance::get_slot_at($bar, '$foo') },
+        qr/slot offset.*\$foo/
+    );
     is(${ mop::internal::instance::get_slot_at($bar, '$bar') }, 'RAB');
 
     is($Foo->find_method('foo')->body, $method->body);
