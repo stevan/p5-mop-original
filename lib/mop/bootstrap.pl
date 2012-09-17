@@ -431,7 +431,7 @@ class Class (roles => [HasMethods, HasAttributes, HasRoles, HasName, HasVersion,
         populate_stash(get_stash_for($self), $self->methods);
         # XXX
         mop::internal::instance::_set_offset_map($self, [
-            keys %{ $class->attributes }
+            keys %{ $self->attributes }
         ]);
     }
 }
