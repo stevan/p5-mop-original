@@ -916,7 +916,7 @@ get_slot_at(SV *instance_ref, SV *slot)
     offset = slot_offset_for_name(slot_names, slot);
     value = mop_get_slot_at(instance, offset);
     if (value && SvOK(value)) {
-        RETVAL = newRV_noinc(mop_get_slot_at(instance, offset));
+        RETVAL = newRV_inc(mop_get_slot_at(instance, offset));
     }
     else {
         char sigil;
