@@ -44,6 +44,7 @@ void free_mop_instance(struct mop_instance *instance);
 int mg_free_mop_instance(pTHX_ SV *sv, MAGIC *mg)
 {
     free_mop_instance((struct mop_instance *)mg->mg_ptr);
+    return 0;
 }
 
 MGVTBL vtbl_instance   = {
@@ -58,7 +59,18 @@ MGVTBL vtbl_instance   = {
   ,NULL
 #endif
 };
-MGVTBL vtbl_slot_names = { 0, 0, 0, 0, 0 };
+MGVTBL vtbl_slot_names = {
+  NULL, NULL, NULL, NULL, NULL
+#if MGf_COPY
+  ,NULL
+#endif
+#if MGf_DUP
+  ,NULL
+#endif
+#if MGf_LOCAL
+  ,NULL
+#endif
+};
 
 void attach_slot_names(SV *class, AV *slot_names)
 {
@@ -859,7 +871,7 @@ create_instance(SV *class, SV *slots_ref)
     slot_names = get_slot_names(class);
 
     hv_iterinit(slots);
-    while (slot_entry = hv_iternext(slots)) {
+    while ((slot_entry = hv_iternext(slots))) {
         I32 offset;
 
         offset = slot_offset_for_name(slot_names, HeSVKEY_force(slot_entry));
@@ -923,7 +935,7 @@ get_slots(SV *instance_ref)
 
         key = av_fetch(slot_names, i, 0);
         if (key) {
-            hv_store_ent(slots, *key, newRV_inc(slot_vals[i]), 0);
+            (void)hv_store_ent(slots, *key, newRV_inc(slot_vals[i]), 0);
         }
     }
     RETVAL = newRV_noinc((SV *)slots);
