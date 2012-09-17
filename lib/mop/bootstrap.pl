@@ -25,7 +25,7 @@ role Cloneable {
     # handle mini-mop objects. after the bootstrap is done, this is replaced
     # with a real implementation using full mop objects.
     method clone (%params) {
-        my $new_instance = create_instance(\get_class($self), {
+        my $new_instance = create_instance(get_class($self), {
             %{ get_slots($self) },
             %params,
         });
