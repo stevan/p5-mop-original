@@ -50,7 +50,6 @@ MGVTBL vtbl_slot_names = { 0, 0, 0, 0, 0 };
 
 void attach_slot_names(SV *class, AV *slot_names)
 {
-    assert(SvTYPE(class) == SVt_PVHV);
     assert(SvTYPE(slot_names) == SVt_PVAV);
     sv_magicext(class, (SV *)slot_names, PERL_MAGIC_ext,
                 &vtbl_slot_names, NULL, 0);
