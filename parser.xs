@@ -946,6 +946,24 @@ set_slot_at(SV *instance_ref, SV *slot, SV *value)
     AV *slot_names;
     I32 offset;
   CODE:
+    if (!value || !SvOK(value)) {
+        char sigil;
+
+        sigil = (SvPV_nolen(slot))[0];
+        switch (sigil) {
+        case '$':
+            value = sv_2mortal(newRV_noinc(newSV(0)));
+            break;
+        case '@':
+            value = sv_2mortal(newRV_noinc((SV *)newAV()));
+            break;
+        case '%':
+            value = sv_2mortal(newRV_noinc((SV *)newHV()));
+            break;
+        default:
+            croak("unknown sigil: %c", sigil);
+        }
+    }
     instance = (struct mop_instance *)SvIVX(SvRV(instance_ref));
     slot_names = get_slot_names(mop_get_class(instance));
     offset = slot_offset_for_name(slot_names, slot);
