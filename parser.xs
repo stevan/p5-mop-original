@@ -852,7 +852,7 @@ get_class(SV *instance_ref)
     struct mop_instance *instance;
   CODE:
     instance = (struct mop_instance *)SvIVX(SvRV(instance_ref));
-    RETVAL = mop_get_class(instance);
+    RETVAL = SvREFCNT_inc(mop_get_class(instance));
   OUTPUT:
     RETVAL
 
