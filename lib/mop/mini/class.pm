@@ -46,7 +46,7 @@ sub new {
         );
 
         # XXX
-        mop::internal::instance::_set_offset_map($class, [ keys %attrs ]);
+        mop::internal::instance::_set_offset_map($class, [ sort keys %attrs ]);
         my $instance = create_instance($class, {});
         foreach my $attr ( keys %attrs ) {
             my ($sigil, $plain_attr) = ($attr =~ /^([\$\@\%])(.*)/);
