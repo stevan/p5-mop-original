@@ -2,6 +2,7 @@
 #include "perl.h"
 #include "callparser1.h"
 #include "XSUB.h"
+#include "ptable.h"
 
 /* XXX replace this with a real implementation */
 static I32 *new_uuid()
@@ -231,6 +232,353 @@ struct data {
     SV *indicator;
     char *package;
 };
+
+static OP *(*old_ck_padsv)(pTHX_ OP *);
+static OP *(*old_ck_padav)(pTHX_ OP *);
+static OP *(*old_ck_padhv)(pTHX_ OP *);
+static OP *(*old_ck_padany)(pTHX_ OP *);
+static Perl_ophook_t old_opfreehook;
+
+#define HH_KEY "mop/enabled"
+
+#define IN_EFFECT in_effect(aTHX)
+
+static bool in_effect (pTHX)
+{
+  SV **sv = hv_fetchs(GvHV(PL_hintgv), HH_KEY, 0);
+  if (!sv || !SvTRUE(*sv))
+    return false;
+  return true;
+}
+
+#define OPpPADOP_TAGGED 1
+
+static void tag (OP *o)
+{
+  o->op_private |= OPpPADOP_TAGGED;
+}
+
+static bool tagged (OP *o)
+{
+  return !!(o->op_private & OPpPADOP_TAGGED);
+}
+
+static void untag (OP *o)
+{
+  o->op_private &= ~OPpPADOP_TAGGED;
+}
+
+typedef void (*walk_cb_t)(pTHX_ OP *, void *);
+
+static void _walk_optree_structural (pTHX_ OP *o, walk_cb_t cb, void *ud,
+                                     ptable *visited)
+{
+  if (!o || ptable_fetch(visited, o))
+    return;
+
+  for (; o; o = o->op_sibling) {
+    ptable_store(visited, o, o);
+
+    cb(aTHX_ o, ud);
+
+    if ( o->op_flags & OPf_KIDS )
+      _walk_optree_structural(aTHX_ cUNOPo->op_first, cb, ud, visited);
+  }
+}
+
+static void walk_optree_structural (pTHX_ OP *o, walk_cb_t cb, void *ud)
+{
+  ptable *visited_ops = ptable_new();
+  _walk_optree_structural(aTHX_ o, cb, ud, visited_ops);
+  ptable_free(visited_ops);
+}
+
+typedef struct mop_frame_St mop_frame_t;
+struct mop_frame_St {
+	mop_frame_t *caller;
+	SV *invocant;
+	SV *class;
+	SV *slots;
+};
+
+mop_frame_t *frame;
+
+typedef SV *(*pad_cb_t)(pTHX_ OP *o, void *ud);
+typedef void (*pad_cb_free_t)(pTHX_ void *);
+
+typedef struct pad_cb_data_St {
+  pad_cb_t cb;
+  void *ud;
+  pad_cb_free_t free_ud;
+} pad_cb_data_t;
+
+static ptable *pad_callbacks;
+
+static pad_cb_data_t * fetch_cb (pTHX_ OP *o)
+{
+  return (pad_cb_data_t *)ptable_fetch(pad_callbacks, o);
+}
+
+static SV * invoke_callback (pTHX_ OP *o)
+{
+  pad_cb_data_t *cb = fetch_cb(aTHX_ o);
+  return cb->cb(aTHX_ o, cb->ud);
+}
+
+static OP * mypp_padcallbacksv (pTHX)
+{
+  dVAR; dSP;
+  SV *sv = invoke_callback(aTHX_ PL_op);
+  XPUSHs(sv);
+  if (PL_op->op_flags & OPf_MOD) {
+    if (PL_op->op_private & OPpDEREF) {
+      PUTBACK;
+      TOPs = Perl_vivify_ref(aTHX_ TOPs, PL_op->op_private & OPpDEREF);
+      SPAGAIN;
+    }
+  }
+  RETURN;
+}
+
+static OP * mypp_padcallbackav (pTHX)
+{
+  dVAR; dSP;
+  I32 gimme;
+  SV *av = invoke_callback(aTHX_ PL_op);
+  assert(SvTYPE(av) == SVt_PVAV);
+  EXTEND(SP, 1);
+  if (PL_op->op_flags & OPf_REF) {
+    PUSHs(av);
+    RETURN;
+  } else if (PL_op->op_private & OPpMAYBE_LVSUB) {
+    const I32 flags = is_lvalue_sub();
+    if (flags && !(flags & OPpENTERSUB_INARGS)) {
+      if (GIMME == G_SCALAR)
+        /* diag_listed_as: Can't return %s to lvalue scalar context */
+        Perl_croak(aTHX_ "Can't return array to lvalue scalar context");
+      PUSHs(av);
+      RETURN;
+    }
+  }
+  gimme = GIMME_V;
+  if (gimme == G_ARRAY) {
+    const I32 maxarg = AvFILL((AV *)av) + 1;
+    EXTEND(SP, maxarg);
+    if (SvMAGICAL(av)) {
+      U32 i;
+      for (i=0; i < (U32)maxarg; i++) {
+        SV * const * const svp = av_fetch((AV *)av, i, FALSE);
+        SP[i+1] = (svp) ? *svp : &PL_sv_undef;
+      }
+    }
+    else {
+      Copy(AvARRAY((const AV *)av), SP+1, maxarg, SV*);
+    }
+    SP += maxarg;
+  }
+  else if (gimme == G_SCALAR) {
+    SV* const sv = sv_newmortal();
+    const I32 maxarg = AvFILL((AV *)av) + 1;
+    sv_setiv(sv, maxarg);
+    PUSHs(sv);
+  }
+  RETURN;
+}
+
+extern OP *Perl_do_kv(pTHX);
+
+static OP * mypp_padcallbackhv (pTHX)
+{
+  dVAR; dSP;
+  I32 gimme;
+  SV *hv = invoke_callback(aTHX_ PL_op);
+
+  assert(SvTYPE(hv) == SVt_PVHV);
+  XPUSHs(hv);
+  if (PL_op->op_flags & OPf_REF)
+    RETURN;
+  else if (PL_op->op_private & OPpMAYBE_LVSUB) {
+    const I32 flags = is_lvalue_sub();
+    if (flags && !(flags & OPpENTERSUB_INARGS)) {
+      if (GIMME == G_SCALAR)
+        /* diag_listed_as: Can't return %s to lvalue scalar context */
+        Perl_croak(aTHX_ "Can't return hash to lvalue scalar context");
+      RETURN;
+    }
+  }
+  gimme = GIMME_V;
+  if (gimme == G_ARRAY) {
+    RETURNOP(Perl_do_kv(aTHX));
+  }
+  else if (
+#ifdef OPpTRUEBOOL
+           (PL_op->op_private & OPpTRUEBOOL
+            || (PL_op->op_private & OPpMAYBE_TRUEBOOL
+                && block_gimme() == G_VOID))
+           &&
+#endif
+           (!SvRMAGICAL(hv) || !mg_find(hv, PERL_MAGIC_tied)))
+    SETs(HvUSEDKEYS(hv) ? &PL_sv_yes : sv_2mortal(newSViv(0)));
+  else if (gimme == G_SCALAR) {
+    SV* const sv = Perl_hv_scalar(aTHX_ (HV *)hv);
+    SETs(sv);
+  }
+  RETURN;
+}
+
+static pad_cb_data_t * new_pad_cb (pTHX_ pad_cb_t cb, void *ud,
+                                   pad_cb_free_t ud_free)
+{
+  pad_cb_data_t *pad_cb;
+
+  Newx(pad_cb, 1, pad_cb_data_t);
+  pad_cb->cb = cb;
+  pad_cb->ud = ud;
+  pad_cb->free_ud = ud_free;
+
+  return pad_cb;
+}
+
+typedef void (*get_pad_cb_t)(pTHX_ OP *, U32, pad_cb_t *, void **, pad_cb_free_t *);
+typedef struct ud_St {
+  get_pad_cb_t get_pad_cb;
+  PADOFFSET *padoffsets;
+  U32 n_padoffsets;
+} ud_t;
+
+static bool padoffset_is_wanted (PADOFFSET *offsets, U32 n_offsets,
+                                 PADOFFSET wanted, U32 *pos_p)
+{
+  U32 i;
+
+  for (i = 0; i < n_offsets; i++) {
+    if (offsets[i] == wanted) {
+      *pos_p = i;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+static void mangle_padops (pTHX_ OP *o, void *_ud)
+{
+  pad_cb_t user_cb;
+  void *user_ud = NULL;
+  pad_cb_free_t free_user_ud = NULL;
+  ud_t *ud = (ud_t *)_ud;
+
+  switch (o->op_type) {
+  case OP_PADSV:
+  case OP_PADAV:
+  case OP_PADHV:
+    if (tagged(o)) {
+      U32 pos;
+      if (padoffset_is_wanted(ud->padoffsets, ud->n_padoffsets, o->op_targ, &pos)) {
+        ud->get_pad_cb(aTHX_ o, pos, &user_cb, &user_ud, &free_user_ud);
+        ptable_store(pad_callbacks, o, new_pad_cb(aTHX_ user_cb, user_ud, free_user_ud));
+        o->op_ppaddr = o->op_type == OP_PADSV
+          ? mypp_padcallbacksv
+          : (o->op_type == OP_PADAV
+             ? mypp_padcallbackav
+             : mypp_padcallbackhv);
+      }
+      untag(o);
+    }
+    break;
+  default:
+    break;
+  }
+}
+
+static void setup_padop_callback (pTHX)
+{
+  PL_hints |= HINT_BLOCK_SCOPE;
+  (void)hv_stores(GvHV(PL_hintgv), HH_KEY, &PL_sv_yes);
+}
+
+static void finalise_padop_callback (pTHX_ OP *o, PADOFFSET *padoffsets,
+                                     U32 n_padoffsets, get_pad_cb_t cb)
+{
+  ud_t mangle_padops_ud;
+
+  (void)hv_stores(GvHV(PL_hintgv), HH_KEY, &PL_sv_no);
+
+  mangle_padops_ud.get_pad_cb = cb;
+  mangle_padops_ud.padoffsets = padoffsets;
+  mangle_padops_ud.n_padoffsets = n_padoffsets;
+  walk_optree_structural(aTHX_ o, mangle_padops, &mangle_padops_ud);
+}
+
+static void unwind_frame (pTHX_ void *ud)
+{
+  mop_frame_t *ex_frame = frame;
+  frame = ex_frame->caller;
+  Safefree(ex_frame);
+}
+
+static OP * mypp_setup_frame (pTHX)
+{
+  dXSARGS;
+  mop_frame_t *prev_frame = frame;
+  Newx(frame, 1, mop_frame_t);
+  frame->caller = prev_frame;
+  frame->invocant = ST(0);
+  SAVEDESTRUCTOR_X(unwind_frame, NULL);
+  RETURN;
+}
+
+static OP * myck_padsv (pTHX_ OP *o)
+{
+  o = old_ck_padsv(aTHX_ o);
+
+  if (IN_EFFECT)
+    tag(o);
+
+  return o;
+}
+
+static OP * myck_padav (pTHX_ OP *o)
+{
+  o = old_ck_padav(aTHX_ o);
+
+  if (IN_EFFECT)
+    tag(o);
+
+  return o;
+}
+
+static OP * myck_padhv (pTHX_ OP *o)
+{
+  o = old_ck_padhv(aTHX_ o);
+
+  if (IN_EFFECT)
+    tag(o);
+
+  return o;
+}
+
+static OP * myck_padany (pTHX_ OP *o)
+{
+  o = old_ck_padany(aTHX_ o);
+
+  if (IN_EFFECT)
+    tag(o);
+
+  return o;
+}
+
+static void myopfreehook (pTHX_ OP *o)
+{
+  pad_cb_data_t *data = ptable_fetch(pad_callbacks, o);
+  if (data) {
+    if (data->free_ud && data->ud)
+      data->free_ud(aTHX_ data->ud);
+
+    Safefree(data);
+    ptable_delete(pad_callbacks, o);
+  }
+}
 
 /* stolen (with modifications) from Scope::Escape::Sugar */
 
@@ -1045,3 +1393,21 @@ init_parser_for(package)
 
     snprintf(buf, 127, "%s::DEMOLISH", package);
     cv_set_call_parser(get_cv(buf, 0), parse_method, &PL_sv_no);
+
+BOOT:
+{
+    pad_callbacks = ptable_new();
+
+    old_ck_padsv = PL_check[OP_PADSV];
+    old_ck_padav = PL_check[OP_PADAV];
+    old_ck_padhv = PL_check[OP_PADHV];
+    old_ck_padany = PL_check[OP_PADANY];
+
+    PL_check[OP_PADSV] = myck_padsv;
+    PL_check[OP_PADAV] = myck_padav;
+    PL_check[OP_PADHV] = myck_padhv;
+    PL_check[OP_PADANY] = myck_padany;
+
+    old_opfreehook = PL_opfreehook;
+    PL_opfreehook = myopfreehook;
+}
