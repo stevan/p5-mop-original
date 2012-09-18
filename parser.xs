@@ -40,15 +40,15 @@ struct mop_instance {
     SV **slots;
 };
 
-void free_mop_instance(struct mop_instance *instance);
+static void free_mop_instance(struct mop_instance *instance);
 
-int mg_free_mop_instance(pTHX_ SV *sv, MAGIC *mg)
+static int mg_free_mop_instance(pTHX_ SV *sv, MAGIC *mg)
 {
     free_mop_instance((struct mop_instance *)mg->mg_ptr);
     return 0;
 }
 
-MGVTBL vtbl_instance   = {
+static MGVTBL vtbl_instance   = {
   NULL, NULL, NULL, NULL, mg_free_mop_instance
 #if MGf_COPY
   ,NULL
@@ -60,7 +60,7 @@ MGVTBL vtbl_instance   = {
   ,NULL
 #endif
 };
-MGVTBL vtbl_slot_names = {
+static MGVTBL vtbl_slot_names = {
   NULL, NULL, NULL, NULL, NULL
 #if MGf_COPY
   ,NULL
@@ -73,14 +73,14 @@ MGVTBL vtbl_slot_names = {
 #endif
 };
 
-void attach_slot_names(SV *class, AV *slot_names)
+static void attach_slot_names(SV *class, AV *slot_names)
 {
     assert(SvTYPE(slot_names) == SVt_PVAV);
     sv_magicext(class, (SV *)slot_names, PERL_MAGIC_ext,
                 &vtbl_slot_names, NULL, 0);
 }
 
-AV *get_slot_names_noref(SV *class)
+static AV *get_slot_names_noref(SV *class)
 {
     MAGIC *mg = NULL;
 
@@ -96,13 +96,13 @@ AV *get_slot_names_noref(SV *class)
     }
 }
 
-AV *get_slot_names(SV *class_ref)
+static AV *get_slot_names(SV *class_ref)
 {
     assert(SvROK(class_ref));
     return get_slot_names_noref(SvRV(class_ref));
 }
 
-I32 slot_offset_for_name(AV *slot_names, SV *name)
+static I32 slot_offset_for_name(AV *slot_names, SV *name)
 {
     I32 slot_names_len;
     int i;
@@ -121,7 +121,7 @@ I32 slot_offset_for_name(AV *slot_names, SV *name)
     croak("couldn't find slot offset for %"SVf, name);
 }
 
-struct mop_instance *allocate_mop_instance(SV *class)
+static struct mop_instance *allocate_mop_instance(SV *class)
 {
     struct mop_instance *instance;
     AV *slot_names;
@@ -144,12 +144,12 @@ struct mop_instance *allocate_mop_instance(SV *class)
     return instance;
 }
 
-SV *mop_get_class(struct mop_instance *instance)
+static SV *mop_get_class(struct mop_instance *instance)
 {
     return instance->class;
 }
 
-void mop_set_class(struct mop_instance *instance, SV *class)
+static void mop_set_class(struct mop_instance *instance, SV *class)
 {
     SV *old_class;
 
@@ -168,7 +168,7 @@ void mop_set_class(struct mop_instance *instance, SV *class)
     /* XXX fix up slots array */
 }
 
-I32 *mop_get_uuid(struct mop_instance *instance)
+static I32 *mop_get_uuid(struct mop_instance *instance)
 {
     if (!instance->uuid) {
         instance->uuid = new_uuid();
@@ -176,17 +176,18 @@ I32 *mop_get_uuid(struct mop_instance *instance)
     return instance->uuid;
 }
 
-SV **mop_get_slots(struct mop_instance *instance)
+static SV **mop_get_slots(struct mop_instance *instance)
 {
     return instance->slots;
 }
 
-SV *mop_get_slot_at(struct mop_instance *instance, IV offset)
+static SV *mop_get_slot_at(struct mop_instance *instance, IV offset)
 {
     return (instance->slots)[offset];
 }
 
-void mop_set_slot_at(struct mop_instance *instance, IV offset, SV *value_ref)
+static void mop_set_slot_at(struct mop_instance *instance, IV offset,
+                            SV *value_ref)
 {
     SV *old_value;
     SV *value;
@@ -208,7 +209,7 @@ void mop_set_slot_at(struct mop_instance *instance, IV offset, SV *value_ref)
     }
 }
 
-SV *undef_for_type(SV *name)
+static SV *undef_for_type(SV *name)
 {
     char sigil;
 
@@ -1169,14 +1170,12 @@ static OP *parse_method(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     }
 }
 
-static void
-attach_instance (pTHX_ SV *sv, struct mop_instance *instance)
+static void attach_instance (pTHX_ SV *sv, struct mop_instance *instance)
 {
   sv_magicext(sv, NULL, PERL_MAGIC_ext, &vtbl_instance, (char *)instance, 0);
 }
 
-static struct mop_instance *
-get_instance (pTHX_ SV *sv)
+static struct mop_instance * get_instance (pTHX_ SV *sv)
 {
   if (SvMAGICAL(sv)) {
     MAGIC *mg;
@@ -1191,7 +1190,7 @@ get_instance (pTHX_ SV *sv)
   croak("not a mop instance");
 }
 
-void free_mop_instance(struct mop_instance *instance)
+static void free_mop_instance(struct mop_instance *instance)
 {
     AV *slot_names;
     I32 number_of_slots;
