@@ -207,6 +207,26 @@ void mop_set_slot_at(struct mop_instance *instance, IV offset, SV *value_ref)
     }
 }
 
+SV *undef_for_type(SV *name)
+{
+    char sigil;
+
+    sigil = (SvPV_nolen(name))[0];
+    switch (sigil) {
+    case '$':
+        return newRV_noinc(newSV(0));
+        break;
+    case '@':
+        return newRV_noinc((SV *)newAV());
+        break;
+    case '%':
+        return newRV_noinc((SV *)newHV());
+        break;
+    default:
+        croak("unknown sigil: %c", sigil);
+    }
+}
+
 struct data {
     SV *indicator;
     char *package;
@@ -958,22 +978,7 @@ get_slot_at(SV *instance_ref, SV *slot)
         RETVAL = newRV_inc(value);
     }
     else {
-        char sigil;
-
-        sigil = (SvPV_nolen(slot))[0];
-        switch (sigil) {
-        case '$':
-            RETVAL = newRV_noinc(newSV(0));
-            break;
-        case '@':
-            RETVAL = newRV_noinc((SV *)newAV());
-            break;
-        case '%':
-            RETVAL = newRV_noinc((SV *)newHV());
-            break;
-        default:
-            croak("unknown sigil: %c", sigil);
-        }
+        RETVAL = undef_for_type(slot);
     }
   OUTPUT:
     RETVAL
@@ -986,22 +991,7 @@ set_slot_at(SV *instance_ref, SV *slot, SV *value)
     I32 offset;
   CODE:
     if (!value || !SvOK(value)) {
-        char sigil;
-
-        sigil = (SvPV_nolen(slot))[0];
-        switch (sigil) {
-        case '$':
-            value = sv_2mortal(newRV_noinc(newSV(0)));
-            break;
-        case '@':
-            value = sv_2mortal(newRV_noinc((SV *)newAV()));
-            break;
-        case '%':
-            value = sv_2mortal(newRV_noinc((SV *)newHV()));
-            break;
-        default:
-            croak("unknown sigil: %c", sigil);
-        }
+        value = sv_2mortal(undef_for_type(slot));
     }
     instance = get_instance(aTHX_ SvRV(instance_ref));
     slot_names = get_slot_names(mop_get_class(instance));
