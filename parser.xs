@@ -4,6 +4,34 @@
 #include "XSUB.h"
 #include "ptable.h"
 
+/* added in 5.17.4 */
+#ifndef PadlistARRAY
+
+#define PadlistARRAY(pl)	AvARRAY(pl)
+#define PadlistMAX(pl)		AvFILLp(pl)
+#define PadlistNAMES(pl)	(*PadlistARRAY(pl))
+#define PadlistNAMESARRAY(pl)	PadnamelistARRAY(PadlistNAMES(pl))
+#define PadlistNAMESMAX(pl)	PadnamelistMAX(PadlistNAMES(pl))
+#define PadlistREFCNT(pl)	1	/* reserved for future use */
+
+#define PadnamelistARRAY(pnl)	AvARRAY(pnl)
+#define PadnamelistMAX(pnl)	AvFILLp(pnl)
+
+#define PadARRAY(pad)		AvARRAY(pad)
+#define PadMAX(pad)		AvFILLp(pad)
+
+#define PadnamePV(pn)		(SvPOKp(pn) ? SvPVX(pn) : NULL)
+#define PadnameLEN(pn)		SvCUR(pn)
+#define PadnameUTF8(pn)		!!SvUTF8(pn)
+#define PadnameSV(pn)		pn
+#define PadnameIsOUR(pn)	!!SvPAD_OUR(pn)
+#define PadnameOURSTASH(pn)	SvOURSTASH(pn)
+#define PadnameOUTER(pn)	!!SvFAKE(pn)
+#define PadnameIsSTATE(pn)	!!SvPAD_STATE(pn)
+#define PadnameTYPE(pn)		(SvPAD_TYPED(pn) ? SvSTASH(pn) : NULL)
+
+#endif
+
 /* XXX replace this with a real implementation */
 static I32 *new_uuid()
 {
