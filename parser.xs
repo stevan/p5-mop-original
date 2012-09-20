@@ -1215,7 +1215,15 @@ static struct mop_instance * get_instance (pTHX_ SV *sv)
     }
   }
 
-  croak("not a mop instance");
+  croak("%"SVf" is not a mop instance", sv);
+}
+
+static struct mop_instance * get_instance_from_ref (pTHX_ SV *sv)
+{
+    if (!SvROK(sv)) {
+        croak("'%"SVf"' is not a reference", sv);
+    }
+    return get_instance(aTHX_ SvRV(sv));
 }
 
 static void free_mop_instance(struct mop_instance *instance)
@@ -1285,7 +1293,7 @@ get_class(SV *instance_ref)
   PREINIT:
     struct mop_instance *instance;
   CODE:
-    instance = get_instance(aTHX_ SvRV(instance_ref));
+    instance = get_instance_from_ref(aTHX_ instance_ref);
     RETVAL = SvREFCNT_inc(mop_get_class(instance));
   OUTPUT:
     RETVAL
@@ -1295,7 +1303,7 @@ set_class(SV *instance_ref, SV *class)
   PREINIT:
     struct mop_instance *instance;
   CODE:
-    instance = get_instance(aTHX_ SvRV(instance_ref));
+    instance = get_instance_from_ref(aTHX_ instance_ref);
     mop_set_class(instance, class);
 
 SV *
@@ -1304,7 +1312,7 @@ get_uuid(SV *instance_ref)
     struct mop_instance *instance;
     I32 *uuid;
   CODE:
-    instance = get_instance(aTHX_ SvRV(instance_ref));
+    instance = get_instance_from_ref(aTHX_ instance_ref);
     uuid = mop_get_uuid(instance);
     RETVAL = uuid_as_string(uuid);
   OUTPUT:
@@ -1320,7 +1328,7 @@ get_slots(SV *instance_ref)
     HV *slots;
     int i;
   CODE:
-    instance = get_instance(aTHX_ SvRV(instance_ref));
+    instance = get_instance_from_ref(aTHX_ instance_ref);
     slot_names = get_slot_names(mop_get_class(instance));
     slot_vals = mop_get_slots(instance);
     number_of_slots = av_len(slot_names) + 1;
@@ -1345,7 +1353,7 @@ get_slot_at(SV *instance_ref, SV *slot)
     I32 offset;
     SV *value;
   CODE:
-    instance = get_instance(aTHX_ SvRV(instance_ref));
+    instance = get_instance_from_ref(aTHX_ instance_ref);
     slot_names = get_slot_names(mop_get_class(instance));
     offset = slot_offset_for_name(slot_names, slot);
     value = mop_get_slot_at(instance, offset);
@@ -1368,7 +1376,7 @@ set_slot_at(SV *instance_ref, SV *slot, SV *value)
     if (!value || !SvOK(value)) {
         value = sv_2mortal(undef_for_type(slot));
     }
-    instance = get_instance(aTHX_ SvRV(instance_ref));
+    instance = get_instance_from_ref(aTHX_ instance_ref);
     slot_names = get_slot_names(mop_get_class(instance));
     offset = slot_offset_for_name(slot_names, slot);
     mop_set_slot_at(instance, offset, value);
