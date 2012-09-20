@@ -26,11 +26,9 @@ class Blog::Model {
     }
 
     method load {
+        $blog = Blog::Model::Schema::Blog->new;
         if ( -e $storage ) {
-            $blog = $serializer->decode( $storage->slurp( chomp => 1 ) );
-        }
-        else {
-            $blog = Blog::Model::Schema::Blog->new
+            $blog->unpack( $serializer->decode( scalar $storage->slurp( chomp => 1 ) ) );
         }
     }
 }
