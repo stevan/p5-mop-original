@@ -1,6 +1,7 @@
 use v5.16;
 use mop;
 
+use Try;
 use Path::Class qw[ file ];
 
 use Blog::Model;
@@ -11,22 +12,19 @@ class Blog {
     has $model  = Blog::Model->new( storage => file( './data.json' ) );
 
     method process_options ( $cmd, @args ) {
-
-        warn $logger;
-        warn $model;
-
-        if ( $cmd eq 'new-post') {
-
-            $model->load;
-            $model->add_new_post( @args );
-            $model->save;
-
-            $logger->log( info => 'Creating new post' );
+        try {
+            if ( $cmd eq 'new-post') {
+                $model->txn_do( add_new_post => @args );
+                $logger->log( info => 'Creating new post' );
+            }
+            else {
+                $logger->log( error => 'No command specified' );
+            }
+        } catch {
+            $logger->log( fatal => 'An error occurred: ' . $_ );
         }
-        else {
-            $logger->log( error => 'No command specified' );
-            exit;
-        }
+
+        exit;
     }
 }
 
