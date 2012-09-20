@@ -21,6 +21,12 @@ class Blog::Model {
         );
     }
 
+    method txn_do ( $method, @args ) {
+        $self->load;
+        $self->$method( @args );
+        $self->save;
+    }
+
     method save {
         $storage->spew( $serializer->encode( $blog->pack ) )
     }
