@@ -8,11 +8,7 @@ use Blog::Model::Schema;
 class Blog::Model {
     has $blog;
     has $storage;
-    has $serializer;
-
-    BUILD {
-        $serializer = JSON::XS->new->pretty
-    }
+    has $serializer = JSON::XS->new->pretty;
 
     method add_new_post ( $author, $title, $url, $body ) {
         $blog->add_post(
