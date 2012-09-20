@@ -7,13 +7,8 @@ use Blog::Model;
 use Blog::Logger;
 
 class Blog {
-    has $logger;
-    has $model;
-
-    BUILD {
-        $logger = Blog::Logger->new;
-        $model  = Blog::Model->new( storage => file( './data.json' ) );
-    }
+    has $logger = Blog::Logger->new;
+    has $model  = Blog::Model->new( storage => file( './data.json' ) );
 
     method process_options ( $cmd, @args ) {
 
