@@ -18,7 +18,7 @@ sub execute_method {
     state $STACKS = {};
 
     my $method   = shift;
-    my $invocant = shift;
+    my $invocant = $_[0];
     weaken($invocant);
 
     my $uuid     = get_uuid($method);
@@ -27,8 +27,6 @@ sub execute_method {
     my $body     = ${ get_slot_at( $method, '$body' ) };
 
     my $env      = {
-        %$instance,
-        '$self'  => \$invocant,
         '$class' => \$class
     };
 
@@ -47,8 +45,6 @@ sub execute_method {
         }
         else {
             set_closed_over( $body, {
-                (map { $_ => mop::util::undef_for_type($_) } keys %$instance),
-                '$self'  => \undef,
                 '$class' => \undef,
             });
         }

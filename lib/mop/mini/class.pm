@@ -270,15 +270,13 @@ sub _create_method {
         $method_name => sub {
             state $STACK = [];
 
-            my $invocant = shift;
+            my $invocant = $_[0];
             weaken($invocant);
 
             my $instance = get_slots( $invocant );
             my $class    = get_class( $invocant );
 
             my $env      = {
-                %$instance,
-                '$self'  => \$invocant,
                 '$class' => \$class
             };
 
@@ -292,9 +290,6 @@ sub _create_method {
                 }
                 else {
                     set_closed_over( $body, {
-                        (map { $_ => mop::util::undef_for_type($_) }
-                             keys %$instance),
-                        '$self'  => \undef,
                         '$class' => \undef,
                     });
                 }

@@ -34,4 +34,12 @@ sub undef_for_type {
     }
 }
 
+sub sort_slot_hash {
+    my ($slots) = @_;
+
+    return {
+        map { $_ => $slots->{$_} } sort keys %{ $slots },
+    };
+}
+
 1;

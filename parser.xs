@@ -209,11 +209,6 @@ static SV **mop_get_slots(struct mop_instance *instance)
     return instance->slots;
 }
 
-static SV *mop_get_slot_at(struct mop_instance *instance, IV offset)
-{
-    return (instance->slots)[offset];
-}
-
 static void mop_set_slot_at(struct mop_instance *instance, IV offset,
                             SV *value_ref)
 {
@@ -280,46 +275,12 @@ static bool in_effect (pTHX)
   return true;
 }
 
-#define OPpPADOP_TAGGED 1
+static ptable *instance_lexical_padops;
 
-static void tag (OP *o)
+static void
+tag (OP *o, SV *padname)
 {
-  o->op_private |= OPpPADOP_TAGGED;
-}
-
-static bool tagged (OP *o)
-{
-  return !!(o->op_private & OPpPADOP_TAGGED);
-}
-
-static void untag (OP *o)
-{
-  o->op_private &= ~OPpPADOP_TAGGED;
-}
-
-typedef void (*walk_cb_t)(pTHX_ OP *, void *);
-
-static void _walk_optree_structural (pTHX_ OP *o, walk_cb_t cb, void *ud,
-                                     ptable *visited)
-{
-  if (!o || ptable_fetch(visited, o))
-    return;
-
-  for (; o; o = o->op_sibling) {
-    ptable_store(visited, o, o);
-
-    cb(aTHX_ o, ud);
-
-    if ( o->op_flags & OPf_KIDS )
-      _walk_optree_structural(aTHX_ cUNOPo->op_first, cb, ud, visited);
-  }
-}
-
-static void walk_optree_structural (pTHX_ OP *o, walk_cb_t cb, void *ud)
-{
-  ptable *visited_ops = ptable_new();
-  _walk_optree_structural(aTHX_ o, cb, ud, visited_ops);
-  ptable_free(visited_ops);
+    ptable_store(instance_lexical_padops, o, padname);
 }
 
 typedef struct mop_frame_St mop_frame_t;
@@ -468,56 +429,34 @@ static pad_cb_data_t * new_pad_cb (pTHX_ pad_cb_t cb, void *ud,
   return pad_cb;
 }
 
-typedef void (*get_pad_cb_t)(pTHX_ OP *, U32, pad_cb_t *, void **, pad_cb_free_t *);
-typedef struct ud_St {
-  get_pad_cb_t get_pad_cb;
-  PADOFFSET *padoffsets;
-  U32 n_padoffsets;
-} ud_t;
+typedef void (*get_pad_cb_t)(pTHX_ OP *, SV *, pad_cb_t *, void **, pad_cb_free_t *);
 
-static bool padoffset_is_wanted (PADOFFSET *offsets, U32 n_offsets,
-                                 PADOFFSET wanted, U32 *pos_p)
+static OP *
+mypp_noop (pTHX)
 {
-  U32 i;
-
-  for (i = 0; i < n_offsets; i++) {
-    if (offsets[i] == wanted) {
-      *pos_p = i;
-      return true;
-    }
-  }
-
-  return false;
+    dVAR; dSP;
+    RETURN;
 }
 
-static void mangle_padops (pTHX_ OP *o, void *_ud)
+static void
+mangle_padops (pTHX_ ptable_ent *ent, void *ud)
 {
-  pad_cb_t user_cb;
-  void *user_ud = NULL;
-  pad_cb_free_t free_user_ud = NULL;
-  ud_t *ud = (ud_t *)_ud;
+    pad_cb_t user_cb;
+    void *user_ud = NULL;
+    pad_cb_free_t free_user_ud = NULL;
+    get_pad_cb_t cb = (get_pad_cb_t)ud;
 
-  switch (o->op_type) {
-  case OP_PADSV:
-  case OP_PADAV:
-  case OP_PADHV:
-    if (tagged(o)) {
-      U32 pos;
-      if (padoffset_is_wanted(ud->padoffsets, ud->n_padoffsets, o->op_targ, &pos)) {
-        ud->get_pad_cb(aTHX_ o, pos, &user_cb, &user_ud, &free_user_ud);
-        ptable_store(pad_callbacks, o, new_pad_cb(aTHX_ user_cb, user_ud, free_user_ud));
-        o->op_ppaddr = o->op_type == OP_PADSV
-          ? mypp_padcallbacksv
-          : (o->op_type == OP_PADAV
-             ? mypp_padcallbackav
-             : mypp_padcallbackhv);
-      }
-      untag(o);
-    }
-    break;
-  default:
-    break;
-  }
+    OP *o = (OP *)ent->key;
+    SV *padname = (SV *)ent->val;
+
+    cb(aTHX_ o, padname, &user_cb, &user_ud, &free_user_ud);
+    ptable_store(pad_callbacks, o,
+                 new_pad_cb(aTHX_ user_cb, user_ud, free_user_ud));
+    o->op_ppaddr = o->op_type == OP_PADSV
+        ? mypp_padcallbacksv
+        : (o->op_type == OP_PADAV
+           ? mypp_padcallbackav
+           : mypp_padcallbackhv);
 }
 
 static void setup_padop_callback (pTHX)
@@ -526,17 +465,11 @@ static void setup_padop_callback (pTHX)
   (void)hv_stores(GvHV(PL_hintgv), HH_KEY, &PL_sv_yes);
 }
 
-static void finalise_padop_callback (pTHX_ OP *o, PADOFFSET *padoffsets,
-                                     U32 n_padoffsets, get_pad_cb_t cb)
+static void finalise_padop_callback (pTHX_ OP *o, get_pad_cb_t cb)
 {
-  ud_t mangle_padops_ud;
-
   (void)hv_stores(GvHV(PL_hintgv), HH_KEY, &PL_sv_no);
 
-  mangle_padops_ud.get_pad_cb = cb;
-  mangle_padops_ud.padoffsets = padoffsets;
-  mangle_padops_ud.n_padoffsets = n_padoffsets;
-  walk_optree_structural(aTHX_ o, mangle_padops, &mangle_padops_ud);
+  ptable_walk(instance_lexical_padops, mangle_padops, cb);
 }
 
 static void unwind_frame (pTHX_ void *ud)
@@ -546,55 +479,151 @@ static void unwind_frame (pTHX_ void *ud)
   Safefree(ex_frame);
 }
 
+static struct mop_instance * get_instance_from_ref (pTHX_ SV *sv);
 static OP * mypp_setup_frame (pTHX)
 {
-  dXSARGS;
+  dSP;
   mop_frame_t *prev_frame = frame;
   Newx(frame, 1, mop_frame_t);
   frame->caller = prev_frame;
-  frame->invocant = ST(0);
+  // doesn't work because pp_entersub already did POPMARK
+  // frame->invocant = *(PL_stack_base + TOPMARK + 1);
+  // XXX find a way to do this without requiring @_?
+  frame->invocant = *av_fetch(GvAV(PL_defgv), 0, 0);
+  assert(SvROK(frame->invocant));
   SAVEDESTRUCTOR_X(unwind_frame, NULL);
   RETURN;
 }
 
+static OP *
+mygenop_setup_frame (pTHX)
+{
+    OP *o = newUNOP(OP_RAND, 0, NULL);
+    o->op_ppaddr = mypp_setup_frame;
+    return o;
+}
+
+static SV **
+resolve_padop (pTHX_ CV *cv, PAD *pad, PADOFFSET off)
+{
+    SV **namessv = av_fetch(pad, off, 0);
+    if (!namessv || !*namessv)
+	return NULL;
+
+    if (SvFAKE(*namessv))
+	namessv = resolve_padop(aTHX_ CvOUTSIDE(cv),
+				(PAD *)*av_fetch(CvPADLIST(CvOUTSIDE(cv)), 0, 0),
+				PARENT_PAD_INDEX(*namessv));
+
+    return namessv;
+}
+
+#ifdef USE_UTF8_SCRIPTS
+#   define UTF (!IN_BYTES)
+#else
+#   define UTF ((PL_parser->linestr && DO_UTF8(PL_parser->linestr)) \
+                || ( !(PL_parser->lex_flags & LEX_IGNORE_UTF8_HINTS) && (PL_hints & HINT_UTF8)))
+#endif
+
+#define LEX_IGNORE_UTF8_HINTS	0x00000002
+
+static PADOFFSET
+compiling_padop_offset (pTHX)
+{
+    return pad_findmy_pvn(PL_parser->tokenbuf, strlen(PL_parser->tokenbuf),
+                          UTF ? SVf_UTF8 : 0);
+}
+
+static ptable *instance_lexical_padnames;
+
+static bool
+resolved_to_instance_lexical (pTHX_ SV *padname)
+{
+    return !!ptable_fetch(instance_lexical_padnames, padname);
+}
+
+static SV *
+try_resolve_compiling_instance_lexical (pTHX)
+{
+    SV **namessv = resolve_padop(aTHX_ PL_compcv, PL_comppad_name,
+                                 compiling_padop_offset(aTHX));
+
+    if (!namessv || !*namessv)
+        return NULL;
+
+    if (resolved_to_instance_lexical(aTHX_ *namessv)) {
+        return *namessv;
+    }
+
+    return NULL;
+}
+
 static OP * myck_padsv (pTHX_ OP *o)
 {
-  o = old_ck_padsv(aTHX_ o);
+    SV *padname;
 
-  if (IN_EFFECT)
-    tag(o);
+    o = old_ck_padsv(aTHX_ o);
 
-  return o;
+    if (!IN_EFFECT)
+        return o;
+
+
+    if ((padname = try_resolve_compiling_instance_lexical(aTHX))) {
+        if (o->op_private & OPpLVAL_INTRO) {
+            return o;
+        }
+        tag(o, padname);
+    }
+
+    return o;
 }
 
 static OP * myck_padav (pTHX_ OP *o)
 {
-  o = old_ck_padav(aTHX_ o);
+    SV *padname;
 
-  if (IN_EFFECT)
-    tag(o);
+    o = old_ck_padav(aTHX_ o);
 
-  return o;
+    if (!IN_EFFECT)
+        return o;
+
+    if ((padname = try_resolve_compiling_instance_lexical(aTHX))) {
+        tag(o, padname);
+    }
+
+    return o;
 }
 
 static OP * myck_padhv (pTHX_ OP *o)
 {
-  o = old_ck_padhv(aTHX_ o);
+    SV *padname;
 
-  if (IN_EFFECT)
-    tag(o);
+    o = old_ck_padhv(aTHX_ o);
 
-  return o;
+    if (!IN_EFFECT)
+        return o;
+
+    if ((padname = try_resolve_compiling_instance_lexical(aTHX))) {
+        tag(o, padname);
+    }
+
+    return o;
 }
 
 static OP * myck_padany (pTHX_ OP *o)
 {
-  o = old_ck_padany(aTHX_ o);
+    SV *padname;
 
-  if (IN_EFFECT)
-    tag(o);
+    o = old_ck_padany(aTHX_ o);
 
-  return o;
+    if (!IN_EFFECT)
+        return o;
+
+    if ((padname = try_resolve_compiling_instance_lexical(aTHX))) {
+        tag(o, padname);
+    }
+
+    return o;
 }
 
 static void myopfreehook (pTHX_ OP *o)
@@ -763,6 +792,72 @@ static OP *THX_parse_metadata(pTHX)
     return metadata;
 }
 
+static SV *mop_get_slot_at(struct mop_instance *instance, IV offset)
+{
+    return (instance->slots)[offset];
+}
+
+static struct mop_instance * get_instance (pTHX_ SV *sv)
+{
+  if (SvMAGICAL(sv)) {
+    MAGIC *mg;
+    for (mg = SvMAGIC(sv); mg; mg = mg->mg_moremagic) {
+      if ((mg->mg_type == PERL_MAGIC_ext)
+       && (mg->mg_virtual == &vtbl_instance)) {
+	return (struct mop_instance *)mg->mg_ptr;
+      }
+    }
+  }
+
+  croak("not a mop instance");
+}
+
+static SV *
+get_padslot (pTHX_ OP *o, void *ud)
+{
+    PERL_UNUSED_ARG(o);
+    struct mop_instance *instance;
+    AV *slot_names;
+    SV *attr_val;
+    SV *slot_name = (SV *)ud;
+    assert(frame);
+    instance = get_instance(aTHX_ SvRV(frame->invocant));
+    slot_names = get_slot_names(mop_get_class(instance));
+    attr_val = mop_get_slot_at(instance,
+                               slot_offset_for_name(slot_names, slot_name));
+    return attr_val;
+}
+
+static void
+get_padslot_cb (pTHX_ OP *o, SV *padname, pad_cb_t *cb_p,
+                 void **ud_p, pad_cb_free_t *free_ud_p)
+{
+    PERL_UNUSED_ARG(o);
+
+    *cb_p = get_padslot;
+    *ud_p = (void *)SvREFCNT_inc(padname);
+    *free_ud_p = NULL;
+}
+
+static HV *
+sort_hv_keys (HV *hv)
+{
+    SV *sorted;
+    dSP;
+    ENTER;
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
+    PUSHs(newRV_noinc((SV *)hv));
+    PUTBACK;
+    call_pv("mop::util::sort_slot_hash", G_SCALAR);
+    SPAGAIN;
+    sorted = POPs;
+    PUTBACK;
+    LEAVE;
+
+    return (HV *)SvRV(sorted);
+}
+
 static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 {
     SV *caller = NULL, *class_name, *metadata, *class;
@@ -770,6 +865,13 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     OP *metadata_op, *local_class, *self_class_lexicals, *block;
     int floor;
     struct data *data;
+
+    ENTER;
+    SAVEVPTR(instance_lexical_padnames);
+    SAVEVPTR(instance_lexical_padops);
+    instance_lexical_padnames = ptable_new();
+    instance_lexical_padops = ptable_new();
+    setup_padop_callback(aTHX);
 
     *flagsp |= CALLPARSER_STATEMENT;
 
@@ -885,6 +987,8 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
                             newSTATEOP(0, NULL, local_class),
                             block);
 
+    finalise_padop_callback(aTHX_ block, get_padslot_cb);
+
     /* evaluate the class block at compile time */
     ENTER;
     {
@@ -925,6 +1029,9 @@ static OP *parse_class(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     }
     LEAVE;
 
+    ptable_free(instance_lexical_padnames);
+    ptable_free(instance_lexical_padops);
+    LEAVE;
     /* the class keyword has no runtime component */
     return newOP(OP_NULL, 0);
 }
@@ -983,27 +1090,30 @@ static OP *parse_has(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
     }
 
     if (sigil == '$') {
-        pad_op = newOP(OP_PADSV, 0);
+        pad_op = newOP(OP_PADSV, (OPpLVAL_INTRO << 8));
         pad_op->op_targ = pad_add_my_scalar_sv(name);
     }
     else if (sigil == '@') {
-        pad_op = newOP(OP_PADAV, 0);
+        pad_op = newOP(OP_PADAV, (OPpLVAL_INTRO << 8));
         pad_op->op_targ = pad_add_my_array_sv(name);
     }
     else if (sigil == '%') {
-        pad_op = newOP(OP_PADHV, 0);
+        pad_op = newOP(OP_PADHV, (OPpLVAL_INTRO << 8));
         pad_op->op_targ = pad_add_my_hash_sv(name);
     }
     else {
         croak("weird sigil '%c'???", sigil);
     }
 
+    SV *padname = *av_fetch(PL_comppad_name, pad_findmy_sv(name, 0), 0);
+    ptable_store(instance_lexical_padnames, padname, padname);
+
     pad_op = Perl_localize(aTHX_ pad_op, 1);
 
     SvREFCNT_inc_simple_void_NN(name);
     ret = newLISTOP(OP_LIST, 0,
                     newSVOP(OP_CONST, 0, name),
-                    newANONLIST(pad_op));
+		    newANONLIST(pad_op));
 
     if (metadata) {
         op_append_elem(OP_LIST, ret, metadata);
@@ -1058,88 +1168,95 @@ static OP *THX_parse_method_prototype(pTHX)
     OP *myvars, *defaults, *get_args, *arg_assign;
     IV i = 0;
 
-    demand_unichar('(', DEMAND_IMMEDIATE);
+    OP *var_self = newOP(OP_PADSV, 0);
+    var_self->op_targ = pad_add_my_scalar_pvn("$self", 5);
 
-    lex_read_space(0);
-    if (lex_peek_unichar(0) == ')') {
-        lex_read_unichar(0);
-        return NULL;
-    }
-
-    myvars = newLISTOP(OP_LIST, 0, NULL, NULL);
+    myvars = newLISTOP(OP_LIST, 0, var_self, NULL);
     defaults = newLISTOP(OP_LINESEQ, 0, NULL, NULL);
 
-    for (;;) {
-        OP *pad_op;
-        I32 next;
-        I32 type;
-        SV *name;
-        char *buf;
-        size_t q;
+    lex_read_space(0);
+    if (lex_peek_unichar(0) == '(') {
+        demand_unichar('(', DEMAND_IMMEDIATE);
 
         lex_read_space(0);
-        next = lex_peek_unichar(0);
-        if (next == '$') {
-            pad_op = newOP(OP_PADSV, 0);
-            name = parse_scalar_varname();
-            pad_op->op_targ = pad_add_my_scalar_sv(name);
-        }
-        else if (next == '@') {
-            pad_op = newOP(OP_PADAV, 0);
-            name = parse_array_varname();
-            pad_op->op_targ = pad_add_my_array_sv(name);
-        }
-        else if (next == '%') {
-            pad_op = newOP(OP_PADHV, 0);
-            name = parse_hash_varname();
-            pad_op->op_targ = pad_add_my_hash_sv(name);
-        }
-        else {
-            Newx(buf, strlen(PL_parser->bufptr), char);
-            strcpy(buf, PL_parser->bufptr);
-            for(q = strlen(buf); q > 0 ; q--) {
-                if(buf[q] == '\n') { buf[q] = '\0'; break; }
-            }
-            croak("syntax error: expected valid sigil, but found '%c' at \"%s\"", (char)next, buf);
-        }
-
-        op_append_elem(OP_LIST, myvars, pad_op);
-
-        lex_read_space(0);
-        next = lex_peek_unichar(0);
-
-        if (next == '=') {
-            OP *set_default;
-
+        if (lex_peek_unichar(0) == ')') {
             lex_read_unichar(0);
-            set_default = parse_parameter_default(i, pad_op->op_targ);
-            op_append_elem(OP_LINESEQ,
-                           defaults,
-                           newSTATEOP(0, NULL, set_default));
+            goto finalise;
+        }
+
+        for (;;) {
+            OP *pad_op;
+            I32 next;
+            I32 type;
+            SV *name;
+            char *buf;
+            size_t q;
 
             lex_read_space(0);
             next = lex_peek_unichar(0);
-        }
-
-        i++;
-
-        if (next == ',') {
-            lex_read_unichar(0);
-        }
-        else if (next == ')') {
-            lex_read_unichar(0);
-            break;
-        }
-        else {
-            Newx(buf, strlen(PL_parser->bufptr), char);
-            strcpy(buf, PL_parser->bufptr);
-            for(q = strlen(buf); q > 0 ; q--) {
-                if(buf[q] == '\n') { buf[q] = '\0'; break; }
+            if (next == '$') {
+                pad_op = newOP(OP_PADSV, 0);
+                name = parse_scalar_varname();
+                pad_op->op_targ = pad_add_my_scalar_sv(name);
             }
-            croak("syntax error: expected comma or closing parenthesis, but found '%s' at \"%s\"", (char *)&next, buf);
+            else if (next == '@') {
+                pad_op = newOP(OP_PADAV, 0);
+                name = parse_array_varname();
+                pad_op->op_targ = pad_add_my_array_sv(name);
+            }
+            else if (next == '%') {
+                pad_op = newOP(OP_PADHV, 0);
+                name = parse_hash_varname();
+                pad_op->op_targ = pad_add_my_hash_sv(name);
+            }
+            else {
+                Newx(buf, strlen(PL_parser->bufptr), char);
+                strcpy(buf, PL_parser->bufptr);
+                for(q = strlen(buf); q > 0 ; q--) {
+                    if(buf[q] == '\n') { buf[q] = '\0'; break; }
+                }
+                croak("syntax error: expected valid sigil, but found '%c' at \"%s\"", (char)next, buf);
+            }
+
+            op_append_elem(OP_LIST, myvars, pad_op);
+
+            lex_read_space(0);
+            next = lex_peek_unichar(0);
+
+            if (next == '=') {
+                OP *set_default;
+
+                lex_read_unichar(0);
+                set_default = parse_parameter_default(i, pad_op->op_targ);
+                op_append_elem(OP_LINESEQ,
+                               defaults,
+                               newSTATEOP(0, NULL, set_default));
+
+                lex_read_space(0);
+                next = lex_peek_unichar(0);
+            }
+
+            i++;
+
+            if (next == ',') {
+                lex_read_unichar(0);
+            }
+            else if (next == ')') {
+                lex_read_unichar(0);
+                break;
+            }
+            else {
+                Newx(buf, strlen(PL_parser->bufptr), char);
+                strcpy(buf, PL_parser->bufptr);
+                for(q = strlen(buf); q > 0 ; q--) {
+                    if(buf[q] == '\n') { buf[q] = '\0'; break; }
+                }
+                croak("syntax error: expected comma or closing parenthesis, but found '%s' at \"%s\"", (char *)&next, buf);
+            }
         }
     }
 
+  finalise:
     myvars = Perl_localize(aTHX_ myvars, 1);
     myvars = Perl_sawparens(aTHX_ myvars);
 
@@ -1166,10 +1283,7 @@ static OP *parse_method(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
         method_name = parse_idword("");
     }
 
-    lex_read_space(0);
-    if (lex_peek_unichar(0) == '(') {
-        arg_assign = parse_method_prototype();
-    }
+    arg_assign = parse_method_prototype();
 
     lex_read_space(0);
     if (lex_peek_unichar(0) == '{') {
@@ -1181,6 +1295,7 @@ static OP *parse_method(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
                                     block);
         }
 
+	block = op_prepend_elem(OP_LINESEQ, mygenop_setup_frame(aTHX), block);
         code = newANONSUB(floor, NULL, block);
     }
     else {
@@ -1201,21 +1316,6 @@ static OP *parse_method(pTHX_ GV *namegv, SV *psobj, U32 *flagsp)
 static void attach_instance (pTHX_ SV *sv, struct mop_instance *instance)
 {
   sv_magicext(sv, NULL, PERL_MAGIC_ext, &vtbl_instance, (char *)instance, 0);
-}
-
-static struct mop_instance * get_instance (pTHX_ SV *sv)
-{
-  if (SvMAGICAL(sv)) {
-    MAGIC *mg;
-    for (mg = SvMAGIC(sv); mg; mg = mg->mg_moremagic) {
-      if ((mg->mg_type == PERL_MAGIC_ext)
-       && (mg->mg_virtual == &vtbl_instance)) {
-	return (struct mop_instance *)mg->mg_ptr;
-      }
-    }
-  }
-
-  croak("%"SVf" is not a mop instance", sv);
 }
 
 static struct mop_instance * get_instance_from_ref (pTHX_ SV *sv)
@@ -1432,6 +1532,8 @@ init_parser_for(package)
 BOOT:
 {
     pad_callbacks = ptable_new();
+    instance_lexical_padnames = ptable_new();
+    instance_lexical_padops = ptable_new();
 
     old_ck_padsv = PL_check[OP_PADSV];
     old_ck_padav = PL_check[OP_PADAV];
