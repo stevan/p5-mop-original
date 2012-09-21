@@ -5,10 +5,11 @@ use JSON::XS ();
 
 use Blog::Model::Schema;
 
+my $serializer = JSON::XS->new->pretty;
+
 class Blog::Model {
     has $blog;
     has $storage;
-    has $serializer = JSON::XS->new->pretty;
 
     method add_new_post ( $author, $title, $url, $body ) {
         $blog->add_post(
