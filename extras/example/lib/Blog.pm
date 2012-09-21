@@ -13,12 +13,14 @@ class Blog {
 
     method process_options ( $cmd, @args ) {
         try {
-            if ( $cmd eq 'new-post') {
-                $model->txn_do( add_new_post => @args );
-                $logger->log( info => 'Creating new post' );
-            }
-            else {
-                $logger->log( error => 'No command specified' );
+            given ( $cmd ) {
+                when ( 'new-post') {
+                    $model->txn_do( add_new_post => @args );
+                    $logger->log( info => 'Creating new post' );
+                }
+                default {
+                    $logger->log( error => 'No command specified' );
+                }
             }
         } catch {
             $logger->log( fatal => 'An error occurred: ' . $_ );
