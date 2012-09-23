@@ -1,5 +1,5 @@
 #!perl
-#BEGIN { $ENV{PERL_MOP_MINI} = 1 }
+BEGIN { $ENV{PERL_MOP_MINI} = 1 }
 
 use v5.16;
 
