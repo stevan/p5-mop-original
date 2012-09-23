@@ -18,7 +18,7 @@ class Blog {
         $logger = Blog::Logger->new;
         $model  = Blog::Model->new(
             storage => file( $config->get('storage') ),
-            editor  => Blog::Editor->new( command => $config->get('editor') )
+            editor  => Blog::Editor->new( editors => $config->get('editors') )
         )
     }
 
