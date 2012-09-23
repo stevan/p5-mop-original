@@ -1,5 +1,5 @@
 #!perl
-BEGIN { $ENV{PERL_MOP_MINI} = 1 }
+#BEGIN { $ENV{PERL_MOP_MINI} = 1 }
 
 use v5.16;
 
@@ -26,5 +26,5 @@ NOTES:
 
 use Blog;
 
-Blog->new->process_options( @ARGV );
+Blog->new->run( @ARGV );
 
