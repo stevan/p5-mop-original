@@ -4,14 +4,25 @@ use mop;
 use Try;
 use Path::Class qw[ file ];
 
+use Blog::Config;
 use Blog::Model;
 use Blog::Logger;
+use Blog::Editor;
 
 class Blog {
-    has $logger = Blog::Logger->new;
-    has $model  = Blog::Model->new( storage => file( './data.json' ) );
+    has $config = Blog::Config->new;
+    has $logger;
+    has $model;
 
-    method run ( @arg ) {
+    BUILD {
+        $logger = Blog::Logger->new;
+        $model  = Blog::Model->new(
+            storage => file( $config->get('storage') ),
+            editor  => Blog::Editor->new( command => $config->get('editor') )
+        )
+    }
+
+    method run ( @args ) {
         try {
             $self->handle_options( @args );
             exit;
@@ -26,6 +37,10 @@ class Blog {
             when ( 'new-post') {
                 $model->txn_do( add_new_post => @args );
                 $logger->log( info => 'Creating new post' );
+            }
+            when ( 'edit-post') {
+                $model->txn_do( edit_post => @args );
+                $logger->log( info => 'Editing post' );
             }
             default {
                 $logger->log( error => 'No command specified' );
