@@ -2,6 +2,8 @@ package Blog::Model::Schema;
 use v5.16;
 use mop;
 
+use List::Util qw[ first ];
+
 role Packable {
     method pack;   # ( ()      => HashRef )
     method unpack; # ( HashRef => $self   )
@@ -26,10 +28,10 @@ class Post ( roles => [ Packable ] )  {
     has $url;
     has $body;
 
-    method title  { $title }
-    method author { $author }
-    method url    { $url }
-    method body   { $body }
+    method title  ( $t ) { $title  = $t if $t; $title  }
+    method author ( $a ) { $author = $a if $a; $author }
+    method url    ( $u ) { $url    = $u if $u; $url    }
+    method body   ( $b ) { $body   = $b if $b; $body   }
 
     method pack {
         return +{
@@ -51,6 +53,10 @@ class Post ( roles => [ Packable ] )  {
 
 class Blog ( roles => [ Packable ] )  {
     has @posts;
+
+    method find_post ( $callback ) {
+        first { $callback->( $_ ) } @posts
+    }
 
     method add_post ( $post ) {
         push @posts => $post
