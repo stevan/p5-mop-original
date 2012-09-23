@@ -11,22 +11,26 @@ class Blog {
     has $logger = Blog::Logger->new;
     has $model  = Blog::Model->new( storage => file( './data.json' ) );
 
-    method process_options ( $cmd, @args ) {
+    method run ( @arg ) {
         try {
-            given ( $cmd ) {
-                when ( 'new-post') {
-                    $model->txn_do( add_new_post => @args );
-                    $logger->log( info => 'Creating new post' );
-                }
-                default {
-                    $logger->log( error => 'No command specified' );
-                }
-            }
+            $self->handle_options( @args );
+            exit;
         } catch {
             $logger->log( fatal => 'An error occurred: ' . $_ );
+            exit(1);
         }
+    }
 
-        exit;
+    method handle_options ( $cmd, @args ) {
+        given ( $cmd ) {
+            when ( 'new-post') {
+                $model->txn_do( add_new_post => @args );
+                $logger->log( info => 'Creating new post' );
+            }
+            default {
+                $logger->log( error => 'No command specified' );
+            }
+        }
     }
 }
 
