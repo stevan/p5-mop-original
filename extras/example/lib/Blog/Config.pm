@@ -1,6 +1,7 @@
 use v5.16;
 use mop;
 
+use Try;
 use YAML::XS qw[ LoadFile ];
 
 class Blog::Config {
@@ -11,7 +12,14 @@ class Blog::Config {
     };
 
     BUILD ($params) {
-        $data = LoadFile( $params->{'config_file'} || 'my_blog.yml' );
+        my $filename = $params->{'config_file'} || 'my_blog.yml';
+        (-e $filename)
+            || die "Could not find config file named: $filename";
+        try {
+            $data = LoadFile( $filename );
+        } catch {
+            die "Failed to parse config file: $filename because: $_";
+        }
     }
 
     method get ( $key ) { $data->{ $key } // $defaults->{ $key } }
