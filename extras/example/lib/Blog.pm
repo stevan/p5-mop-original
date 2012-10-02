@@ -11,11 +11,10 @@ use Blog::Editor;
 
 class Blog {
     has $config = Blog::Config->new;
-    has $logger;
+    has $logger = Blog::Logger->new;
     has $model;
 
     BUILD {
-        $logger = Blog::Logger->new;
         $model  = Blog::Model->new(
             storage => file( $config->get('storage') ),
             editor  => Blog::Editor->new( editors => $config->get('editors') )
@@ -34,11 +33,11 @@ class Blog {
 
     method handle_options ( $cmd, @args ) {
         given ( $cmd ) {
-            when ( 'new-post') {
+            when ( 'new-post' ) {
                 $model->txn_do( add_new_post => @args );
                 $logger->log( info => 'Creating new post' );
             }
-            when ( 'edit-post') {
+            when ( 'edit-post' ) {
                 $model->txn_do( edit_post => @args );
                 $logger->log( info => 'Editing post' );
             }
