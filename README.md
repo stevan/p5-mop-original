@@ -1,6 +1,6 @@
-# A MOP for Perl 5
+**NOTE: This project has been restarted under a different name, see https://github.com/stevan/p5-mop-redux for more info**
 
-**NOTE: This is still _VERY_ much a work in progress**
+# A MOP for Perl 5
 
 This repository contains an ever evolving proposal and a
 functioning prototype for a Meta Object Protocol, or MOP,
